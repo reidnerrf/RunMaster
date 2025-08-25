@@ -92,4 +92,9 @@ export const api = {
   async joinChallenge(id: string, userId: string): Promise<{ ok: boolean }> {
     return http<{ ok: boolean }>(`/challenges/${encodeURIComponent(id)}/join`, { method: 'POST', body: JSON.stringify({ userId }) });
   },
+  // Export PDF
+  async exportRunPdf(id: string): Promise<string> {
+    // returns a shareable URL
+    return `${BASE_URL}/export/run/${encodeURIComponent(id)}.pdf`;
+  },
 };

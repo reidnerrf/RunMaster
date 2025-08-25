@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Pressable, Share, Linking } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { getRuns, Run } from '../Lib/runStore';
 import { useTheme } from '../hooks/useTheme';
@@ -9,6 +9,7 @@ import ActionButton from '../components/ActionButton';
 import { addRoute } from '../Lib/routeStore';
 import GeneratedImage from '../components/GeneratedImage';
 import { getRecoveryAdvice } from '../Lib/analysis';
+import { api } from '../Lib/api';
 
 export default function RunSummaryScreen() {
   const route = useRoute<any>();
@@ -34,6 +35,13 @@ export default function RunSummaryScreen() {
   const onShare = async () => {
     try {
       await Share.share({ message: `Acabei de correr ${run.distanceKm.toFixed(2)} km com pace médio ${run.avgPace}! #RunMaster` });
+    } catch {}
+  };
+
+  const onExportPdf = async () => {
+    try {
+      const url = api.exportRunPdf(run.remoteId || '');
+      await Linking.openURL(url);
     } catch {}
   };
 
@@ -70,6 +78,7 @@ export default function RunSummaryScreen() {
       <View style={[styles.shareCard, { backgroundColor: theme.colors.card }]}> 
         <GeneratedImage text={`Cartão de corrida: ${run.distanceKm.toFixed(2)} km, pace ${run.avgPace}, estilo esportivo com gradientes vibrantes` as any} aspect="1:1" style={{ width: '100%', height: 200, borderRadius: 12 }} />
         <ActionButton label="Compartilhar" onPress={onShare} />
+        <ActionButton label="Exportar PDF (server)" onPress={onExportPdf} />
       </View>
 
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>

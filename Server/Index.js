@@ -4,6 +4,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+let PDFDocument; try { PDFDocument = require('pdfkit'); } catch {}
 
 const app = express();
 app.use(cors());
@@ -103,6 +104,34 @@ app.delete('/routes/:id', async (req, res) => {
     const { id } = req.params;
     await SavedRoute.findByIdAndDelete(id);
     res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PDF export for a run summary (server-side)
+app.get('/export/run/:id.pdf', async (req, res) => {
+  try {
+    if (!PDFDocument) return res.status(501).json({ error: 'pdfkit not installed on server' });
+    const { id } = req.params;
+    const run = await Run.findById(id).lean();
+    if (!run) return res.status(404).json({ error: 'not found' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=run_${id}.pdf`);
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
+    doc.pipe(res);
+    doc.fontSize(18).text('RunMaster - Resumo da Corrida', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Início: ${new Date(run.startedAt).toLocaleString()}`);
+    doc.text(`Duração: ${(run.durationSec/60|0)} min`);
+    doc.text(`Distância: ${run.distanceKm.toFixed(2)} km`);
+    doc.text(`Pace médio: ${run.avgPace}`);
+    doc.text(`Calorias: ${Math.round(run.calories)}`);
+    doc.moveDown();
+    if (Array.isArray(run.splits) && run.splits.length) {
+      doc.fontSize(14).text('Splits');
+      doc.fontSize(12);
+      run.splits.forEach((s) => doc.text(`${s.km} km: ${s.paceSec}s ${s.avgHr ? `• ${s.avgHr} bpm` : ''}`));
+    }
+    doc.end();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

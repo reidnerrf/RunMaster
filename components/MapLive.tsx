@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import type { TrackPoint } from '../hooks/useRunTracker';
 import { useTheme } from '../hooks/useTheme';
@@ -12,11 +12,17 @@ export type MapLiveProps = {
   points: TrackPoint[];
   height?: number;
   pois?: { id: string; latitude: number; longitude: number; type: 'water' | 'toilet' | 'park' | 'challenge' | 'collectible'; label?: string }[];
+  showLighting?: boolean;
+  showAirQuality?: boolean;
+  showWeather?: boolean;
 };
 
-export default function MapLive({ points, height = 260, pois = [] }: MapLiveProps) {
+export default function MapLive({ points, height = 260, pois = [], showLighting, showAirQuality, showWeather }: MapLiveProps) {
   const { theme } = useTheme();
   const mapRef = useRef<any>(null);
+  const [aqLayer, setAqLayer] = useState<any[] | null>(null);
+  const [lightPins, setLightPins] = useState<{ lat: number; lon: number }[] | null>(null);
+  const [weatherCells, setWeatherCells] = useState<{ lat: number; lon: number; i: number }[] | null>(null);
 
   const region = useMemo(() => {
     if (!points || points.length === 0) return null as any;
@@ -70,6 +76,16 @@ export default function MapLive({ points, height = 260, pois = [] }: MapLiveProp
         loadingEnabled
         zoomControlEnabled={Platform.OS === 'android'}
       >
+        {/* Safety layers (mock overlays) */}
+        {showLighting && lightPins && lightPins.map((c, idx) => (
+          <Marker key={`lt-${idx}`} coordinate={{ latitude: c.lat, longitude: c.lon }} title="Iluminação" pinColor="#F1C40F" />
+        ))}
+        {showAirQuality && aqLayer && aqLayer.map((c, idx) => (
+          <Marker key={`aq-${idx}`} coordinate={{ latitude: c.lat, longitude: c.lon }} title={`AQI ${c.aqi}`} pinColor={aqColor(c.aqi)} />
+        ))}
+        {showWeather && weatherCells && weatherCells.map((c, idx) => (
+          <Marker key={`wx-${idx}`} coordinate={{ latitude: c.lat, longitude: c.lon }} title={c.i > 6 ? 'Chuva' : 'Nublado'} pinColor={c.i > 6 ? '#3498DB' : '#95A5A6'} />
+        ))}
         {polyCoords.length > 1 && (
           <Polyline
             coordinates={polyCoords}
@@ -102,6 +118,13 @@ function poiColor(type: MapLiveProps['pois'][number]['type']): string {
     case 'collectible': return '#E91E63';
     default: return '#999999';
   }
+}
+
+function aqColor(aqi: number): string {
+  if (aqi < 50) return '#2ECC71';
+  if (aqi < 100) return '#F1C40F';
+  if (aqi < 150) return '#E67E22';
+  return '#E74C3C';
 }
 
 const styles = StyleSheet.create({
