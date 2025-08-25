@@ -31,6 +31,7 @@ export default function RunScreen() {
   const [countdown, setCountdown] = useState<number | null>(null);
   const startedRef = useRef(false);
   const [layers, setLayers] = useState({ lighting: false, airQuality: false, weather: false });
+  const [poiMarkers, setPoiMarkers] = useState<{ id: string; latitude: number; longitude: number; type: 'collectible' | 'challenge'; label?: string }[]>([]);
 
   useEffect(() => {
     getSettings().then((s) => setLayers(s.safetyLayers)).catch(() => {});
@@ -88,7 +89,7 @@ export default function RunScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={{ position: 'relative' }}>
-        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} />
+        <MapLive points={state.path} pois={poiMarkers} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} />
         {state.isAutoPaused && (
           <View style={[styles.autoPauseBadge, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={{ color: theme.colors.muted }}>Pausado automaticamente</Text>
@@ -96,7 +97,13 @@ export default function RunScreen() {
         )}
       </View>
       {isPremium && <CoachAudio active={state.status === 'running'} paceStr={state.paceStr} distanceKm={state.distanceKm} />}
-      {isPremium && <POIOverlay path={state.path} enabled={state.status === 'running'} />}
+      {isPremium && (
+        <POIOverlay
+          path={state.path}
+          enabled={state.status === 'running'}
+          onPoisChanged={(pois) => setPoiMarkers(pois.map((p) => ({ id: p.id, latitude: p.latitude, longitude: p.longitude, type: 'collectible', label: p.type })))}
+        />
+      )}
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 + insets.bottom }}>
         <View style={styles.topRow}>

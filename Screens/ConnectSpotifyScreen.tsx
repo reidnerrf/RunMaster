@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { getSettings, setSettings } from '../Lib/settings';
 
 export default function ConnectSpotifyScreen() {
   const [connected, setConnected] = useState(false);
 
-  const handleConnect = () => {
+  React.useEffect(() => { getSettings().then((s) => setConnected(!!s.spotifyConnected)); }, []);
+
+  const handleConnect = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setConnected(true);
+    await setSettings({ spotifyConnected: true });
   };
 
   return (

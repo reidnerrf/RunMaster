@@ -60,6 +60,9 @@ export default function SavedRoutesScreen() {
       <Pressable onPress={async () => { if (!user) return; setSyncing(true); await syncRoutes(user.id); setRoutes(await getRoutes()); setSyncing(false); }} style={[styles.sync, { borderColor: theme.colors.border }]}>
         <Text style={{ color: theme.colors.muted }}>{syncing ? 'Sincronizando...' : 'Sincronizar com a nuvem'}</Text>
       </Pressable>
+      <Pressable onPress={async () => { if (!user) return; setSyncing(true); try { const remote = await api.listRoutes(user.id); for (const rr of remote) { await api.deleteRoute((rr as any)._id); } } catch {} setSyncing(false); }} style={[styles.sync, { borderColor: theme.colors.border }]}>
+        <Text style={{ color: theme.colors.muted }}>Excluir todas remotas (admin)</Text>
+      </Pressable>
       {routes.length === 0 && (
         <View style={[styles.empty, { borderColor: theme.colors.border }]}> 
           <Text style={{ color: theme.colors.muted }}>Você ainda não salvou rotas.</Text>

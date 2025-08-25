@@ -16,7 +16,7 @@ function distanceMeters(a: { latitude: number; longitude: number }, b: { latitud
   return R * c;
 }
 
-export default function POIOverlay({ path, enabled }: { path: TrackPoint[]; enabled: boolean }) {
+export default function POIOverlay({ path, enabled, onPoisChanged }: { path: TrackPoint[]; enabled: boolean; onPoisChanged?: (pois: POI[]) => void }) {
   const { theme } = useTheme();
   const [pois, setPois] = useState<POI[]>([]);
   const [score, setScore] = useState(0);
@@ -47,6 +47,12 @@ export default function POIOverlay({ path, enabled }: { path: TrackPoint[]; enab
       return p;
     }));
   }, [enabled, path, pois.length]);
+
+  // notify host about POIs to show markers on the map
+  useEffect(() => {
+    if (!enabled) return;
+    onPoisChanged?.(pois);
+  }, [enabled, pois, onPoisChanged]);
 
   if (!enabled) return null;
 
