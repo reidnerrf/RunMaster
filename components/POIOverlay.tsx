@@ -16,7 +16,7 @@ function distanceMeters(a: { latitude: number; longitude: number }, b: { latitud
   return R * c;
 }
 
-export default function POIOverlay({ path, enabled }: { path: TrackPoint[]; enabled: boolean }) {
+export default function POIOverlay({ path, enabled, onPoisChanged }: { path: TrackPoint[]; enabled: boolean; onPoisChanged?: (pois: POI[]) => void }) {
   const { theme } = useTheme();
   const [pois, setPois] = useState<POI[]>([]);
   const [score, setScore] = useState(0);
@@ -33,6 +33,7 @@ export default function POIOverlay({ path, enabled }: { path: TrackPoint[]; enab
         longitude: start.longitude + (Math.random() - 0.5) * 0.002,
       }));
       setPois(gen);
+      if (onPoisChanged) onPoisChanged(gen);
     }
   }, [enabled, path, pois.length]);
 
@@ -46,6 +47,7 @@ export default function POIOverlay({ path, enabled }: { path: TrackPoint[]; enab
       }
       return p;
     }));
+    if (onPoisChanged) onPoisChanged(pois);
   }, [enabled, path, pois.length]);
 
   if (!enabled) return null;
