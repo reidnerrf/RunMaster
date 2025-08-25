@@ -33,7 +33,7 @@ export type ApiChallenge = {
   participants: string[]; // userIds
 };
 
-const DEFAULT_BASE_URL = 'https://your-express-api.example.com'; // TODO: replace with your deployed URL
+const DEFAULT_BASE_URL = 'http://localhost:3000'; // set via setApiBaseUrl at runtime
 let BASE_URL = DEFAULT_BASE_URL;
 
 export function setApiBaseUrl(url: string) { BASE_URL = url; }

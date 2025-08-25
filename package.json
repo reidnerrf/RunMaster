@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "license": "0BSD",
   "private": true,
-  "main": "index.ts",
+  "main": "App.tsx",
   "scripts": {
-    "start": "npx expo start",
-    "android": "npx expo run:android",
-    "ios": "npx expo run:ios",
-    "web": "npx expo start --web"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "server": "node Server/Index.js"
   },
   "dependencies": {
     "@auth0/auth0-react": "2.0.1",

@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Toaster } from 'sonner-native';
 import { AuthProvider, useAuth } from './hooks/useAuth';
-import type { RootStackParamList } from './types/navigation';
+import type { RootStackParamList } from './Types/Navigation';
 import WelcomeScreen from './Screens/auth/WelcomeScreen';
 import LoginScreen from './Screens/auth/LoginScreen';
 import SignupScreen from './Screens/auth/SignupScreen';

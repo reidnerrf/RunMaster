@@ -1,1 +1,1 @@
-export const API_BASE_URL = 'https://your-express-api.example.com'; // replace with your deployed Express API URL
+export const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
