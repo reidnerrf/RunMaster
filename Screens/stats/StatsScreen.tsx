@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, Animated, Pressable, ScrollView, RefreshControl
 import SectionTitle from '../../components/SectionTitle';
 import { useGate } from '../../hooks/useGate';
 import { useTheme } from '../../hooks/useTheme';
-import { summarize, getRuns } from '../../lib/runStore';
+import { summarize, getRuns } from '../../Lib/runStore';
 import { useAuth } from '../../hooks/useAuth';
-import { pushUnsyncedRuns } from '../../lib/sync';
+import { pushUnsyncedRuns } from '../../Lib/sync';
 import PaceHrChart from '../../components/Charts';
 
 export default function StatsScreen() {

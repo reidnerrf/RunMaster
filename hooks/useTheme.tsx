@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getTheme, Theme, ThemeMode } from '../lib/theme';
-import * as Storage from '../lib/storage';
+import { getTheme, Theme, ThemeMode } from '../Lib/theme';
+import * as Storage from '../Lib/storage';
 
 const THEME_STORAGE_KEY = 'runmaster_theme_v1';
 

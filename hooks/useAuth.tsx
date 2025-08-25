@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { Alert } from 'react-native';
-import * as Storage from '../lib/storage';
+import * as Storage from '../Lib/storage';
 
 export type User = {
   id: string;

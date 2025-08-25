@@ -7,10 +7,10 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
 import BadgeChip from '../../components/BadgeChip';
 import ActionButton from '../../components/ActionButton';
-import { getRuns } from '../../lib/runStore';
+import { getRuns } from '../../Lib/runStore';
 import RunList from '../../components/RunList';
-import { pushUnsyncedRuns } from '../../lib/sync';
-import * as Storage from '../../lib/storage';
+import { pushUnsyncedRuns } from '../../Lib/sync';
+import * as Storage from '../../Lib/storage';
 let ImagePicker: any = null; try { ImagePicker = require('expo-image-picker'); } catch {}
 
 const PROFILE_KEY = 'runmaster_profile_v1';

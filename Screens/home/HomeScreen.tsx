@@ -9,8 +9,8 @@ import FlowHint from '../../components/FlowHint';
 import FadeInUp from '../../components/FadeInUp';
 import { useGate } from '../../hooks/useGate';
 import { useTheme } from '../../hooks/useTheme';
-import { suggestPlan, AISuggestions } from '../../lib/ai';
-import { addRoute, getRoutes, SavedRoute } from '../../lib/routesStore';
+import { suggestPlan, AISuggestions } from '../../Lib/ai';
+import { addRoute, getRoutes, SavedRoute } from '../../Lib/routeStore';
 
 export default function HomeScreen() {
   const nav = useNavigation();

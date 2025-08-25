@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, View, Text, Pressable, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
-import { getTheme } from '../lib/theme';
+import { getTheme } from '../Lib/theme';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Share, Image } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
-import { getRuns, Run } from '../lib/runStore';
+import { getRuns, Run } from '../Lib/runStore';
 import SectionTitle from '../components/SectionTitle';
 import MapTrace from '../components/MapTrace';
 

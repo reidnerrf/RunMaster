@@ -6,8 +6,8 @@ import { useGate } from '../../hooks/useGate';
 import BadgeChip from '../../components/BadgeChip';
 import ActionButton from '../../components/ActionButton';
 import { useTheme } from '../../hooks/useTheme';
-import * as Storage from '../../lib/storage';
-import { api, ApiChallenge } from '../../lib/api';
+import * as Storage from '../../Lib/storage';
+import { api, ApiChallenge } from '../../Lib/api';
 
 const FEED_KEY = 'runmaster_feed_v1';
 
