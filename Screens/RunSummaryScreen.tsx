@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Pressable, Share } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { getRuns, Run } from '../lib/runStore';
+import { getRuns, Run } from '../Lib/runStore';
 import { useTheme } from '../hooks/useTheme';
 import MapTrace from '../components/MapTrace';
 import PaceHrChart from '../components/Charts';
 import ActionButton from '../components/ActionButton';
-import { addRoute } from '../lib/routesStore';
+import { addRoute } from '../Lib/routeStore';
 import GeneratedImage from '../components/GeneratedImage';
-import { getRecoveryAdvice } from '../lib/analysis';
+import { getRecoveryAdvice } from '../Lib/analysis';
 
 export default function RunSummaryScreen() {
   const route = useRoute<any>();

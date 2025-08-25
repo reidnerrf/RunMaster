@@ -10,7 +10,7 @@ import { useGate } from '../hooks/useGate';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../hooks/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { addRun } from '../lib/runStore';
+import { addRun } from '../Lib/runStore';
 import AchievementToast from '../components/AchievementToast';
 import { useRunTracker, formatHHMMSS } from '../hooks/useRunTracker';
 import MapLive from '../components/MapLive';

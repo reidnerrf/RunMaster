@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
-import { getRoutes, SavedRoute } from '../../lib/routesStore';
+import { getRoutes, SavedRoute } from '../../Lib/routeStore';
 import MapTrace from '../../components/MapTrace';
 import MapLive from '../../components/MapLive';
 import ActionButton from '../../components/ActionButton';
-import { api } from '../../lib/api';
+import { api } from '../../Lib/api';
 
 let SvgLib: any = null;
 try { SvgLib = require('react-native-svg'); } catch {}

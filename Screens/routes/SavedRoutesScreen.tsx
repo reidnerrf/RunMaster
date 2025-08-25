@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { getRoutes, SavedRoute, deleteRouteLocal, updateRouteLocal } from '../../lib/routesStore';
-import { syncRoutes } from '../../lib/sync';
+import { getRoutes, SavedRoute, deleteRouteLocal, updateRouteLocal } from '../../Lib/routeStore';
+import { syncRoutes } from '../../Lib/sync';
 import { useNavigation } from '@react-navigation/native';
 import SectionTitle from '../../components/SectionTitle';
 import { useAuth } from '../../hooks/useAuth';
-import { api } from '../../lib/api';
+import { api } from '../../Lib/api';
 
 export default function SavedRoutesScreen() {
   const { theme } = useTheme();

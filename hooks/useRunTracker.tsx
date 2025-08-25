@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
-import { registerBackgroundTask, startBackground, stopBackground, popBufferedPoints } from '../lib/background';
-import { ensureRunTrackingChannel } from '../lib/notifications';
+import { registerBackgroundTask, startBackground, stopBackground, popBufferedPoints } from '../Lib/background';
+import { ensureRunTrackingChannel } from '../Lib/notification';
 
 export type LatLng = { latitude: number; longitude: number };
 export type TrackPoint = LatLng & { timestamp: number };

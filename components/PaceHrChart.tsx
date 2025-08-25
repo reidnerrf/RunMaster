@@ -1,31 +1,24 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
-import type { RunSplit, HrSample } from '../lib/runStore';
+import type { Split } from '../Lib/runStore';
 
 let SvgLib: any = null;
 try { SvgLib = require('react-native-svg'); } catch {}
 
-export default function PaceHrChart({ splits, hrSeries, height = 180 }: { splits: RunSplit[]; hrSeries?: HrSample[]; height?: number }) {
+export default function PaceHrChart({ splits, height = 180 }: { splits: Split[]; height?: number }) {
   const { theme } = useTheme();
 
   const data = useMemo(() => {
-    const paces = splits.map((s) => s.sec);
+    const paces = splits.map((s) => s.paceSec);
     const maxP = Math.max(1, ...paces);
     const minP = Math.min(...paces);
     const pad = 8;
     const w = Math.max(1, splits.length - 1);
     const pacePoints = splits.map((s, i) => ({ x: i / w, y: (s.sec - minP) / (maxP - minP || 1) }));
 
-    let hrPoints: { x: number; y: number }[] = [];
-    if (hrSeries && hrSeries.length > 0) {
-      const maxHr = Math.max(...hrSeries.map((h) => h.hr));
-      const minHr = Math.min(...hrSeries.map((h) => h.hr));
-      const maxT = Math.max(...hrSeries.map((h) => h.tSec));
-      hrPoints = hrSeries.map((h) => ({ x: (h.tSec / (maxT || 1)), y: (h.hr - minHr) / (maxHr - minHr || 1) }));
-    }
-    return { pacePoints, hrPoints };
-  }, [splits, hrSeries]);
+    return { pacePoints };
+  }, [splits]);
 
   if (!SvgLib || splits.length === 0) {
     return (
@@ -39,7 +32,7 @@ export default function PaceHrChart({ splits, hrSeries, height = 180 }: { splits
 
   const toStr = (pts: { x: number; y: number }[]) => pts.map((p) => `${p.x},${1 - p.y}`).join(' ');
   const paceStr = toStr(data.pacePoints);
-  const hrStr = toStr(data.hrPoints);
+  
 
   return (
     <View style={[styles.container, { height }]}> 
@@ -59,8 +52,7 @@ export default function PaceHrChart({ splits, hrSeries, height = 180 }: { splits
         {[0.25,0.5,0.75].map((g) => <Line key={g} x1={0} y1={g} x2={1} y2={g} stroke={theme.colors.border} strokeWidth={0.002} />)}
         {/* pace polyline */}
         {data.pacePoints.length > 1 && <Polyline points={paceStr} stroke="url(#pace)" strokeWidth={0.01} fill="none" strokeLinejoin="round" strokeLinecap="round" />}
-        {/* hr polyline */}
-        {data.hrPoints.length > 1 && <Polyline points={hrStr} stroke="url(#hr)" strokeWidth={0.008} fill="none" strokeLinejoin="round" strokeLinecap="round" />}
+        {/* hr polyline (disabled until health integration provides series) */}
       </Svg>
     </View>
   );
