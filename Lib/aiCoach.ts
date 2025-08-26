@@ -2,356 +2,796 @@ import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
 export interface PhysiologicalData {
-  hrv: number; // Heart Rate Variability (ms)
+  hrv: number;
   sleepHours: number;
-  sleepQuality: number; // 0-100
+  sleepQuality: number;
   fatigue: number; // 0-100
   stress: number; // 0-100
   mood: number; // 0-100
-  menstrualPhase?: 'follicular' | 'ovulatory' | 'luteal' | 'menstrual';
   lastWorkoutIntensity: number; // 0-100
   lastWorkoutDistance: number;
   lastWorkoutDate: number;
+  // Novos campos para análise preditiva
+  weeklyDistance: number;
+  weeklyIntensity: number;
+  weeklyFrequency: number;
+  recentPaces: number[]; // min/km
+  recentHeartRates: number[];
+  weight: number;
+  height: number;
+  age: number;
+  gender: 'male' | 'female' | 'other';
+  menstrualPhase?: 'follicular' | 'ovulation' | 'luteal' | 'menstruation';
+  hydrationLevel: number; // 0-100
+  nutritionQuality: number; // 0-100
 }
 
 export interface TrainingRecommendation {
-  type: 'easy' | 'moderate' | 'hard' | 'recovery' | 'skip';
+  type: 'easy_run' | 'tempo_run' | 'long_run' | 'interval' | 'recovery' | 'strength' | 'rest';
   distance: number;
+  duration: number; // minutes
   intensity: number; // 0-100
+  pace: string; // "5:00-5:30 min/km"
+  heartRateZones: string[];
   reason: string;
   tips: string[];
-  adaptation: string;
+  nutritionAdvice: string[];
+  hydrationAdvice: string[];
+  warmup: string[];
+  cooldown: string[];
+  expectedCalories: number;
+  expectedDifficulty: 'easy' | 'moderate' | 'hard';
+}
+
+export interface NutritionRecommendation {
+  preRun: {
+    timing: string; // "2-3 horas antes"
+    foods: string[];
+    hydration: string;
+    avoid: string[];
+  };
+  duringRun: {
+    ifNeeded: string[];
+    hydration: string;
+    timing: string;
+  };
+  postRun: {
+    timing: string; // "30 minutos após"
+    foods: string[];
+    hydration: string;
+    protein: string;
+    carbs: string;
+  };
+  daily: {
+    calories: number;
+    protein: number; // grams
+    carbs: number; // grams
+    fats: number; // grams
+    hydration: number; // liters
+    supplements: string[];
+  };
+}
+
+export interface PerformancePrediction {
+  nextWeek: {
+    predictedDistance: number;
+    predictedPace: number;
+    confidence: number; // 0-100
+  };
+  nextMonth: {
+    predictedDistance: number;
+    predictedPace: number;
+    predictedVO2Max: number;
+    confidence: number;
+  };
+  racePredictions: {
+    distance: number;
+    predictedTime: string;
+    confidence: number;
+    strategy: string[];
+  }[];
+}
+
+export interface VoiceCommand {
+  id: string;
+  trigger: string; // "mais rápido", "mais lento", "parar"
+  action: string;
+  response: string;
   hapticFeedback: boolean;
 }
 
 export interface RunnerProfile {
-  type: 'speedster' | 'endurance' | 'trail' | 'social' | 'beginner';
+  type: 'speedster' | 'endurance' | 'trail' | 'social' | 'beginner' | 'intermediate' | 'advanced';
   experience: number; // months
   weeklyGoal: number; // km
   preferredTime: 'morning' | 'afternoon' | 'evening' | 'night';
-  terrain: 'road' | 'trail' | 'mixed';
+  terrain: 'road' | 'trail' | 'mixed' | 'track';
   social: boolean;
+  goals: string[];
+  limitations: string[];
+  preferences: {
+    music: boolean;
+    voiceCoaching: boolean;
+    hapticFeedback: boolean;
+    detailedStats: boolean;
+  };
 }
 
 export class AICoach {
-  private userProfile: RunnerProfile;
-  private trainingHistory: any[] = [];
+  private runnerProfile: RunnerProfile;
   private physiologicalHistory: PhysiologicalData[] = [];
+  private trainingHistory: any[] = [];
+  private voiceCommands: VoiceCommand[] = [];
   private learningModel: any = {};
 
   constructor(profile: RunnerProfile) {
-    this.userProfile = profile;
+    this.runnerProfile = profile;
+    this.initializeVoiceCommands();
     this.initializeLearningModel();
   }
 
+  private initializeVoiceCommands() {
+    this.voiceCommands = [
+      {
+        id: 'speed_up',
+        trigger: 'mais rápido',
+        action: 'increase_pace',
+        response: 'Aumentando o ritmo! Vamos acelerar!',
+        hapticFeedback: true
+      },
+      {
+        id: 'slow_down',
+        trigger: 'mais lento',
+        action: 'decrease_pace',
+        response: 'Reduzindo o ritmo. Mantenha-se confortável.',
+        hapticFeedback: true
+      },
+      {
+        id: 'stop',
+        trigger: 'parar',
+        action: 'stop_run',
+        response: 'Parando a corrida. Desacelere gradualmente.',
+        hapticFeedback: true
+      },
+      {
+        id: 'status',
+        trigger: 'status',
+        action: 'get_status',
+        response: 'Você está a {distance}km com ritmo de {pace} min/km.',
+        hapticFeedback: false
+      },
+      {
+        id: 'motivation',
+        trigger: 'motivação',
+        action: 'motivate',
+        response: 'Você está incrível! Continue assim!',
+        hapticFeedback: true
+      },
+      {
+        id: 'hydration',
+        trigger: 'hidratação',
+        action: 'check_hydration',
+        response: 'Lembre-se de se hidratar!',
+        hapticFeedback: false
+      }
+    ];
+  }
+
   private initializeLearningModel() {
-    // Modelo de aprendizado simples baseado em padrões
     this.learningModel = {
-      optimalHRV: 50,
-      optimalSleep: 7.5,
-      fatigueThreshold: 70,
-      stressThreshold: 60,
-      recoveryPatterns: [],
-      performanceTrends: [],
-      adaptationRate: 0.1
+      pacePreferences: {},
+      intensityPatterns: {},
+      recoveryNeeds: {},
+      nutritionPreferences: {},
+      voiceCommandUsage: {}
     };
   }
 
-  public async getTrainingRecommendation(
-    currentData: PhysiologicalData,
-    weather?: { temperature: number; humidity: number; precipitation: number }
-  ): Promise<TrainingRecommendation> {
-    // Analisa dados fisiológicos
-    const healthScore = this.calculateHealthScore(currentData);
-    const recoveryNeeded = this.assessRecoveryNeeded(currentData);
-    const weatherAdjustment = this.calculateWeatherAdjustment(weather);
+  // Obter recomendação de treino personalizada
+  public async getTrainingRecommendation(physiologicalData: PhysiologicalData): Promise<TrainingRecommendation> {
+    this.physiologicalHistory.push(physiologicalData);
     
-    // Aplica aprendizado do modelo
-    this.updateLearningModel(currentData);
+    // Analisar dados fisiológicos
+    const healthScore = this.calculateHealthScore(physiologicalData);
+    const trainingLoad = this.calculateTrainingLoad();
+    const recoveryStatus = this.assessRecoveryStatus(physiologicalData);
     
-    // Gera recomendação personalizada
-    const recommendation = this.generateRecommendation(
-      healthScore,
-      recoveryNeeded,
-      weatherAdjustment,
-      currentData
-    );
-
-    // Feedback háptico se necessário
-    if (recommendation.hapticFeedback) {
-      await this.provideHapticFeedback(recommendation.type);
+    // Determinar tipo de treino baseado no status
+    let recommendation: TrainingRecommendation;
+    
+    if (recoveryStatus === 'needs_rest') {
+      recommendation = this.generateRestDayRecommendation(physiologicalData);
+    } else if (recoveryStatus === 'ready_for_intensity') {
+      recommendation = this.generateIntensityWorkoutRecommendation(physiologicalData);
+    } else {
+      recommendation = this.generateEasyRunRecommendation(physiologicalData);
     }
-
+    
+    // Personalizar baseado no perfil do corredor
+    recommendation = this.personalizeRecommendation(recommendation, physiologicalData);
+    
+    // Atualizar modelo de aprendizado
+    this.updateLearningModel(recommendation, physiologicalData);
+    
     return recommendation;
   }
 
+  // Obter recomendação nutricional
+  public getNutritionRecommendation(physiologicalData: PhysiologicalData, workoutType: string): NutritionRecommendation {
+    const dailyCalories = this.calculateDailyCalories(physiologicalData);
+    const workoutCalories = this.calculateWorkoutCalories(workoutType);
+    
+    return {
+      preRun: {
+        timing: workoutType === 'long_run' ? '3-4 horas antes' : '2-3 horas antes',
+        foods: this.getPreRunFoods(workoutType, physiologicalData),
+        hydration: this.getPreRunHydration(workoutType),
+        avoid: ['Alimentos gordurosos', 'Fibras excessivas', 'Cafeína em excesso']
+      },
+      duringRun: {
+        ifNeeded: workoutType === 'long_run' ? ['Géis energéticos', 'Banana', 'Barras energéticas'] : [],
+        hydration: this.getDuringRunHydration(workoutType),
+        timing: workoutType === 'long_run' ? 'A cada 20-30 minutos' : 'Conforme necessário'
+      },
+      postRun: {
+        timing: '30 minutos após',
+        foods: this.getPostRunFoods(workoutType, physiologicalData),
+        hydration: this.getPostRunHydration(workoutType),
+        protein: this.getPostRunProtein(workoutType),
+        carbs: this.getPostRunCarbs(workoutType)
+      },
+      daily: {
+        calories: dailyCalories + workoutCalories,
+        protein: this.calculateProteinNeeds(physiologicalData),
+        carbs: this.calculateCarbNeeds(physiologicalData, workoutType),
+        fats: this.calculateFatNeeds(physiologicalData),
+        hydration: this.calculateHydrationNeeds(physiologicalData),
+        supplements: this.getRecommendedSupplements(physiologicalData)
+      }
+    };
+  }
+
+  // Análise preditiva de performance
+  public getPerformancePrediction(physiologicalData: PhysiologicalData): PerformancePrediction {
+    const currentFitness = this.calculateCurrentFitness(physiologicalData);
+    const trainingTrend = this.analyzeTrainingTrend();
+    const recoveryPattern = this.analyzeRecoveryPattern();
+    
+    return {
+      nextWeek: {
+        predictedDistance: this.predictNextWeekDistance(currentFitness, trainingTrend),
+        predictedPace: this.predictNextWeekPace(currentFitness, trainingTrend),
+        confidence: this.calculatePredictionConfidence('weekly')
+      },
+      nextMonth: {
+        predictedDistance: this.predictNextMonthDistance(currentFitness, trainingTrend),
+        predictedPace: this.predictNextMonthPace(currentFitness, trainingTrend),
+        predictedVO2Max: this.predictVO2Max(currentFitness, trainingTrend),
+        confidence: this.calculatePredictionConfidence('monthly')
+      },
+      racePredictions: this.generateRacePredictions(currentFitness, trainingTrend)
+    };
+  }
+
+  // Processar comando de voz
+  public processVoiceCommand(command: string, currentRunData: any): string {
+    const voiceCommand = this.voiceCommands.find(vc => 
+      command.toLowerCase().includes(vc.trigger.toLowerCase())
+    );
+    
+    if (!voiceCommand) {
+      return 'Comando não reconhecido. Tente: "mais rápido", "mais lento", "status"';
+    }
+    
+    // Executar ação
+    const response = this.executeVoiceAction(voiceCommand, currentRunData);
+    
+    // Atualizar modelo de aprendizado
+    this.updateVoiceCommandUsage(voiceCommand.id);
+    
+    return response;
+  }
+
+  // Calcular score de saúde
   private calculateHealthScore(data: PhysiologicalData): number {
     let score = 100;
     
-    // HRV (maior é melhor)
-    if (data.hrv < 30) score -= 30;
-    else if (data.hrv < 50) score -= 15;
-    else if (data.hrv > 80) score += 10;
+    // HRV (0-100)
+    if (data.hrv < 40) score -= 30;
+    else if (data.hrv < 55) score -= 15;
     
     // Sono
     if (data.sleepHours < 6) score -= 25;
     else if (data.sleepHours < 7) score -= 10;
-    else if (data.sleepHours > 9) score -= 5;
     
-    score += (data.sleepQuality - 50) * 0.3;
+    if (data.sleepQuality < 60) score -= 20;
+    else if (data.sleepQuality < 75) score -= 10;
     
     // Fadiga e estresse
-    score -= data.fatigue * 0.4;
-    score -= data.stress * 0.3;
+    if (data.fatigue > 70) score -= 20;
+    if (data.stress > 70) score -= 15;
     
     // Humor
-    score += (data.mood - 50) * 0.2;
+    if (data.mood < 50) score -= 10;
     
-    return Math.max(0, Math.min(100, score));
+    return Math.max(0, score);
   }
 
-  private assessRecoveryNeeded(data: PhysiologicalData): number {
-    let recoveryScore = 0;
+  // Calcular carga de treino
+  private calculateTrainingLoad(): number {
+    if (this.trainingHistory.length === 0) return 0;
     
-    // Fadiga alta = mais recuperação
-    if (data.fatigue > 70) recoveryScore += 40;
-    else if (data.fatigue > 50) recoveryScore += 20;
-    
-    // Estresse alto = mais recuperação
-    if (data.stress > 70) recoveryScore += 30;
-    else if (data.stress > 50) recoveryScore += 15;
-    
-    // Sono ruim = mais recuperação
-    if (data.sleepHours < 6) recoveryScore += 25;
-    if (data.sleepQuality < 50) recoveryScore += 20;
-    
-    // Treino recente intenso = mais recuperação
-    const hoursSinceLastWorkout = (Date.now() - data.lastWorkoutDate) / (1000 * 60 * 60);
-    if (hoursSinceLastWorkout < 24 && data.lastWorkoutIntensity > 70) {
-      recoveryScore += 30;
-    }
-    
-    return Math.min(100, recoveryScore);
+    const recentRuns = this.trainingHistory.slice(-7); // Últimos 7 dias
+    return recentRuns.reduce((load, run) => {
+      return load + (run.distance * run.intensity / 100);
+    }, 0);
   }
 
-  private calculateWeatherAdjustment(weather?: { temperature: number; humidity: number; precipitation: number }): number {
-    if (!weather) return 0;
+  // Avaliar status de recuperação
+  private assessRecoveryStatus(data: PhysiologicalData): 'needs_rest' | 'ready_for_intensity' | 'ready_for_easy' {
+    const healthScore = this.calculateHealthScore(data);
+    const trainingLoad = this.calculateTrainingLoad();
     
-    let adjustment = 0;
-    
-    // Temperatura
-    if (weather.temperature > 30 || weather.temperature < 5) adjustment -= 20;
-    else if (weather.temperature > 25 || weather.temperature < 10) adjustment -= 10;
-    
-    // Umidade
-    if (weather.humidity > 80) adjustment -= 15;
-    
-    // Chuva
-    if (weather.precipitation > 0) adjustment -= 10;
-    
-    return adjustment;
+    if (healthScore < 50 || trainingLoad > 80) return 'needs_rest';
+    if (healthScore > 80 && trainingLoad < 40) return 'ready_for_intensity';
+    return 'ready_for_easy';
   }
 
-  private generateRecommendation(
-    healthScore: number,
-    recoveryNeeded: number,
-    weatherAdjustment: number,
-    data: PhysiologicalData
-  ): TrainingRecommendation {
-    const totalScore = healthScore - recoveryNeeded + weatherAdjustment;
-    
-    // Adaptação ao ciclo menstrual se aplicável
-    const menstrualAdjustment = this.getMenstrualAdjustment(data.menstrualPhase);
-    
-    if (totalScore < 30 || recoveryNeeded > 70) {
-      return {
-        type: 'skip',
-        distance: 0,
-        intensity: 0,
-        reason: 'Seu corpo precisa de descanso hoje. Foque na recuperação.',
-        tips: [
-          'Faça alongamentos leves',
-          'Hidrate-se bem',
-          'Durma mais cedo',
-          'Evite cafeína'
-        ],
-        adaptation: 'Recuperação forçada baseada em dados fisiológicos',
-        hapticFeedback: true
-      };
-    }
-    
-    if (totalScore < 50 || recoveryNeeded > 50) {
-      return {
-        type: 'recovery',
-        distance: Math.max(2, this.userProfile.weeklyGoal * 0.3),
-        intensity: 20 + menstrualAdjustment,
-        reason: 'Treino de recuperação para manter consistência sem sobrecarregar.',
-        tips: [
-          'Mantenha ritmo conversável',
-          'Foque na técnica',
-          'Hidrate-se durante',
-          'Alongue bem após'
-        ],
-        adaptation: 'Intensidade reduzida para recuperação',
-        hapticFeedback: false
-      };
-    }
-    
-    if (totalScore < 70) {
-      return {
-        type: 'easy',
-        distance: this.userProfile.weeklyGoal * 0.5,
-        intensity: 40 + menstrualAdjustment,
-        reason: 'Treino leve para manter forma sem estresse.',
-        tips: [
-          'Ritmo confortável',
-          'Respiração controlada',
-          'Aproveite o ambiente',
-          'Foque na consistência'
-        ],
-        adaptation: 'Volume moderado para manutenção',
-        hapticFeedback: false
-      };
-    }
-    
-    // Treino moderado ou intenso baseado no perfil
-    const isIntenseDay = this.shouldDoIntenseWorkout(data);
-    
-    if (isIntenseDay && totalScore > 80) {
-      return {
-        type: 'hard',
-        distance: this.userProfile.weeklyGoal * 0.8,
-        intensity: 80 + menstrualAdjustment,
-        reason: 'Dia ideal para treino intenso! Aproveite sua energia.',
-        tips: [
-          'Warm-up completo',
-          'Mantenha forma técnica',
-          'Hidratação extra',
-          'Recuperação ativa após'
-        ],
-        adaptation: 'Intensidade alta para desenvolvimento',
-        hapticFeedback: true
-      };
-    }
-    
+  // Gerar recomendação de descanso
+  private generateRestDayRecommendation(data: PhysiologicalData): TrainingRecommendation {
     return {
-      type: 'moderate',
-      distance: this.userProfile.weeklyGoal * 0.6,
-      intensity: 60 + menstrualAdjustment,
-      reason: 'Treino equilibrado para desenvolvimento consistente.',
+      type: 'rest',
+      distance: 0,
+      duration: 0,
+      intensity: 0,
+      pace: 'N/A',
+      heartRateZones: ['Zona 1'],
+      reason: 'Seu corpo precisa de recuperação. Priorize descanso e sono.',
       tips: [
-        'Ritmo desafiador mas sustentável',
-        'Foque na respiração',
-        'Mantenha postura',
-        'Alongue após'
+        'Faça alongamentos leves',
+        'Hidrate-se bem',
+        'Priorize o sono',
+        'Considere meditação ou yoga'
       ],
-      adaptation: 'Volume e intensidade balanceados',
-      hapticFeedback: false
+      nutritionAdvice: [
+        'Foque em alimentos anti-inflamatórios',
+        'Consuma proteínas de qualidade',
+        'Hidrate-se adequadamente'
+      ],
+      hydrationAdvice: ['2-3 litros de água por dia'],
+      warmup: [],
+      cooldown: ['Alongamentos leves', 'Respiração profunda'],
+      expectedCalories: 0,
+      expectedDifficulty: 'easy'
     };
   }
 
-  private getMenstrualAdjustment(phase?: string): number {
-    if (!phase) return 0;
+  // Gerar recomendação de treino intenso
+  private generateIntensityWorkoutRecommendation(data: PhysiologicalData): TrainingRecommendation {
+    const baseDistance = this.runnerProfile.weeklyGoal / 7;
+    const intensity = Math.min(85, 70 + (data.hrv - 40) / 2);
     
-    switch (phase) {
-      case 'menstrual':
-        return -15; // Reduz intensidade
-      case 'follicular':
-        return 10; // Aumenta intensidade
-      case 'ovulatory':
-        return 5; // Pequeno aumento
-      case 'luteal':
-        return -5; // Pequena redução
-      default:
-        return 0;
+    return {
+      type: 'tempo_run',
+      distance: baseDistance * 1.2,
+      duration: Math.round(baseDistance * 1.2 * 5), // Assumindo 5 min/km
+      intensity,
+      pace: this.calculateTargetPace(intensity),
+      heartRateZones: ['Zona 3', 'Zona 4'],
+      reason: 'Você está bem recuperado. Hora de desafiar seus limites!',
+      tips: [
+        'Mantenha ritmo constante',
+        'Foque na respiração',
+        'Mantenha boa postura'
+      ],
+      nutritionAdvice: [
+        'Carboidratos 2-3 horas antes',
+        'Hidratação adequada',
+        'Proteína após o treino'
+      ],
+      hydrationAdvice: ['500ml 2 horas antes', '200ml a cada 20 min'],
+      warmup: ['10 min corrida leve', 'Alongamentos dinâmicos', 'Drills de corrida'],
+      cooldown: ['5 min corrida leve', 'Alongamentos estáticos'],
+      expectedCalories: Math.round(baseDistance * 1.2 * 100),
+      expectedDifficulty: 'hard'
+    };
+  }
+
+  // Gerar recomendação de corrida fácil
+  private generateEasyRunRecommendation(data: PhysiologicalData): TrainingRecommendation {
+    const baseDistance = this.runnerProfile.weeklyGoal / 7;
+    const intensity = Math.max(50, 60 - (data.fatigue / 10));
+    
+    return {
+      type: 'easy_run',
+      distance: baseDistance * 0.8,
+      duration: Math.round(baseDistance * 0.8 * 6), // Assumindo 6 min/km
+      intensity,
+      pace: this.calculateTargetPace(intensity),
+      heartRateZones: ['Zona 2'],
+      reason: 'Treino de recuperação ativa. Mantenha-se confortável.',
+      tips: [
+        'Ritmo conversável',
+        'Foque na técnica',
+        'Aproveite o momento'
+      ],
+      nutritionAdvice: [
+        'Hidratação leve antes',
+        'Refeição leve 1-2 horas antes'
+      ],
+      hydrationAdvice: ['300ml 1 hora antes'],
+      warmup: ['5 min caminhada', 'Alongamentos leves'],
+      cooldown: ['5 min caminhada', 'Alongamentos estáticos'],
+      expectedCalories: Math.round(baseDistance * 0.8 * 80),
+      expectedDifficulty: 'easy'
+    };
+  }
+
+  // Personalizar recomendação
+  private personalizeRecommendation(recommendation: TrainingRecommendation, data: PhysiologicalData): TrainingRecommendation {
+    // Adaptar baseado no perfil do corredor
+    if (this.runnerProfile.type === 'speedster') {
+      recommendation.intensity = Math.min(100, recommendation.intensity + 10);
+      recommendation.tips.push('Foque na velocidade e explosão');
+    } else if (this.runnerProfile.type === 'endurance') {
+      recommendation.distance = Math.round(recommendation.distance * 1.2);
+      recommendation.tips.push('Construa resistência gradualmente');
+    }
+    
+    // Adaptar baseado no ciclo menstrual (se aplicável)
+    if (data.menstrualPhase === 'luteal') {
+      recommendation.intensity = Math.max(50, recommendation.intensity - 15);
+      recommendation.tips.push('Fase luteal - reduza intensidade');
+    }
+    
+    // Adaptar baseado no clima e terreno
+    if (this.runnerProfile.terrain === 'trail') {
+      recommendation.tips.push('Atenção ao terreno irregular');
+      recommendation.expectedDifficulty = 'hard';
+    }
+    
+    return recommendation;
+  }
+
+  // Calcular pace alvo
+  private calculateTargetPace(intensity: number): string {
+    const basePace = 5.0; // 5 min/km base
+    const paceAdjustment = (100 - intensity) / 20; // 0.5 min/km por 10% de intensidade
+    
+    const minPace = basePace + paceAdjustment;
+    const maxPace = minPace + 0.5;
+    
+    return `${minPace.toFixed(1)}-${maxPace.toFixed(1)} min/km`;
+  }
+
+  // Métodos auxiliares para nutrição
+  private getPreRunFoods(workoutType: string, data: PhysiologicalData): string[] {
+    if (workoutType === 'long_run') {
+      return ['Aveia com banana', 'Pão integral com mel', 'Iogurte grego'];
+    } else if (workoutType === 'tempo_run') {
+      return ['Banana', 'Barrinha de cereais', 'Chá verde'];
+    } else {
+      return ['Frutas leves', 'Água'];
     }
   }
 
-  private shouldDoIntenseWorkout(data: PhysiologicalData): boolean {
-    // Verifica se é um bom dia para treino intenso
-    return data.hrv > 60 && 
-           data.fatigue < 40 && 
-           data.stress < 50 && 
-           data.sleepQuality > 70 &&
-           data.mood > 60;
+  private getPreRunHydration(workoutType: string): string {
+    if (workoutType === 'long_run') return '500-750ml 2-3 horas antes';
+    if (workoutType === 'tempo_run') return '300-500ml 1-2 horas antes';
+    return '200-300ml 1 hora antes';
   }
 
-  private updateLearningModel(data: PhysiologicalData) {
-    // Atualiza o modelo com novos dados
-    this.physiologicalHistory.push(data);
-    
-    // Mantém apenas últimos 30 dias
-    if (this.physiologicalHistory.length > 30) {
-      this.physiologicalHistory.shift();
-    }
-    
-    // Ajusta parâmetros do modelo
-    const avgHRV = this.physiologicalHistory.reduce((sum, d) => sum + d.hrv, 0) / this.physiologicalHistory.length;
-    this.learningModel.optimalHRV = this.learningModel.optimalHRV * 0.9 + avgHRV * 0.1;
-    
-    // Identifica padrões de recuperação
-    this.identifyRecoveryPatterns();
+  private getDuringRunHydration(workoutType: string): string {
+    if (workoutType === 'long_run') return '200-300ml a cada 20-30 min';
+    if (workoutType === 'tempo_run') return '100-200ml a cada 15-20 min';
+    return 'Conforme necessário';
   }
 
-  private identifyRecoveryPatterns() {
-    // Análise simples de padrões de recuperação
-    const patterns = this.physiologicalHistory
-      .filter(d => d.fatigue > 70)
-      .map(d => ({
-        hrv: d.hrv,
-        sleep: d.sleepHours,
-        recovery: d.fatigue
-      }));
-    
-    if (patterns.length > 5) {
-      this.learningModel.recoveryPatterns = patterns;
+  private getPostRunFoods(workoutType: string, data: PhysiologicalData): string[] {
+    if (workoutType === 'long_run') {
+      return ['Proteína whey', 'Banana', 'Pão integral', 'Leite chocolate'];
+    } else if (workoutType === 'tempo_run') {
+      return ['Proteína', 'Carboidratos simples', 'Frutas'];
+    } else {
+      return ['Hidratação', 'Snack leve'];
     }
   }
 
-  private async provideHapticFeedback(type: string) {
-    try {
-      switch (type) {
-        case 'skip':
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          break;
-        case 'hard':
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          break;
-        default:
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-    } catch (error) {
-      console.log('Haptic feedback not available');
+  private getPostRunHydration(workoutType: string): string {
+    if (workoutType === 'long_run') return '500-750ml imediatamente';
+    if (workoutType === 'tempo_run') return '300-500ml imediatamente';
+    return '200-300ml';
+  }
+
+  private getPostRunProtein(workoutType: string): string {
+    if (workoutType === 'long_run') return '20-30g';
+    if (workoutType === 'tempo_run') return '15-25g';
+    return '10-15g';
+  }
+
+  private getPostRunCarbs(workoutType: string): string {
+    if (workoutType === 'long_run') return '60-90g';
+    if (workoutType === 'tempo_run') return '40-60g';
+    return '20-30g';
+  }
+
+  // Cálculos nutricionais
+  private calculateDailyCalories(data: PhysiologicalData): number {
+    const bmr = this.calculateBMR(data);
+    const activityMultiplier = this.getActivityMultiplier();
+    return Math.round(bmr * activityMultiplier);
+  }
+
+  private calculateBMR(data: PhysiologicalData): number {
+    if (data.gender === 'male') {
+      return 88.362 + (13.397 * data.weight) + (4.799 * data.height) - (5.677 * data.age);
+    } else {
+      return 447.593 + (9.247 * data.weight) + (3.098 * data.height) - (4.330 * data.age);
     }
   }
 
-  public getRunnerProfile(): RunnerProfile {
-    return this.userProfile;
+  private getActivityMultiplier(): number {
+    switch (this.runnerProfile.type) {
+      case 'speedster': return 1.725;
+      case 'endurance': return 1.725;
+      case 'trail': return 1.725;
+      default: return 1.55;
+    }
   }
 
-  public updateProfile(newProfile: Partial<RunnerProfile>) {
-    this.userProfile = { ...this.userProfile, ...newProfile };
+  private calculateWorkoutCalories(workoutType: string): number {
+    const baseCalories = 100; // por km
+    switch (workoutType) {
+      case 'long_run': return baseCalories * 1.2;
+      case 'tempo_run': return baseCalories * 1.1;
+      case 'interval': return baseCalories * 1.3;
+      default: return baseCalories;
+    }
   }
 
-  public getHealthInsights(): string[] {
-    const insights: string[] = [];
+  private calculateProteinNeeds(data: PhysiologicalData): number {
+    return Math.round(data.weight * 1.6); // 1.6g por kg
+  }
+
+  private calculateCarbNeeds(data: PhysiologicalData, workoutType: string): number {
+    const baseCarbs = data.weight * 5; // 5g por kg
+    if (workoutType === 'long_run') return Math.round(baseCarbs * 1.3);
+    if (workoutType === 'tempo_run') return Math.round(baseCarbs * 1.2);
+    return Math.round(baseCarbs);
+  }
+
+  private calculateFatNeeds(data: PhysiologicalData): number {
+    return Math.round(data.weight * 1.0); // 1g por kg
+  }
+
+  private calculateHydrationNeeds(data: PhysiologicalData): number {
+    return Math.round(data.weight * 0.035); // 35ml por kg
+  }
+
+  private getRecommendedSupplements(data: PhysiologicalData): string[] {
+    const supplements = ['Multivitamínico'];
+    
+    if (data.hrv < 50) supplements.push('Magnésio');
+    if (data.sleepQuality < 70) supplements.push('Melatonina');
+    if (data.stress > 60) supplements.push('Ashwagandha');
+    
+    return supplements;
+  }
+
+  // Métodos de predição
+  private calculateCurrentFitness(data: PhysiologicalData): number {
+    const healthScore = this.calculateHealthScore(data);
+    const trainingConsistency = this.calculateTrainingConsistency();
+    return (healthScore + trainingConsistency) / 2;
+  }
+
+  private calculateTrainingConsistency(): number {
+    if (this.trainingHistory.length === 0) return 50;
+    
+    const recentRuns = this.trainingHistory.slice(-30); // Últimos 30 dias
+    const expectedRuns = this.runnerProfile.weeklyGoal > 0 ? 4 : 3; // 4 corridas por semana
+    const actualRuns = recentRuns.length;
+    
+    return Math.min(100, (actualRuns / (expectedRuns * 4)) * 100);
+  }
+
+  private analyzeTrainingTrend(): 'improving' | 'stable' | 'declining' {
+    if (this.trainingHistory.length < 14) return 'stable';
+    
+    const recent = this.trainingHistory.slice(-7);
+    const previous = this.trainingHistory.slice(-14, -7);
+    
+    const recentAvg = recent.reduce((sum, run) => sum + run.distance, 0) / recent.length;
+    const previousAvg = previous.reduce((sum, run) => sum + run.distance, 0) / previous.length;
+    
+    if (recentAvg > previousAvg * 1.1) return 'improving';
+    if (recentAvg < previousAvg * 0.9) return 'declining';
+    return 'stable';
+  }
+
+  private analyzeRecoveryPattern(): 'good' | 'moderate' | 'poor' {
+    if (this.physiologicalHistory.length < 7) return 'moderate';
+    
     const recent = this.physiologicalHistory.slice(-7);
+    const avgHRV = recent.reduce((sum, data) => sum + data.hrv, 0) / recent.length;
+    const avgSleep = recent.reduce((sum, data) => sum + data.sleepQuality, 0) / recent.length;
     
-    if (recent.length === 0) return insights;
+    if (avgHRV > 60 && avgSleep > 80) return 'good';
+    if (avgHRV < 40 || avgSleep < 60) return 'poor';
+    return 'moderate';
+  }
+
+  private predictNextWeekDistance(fitness: number, trend: string): number {
+    const baseDistance = this.runnerProfile.weeklyGoal;
+    const fitnessMultiplier = fitness / 100;
+    const trendMultiplier = trend === 'improving' ? 1.1 : trend === 'declining' ? 0.9 : 1.0;
     
-    const avgHRV = recent.reduce((sum, d) => sum + d.hrv, 0) / recent.length;
-    const avgSleep = recent.reduce((sum, d) => sum + d.sleepHours, 0) / recent.length;
-    const avgFatigue = recent.reduce((sum, d) => sum + d.fatigue, 0) / recent.length;
+    return Math.round(baseDistance * fitnessMultiplier * trendMultiplier);
+  }
+
+  private predictNextWeekPace(fitness: number, trend: string): number {
+    const basePace = 5.0; // 5 min/km
+    const fitnessImprovement = (fitness - 50) / 100; // -0.5 a 0.5
+    const trendImprovement = trend === 'improving' ? 0.2 : trend === 'declining' ? -0.2 : 0;
     
-    if (avgHRV < 40) insights.push('Seu HRV está baixo. Considere mais descanso e redução de estresse.');
-    if (avgSleep < 7) insights.push('Você está dormindo menos que o ideal. Tente dormir 7-9 horas.');
-    if (avgFatigue > 60) insights.push('Fadiga acumulada detectada. Considere uma semana de recuperação.');
+    return Math.max(3.0, basePace - fitnessImprovement - trendImprovement);
+  }
+
+  private predictNextMonthDistance(fitness: number, trend: string): number {
+    return Math.round(this.predictNextWeekDistance(fitness, trend) * 4 * 1.2);
+  }
+
+  private predictNextMonthPace(fitness: number, trend: string): number {
+    return this.predictNextWeekPace(fitness, trend) - 0.3; // Melhoria mensal
+  }
+
+  private predictVO2Max(fitness: number, trend: string): number {
+    const baseVO2Max = 45; // ml/kg/min
+    const fitnessImprovement = (fitness - 50) / 100;
+    const trendImprovement = trend === 'improving' ? 0.1 : trend === 'declining' ? -0.1 : 0;
     
-    return insights;
+    return Math.round(baseVO2Max * (1 + fitnessImprovement + trendImprovement));
+  }
+
+  private calculatePredictionConfidence(period: 'weekly' | 'monthly'): number {
+    const dataPoints = this.trainingHistory.length;
+    const physiologicalDataPoints = this.physiologicalHistory.length;
+    
+    let confidence = 50;
+    
+    if (dataPoints >= 14) confidence += 20;
+    if (dataPoints >= 30) confidence += 15;
+    if (physiologicalDataPoints >= 7) confidence += 15;
+    
+    return Math.min(100, confidence);
+  }
+
+  private generateRacePredictions(fitness: number, trend: string): Array<{
+    distance: number;
+    predictedTime: string;
+    confidence: number;
+    strategy: string[];
+  }> {
+    const predictions = [];
+    
+    // 5K
+    const pace5k = this.predictNextWeekPace(fitness, trend);
+    const time5k = Math.round(5 * pace5k * 60);
+    predictions.push({
+      distance: 5,
+      predictedTime: `${Math.floor(time5k / 60)}:${(time5k % 60).toString().padStart(2, '0')}`,
+      confidence: this.calculatePredictionConfidence('weekly'),
+      strategy: ['Ritmo constante', 'Foco na respiração', 'Último km forte']
+    });
+    
+    // 10K
+    const pace10k = pace5k + 0.3;
+    const time10k = Math.round(10 * pace10k * 60);
+    predictions.push({
+      distance: 10,
+      predictedTime: `${Math.floor(time10k / 60)}:${(time10k % 60).toString().padStart(2, '0')}`,
+      confidence: this.calculatePredictionConfidence('weekly') - 10,
+      strategy: ['Primeira metade conservadora', 'Segunda metade progressiva', 'Hidratação a cada 3km']
+    });
+    
+    // Meia Maratona
+    const pace21k = pace10k + 0.5;
+    const time21k = Math.round(21.1 * pace21k * 60);
+    predictions.push({
+      distance: 21.1,
+      predictedTime: `${Math.floor(time21k / 60)}:${(time21k % 60).toString().padStart(2, '0')}`,
+      confidence: this.calculatePredictionConfidence('monthly'),
+      strategy: ['Ritmo conservador nos primeiros 10km', 'Progredir no meio', 'Últimos 5km com tudo']
+    });
+    
+    return predictions;
+  }
+
+  // Executar ação de voz
+  private executeVoiceAction(voiceCommand: VoiceCommand, currentRunData: any): string {
+    let response = voiceCommand.response;
+    
+    // Substituir placeholders
+    if (currentRunData) {
+      response = response.replace('{distance}', currentRunData.distance?.toFixed(1) || '0');
+      response = response.replace('{pace}', currentRunData.pace?.toFixed(1) || '0');
+    }
+    
+    return response;
+  }
+
+  // Atualizar uso de comandos de voz
+  private updateVoiceCommandUsage(commandId: string): void {
+    if (!this.learningModel.voiceCommandUsage[commandId]) {
+      this.learningModel.voiceCommandUsage[commandId] = 0;
+    }
+    this.learningModel.voiceCommandUsage[commandId]++;
+  }
+
+  // Atualizar modelo de aprendizado
+  private updateLearningModel(recommendation: TrainingRecommendation, data: PhysiologicalData): void {
+    // Atualizar preferências de pace
+    const pace = this.parsePaceToNumber(recommendation.pace);
+    if (pace > 0) {
+      if (!this.learningModel.pacePreferences[recommendation.type]) {
+        this.learningModel.pacePreferences[recommendation.type] = [];
+      }
+      this.learningModel.pacePreferences[recommendation.type].push(pace);
+    }
+    
+    // Atualizar padrões de intensidade
+    if (!this.learningModel.intensityPatterns[recommendation.type]) {
+      this.learningModel.intensityPatterns[recommendation.type] = [];
+    }
+    this.learningModel.intensityPatterns[recommendation.type].push(recommendation.intensity);
+    
+    // Atualizar necessidades de recuperação
+    const recoveryTime = this.calculateRecoveryTime(recommendation);
+    if (!this.learningModel.recoveryNeeds[recommendation.type]) {
+      this.learningModel.recoveryNeeds[recommendation.type] = [];
+    }
+    this.learningModel.recoveryNeeds[recommendation.type].push(recoveryTime);
+  }
+
+  // Métodos auxiliares
+  private parsePaceToNumber(pace: string): number {
+    const match = pace.match(/(\d+\.?\d*)/);
+    return match ? parseFloat(match[1]) : 0;
+  }
+
+  private calculateRecoveryTime(recommendation: TrainingRecommendation): number {
+    switch (recommendation.type) {
+      case 'easy_run': return 12; // horas
+      case 'tempo_run': return 24;
+      case 'long_run': return 48;
+      case 'interval': return 36;
+      default: return 24;
+    }
+  }
+
+  // Obter comandos de voz disponíveis
+  public getAvailableVoiceCommands(): VoiceCommand[] {
+    return this.voiceCommands;
+  }
+
+  // Obter histórico fisiológico
+  public getPhysiologicalHistory(): PhysiologicalData[] {
+    return this.physiologicalHistory;
+  }
+
+  // Obter modelo de aprendizado
+  public getLearningModel(): any {
+    return this.learningModel;
+  }
+
+  // Calcular score de saúde atual
+  public getCurrentHealthScore(): number {
+    if (this.physiologicalHistory.length === 0) return 50;
+    const latest = this.physiologicalHistory[this.physiologicalHistory.length - 1];
+    return this.calculateHealthScore(latest);
   }
 }
 
-// Função helper para criar coach
 export function createAICoach(profile: RunnerProfile): AICoach {
   return new AICoach(profile);
 }
