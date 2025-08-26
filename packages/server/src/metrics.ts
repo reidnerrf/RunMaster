@@ -1,9 +1,20 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import client from 'prom-client';
+import { monitorEventLoopDelay } from 'perf_hooks';
 
 const registry = new client.Registry();
 
-client.collectDefaultMetrics({ register: registry, prefix: 'runx_' });
+// Only collect default metrics if event loop monitoring is available
+if (typeof monitorEventLoopDelay === 'function') {
+	client.collectDefaultMetrics({ register: registry, prefix: 'runx_' });
+} else {
+	// Collect default metrics without event loop lag if not available
+	client.collectDefaultMetrics({ 
+		register: registry, 
+		prefix: 'runx_',
+		eventLoopMonitoringPrecision: 0 // Disable event loop monitoring
+	});
+}
 
 const httpRequestsTotal = new client.Counter({
 	name: 'http_requests_total',
