@@ -14,6 +14,7 @@ import { addRoute, getRoutes, SavedRoute } from '../../Lib/routeStore';
 import { getSettings, setSettings } from '../../Lib/settings';
 import { updateDailyGoalWidget } from '../../Lib/background';
 import Shimmer from '../../components/ui/Shimmer';
+import BlurCard from '../../components/ui/BlurCard';
 
 export default function HomeScreen() {
   const nav = useNavigation();
@@ -66,7 +67,7 @@ export default function HomeScreen() {
           </View>
         ) : (
         <FadeInUp>
-          <View style={[styles.routeCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
+          <BlurCard>
             <Text style={[styles.routeTitle, { color: theme.colors.text }]}>{ai?.route?.[0]?.name ?? 'Parque Central • 5.2 km'}</Text>
             <Text style={{ color: theme.colors.muted }}>{ai ? `${ai.route[0].distance_km} km • ${ai.route[0].notes.join(' • ')}` : 'Plano, bem iluminado, pontos de água'}</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
@@ -83,7 +84,7 @@ export default function HomeScreen() {
                 <Text style={{ color: theme.colors.muted }}>Pacing sugerido: {ai.pacing.target_min_per_km} • Dica: {ai.pacing.tip}</Text>
               </View>
             )}
-          </View>
+          </BlurCard>
         </FadeInUp>
         )}
 
