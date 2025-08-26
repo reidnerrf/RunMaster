@@ -6,12 +6,16 @@ import { getSettings, setSettings } from '../Lib/settings';
 export default function ConnectWatchScreen() {
   const [connected, setConnected] = useState(false);
 
-  React.useEffect(() => { getSettings().then((s) => setConnected(!!s.healthConnected)); }, []);
+  useEffect(() => {
+    getSettings().then((s) => setConnected(!!s.healthConnected)).catch(() => {});
+  }, []);
 
   const handleConnect = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    setConnected(true);
-    await setSettings({ healthConnected: true });
+    const next = !connected;
+    setConnected(next);
+    try { await setSettings({ healthConnected: next }); } catch {}
+
   };
 
   return (
