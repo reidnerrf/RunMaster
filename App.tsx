@@ -23,6 +23,7 @@ import RouteDetailScreen from './Screens/routes/RouteDetailScreen';
 import SavedRoutesScreen from './Screens/routes/SavedRoutesScreen';
 import { identify, funnelStep } from './Lib/analytics';
 import { initObservability, trackEvent } from './Lib/observability';
+import { iapSetup } from './Lib/iap';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -88,6 +89,7 @@ export default function App() {
   React.useEffect(() => {
     initObservability({ SENTRY_DSN: process.env.SENTRY_DSN as any, AMPLITUDE_API_KEY: process.env.AMPLITUDE_API_KEY as any }).catch(() => {});
     trackEvent('app_open');
+    iapSetup(process.env.REVENUECAT_API_KEY as any).catch(() => {});
   }, []);
 
   return (

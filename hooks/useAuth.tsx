@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import * as Storage from '../Lib/storage';
+import { iapPurchase } from '../Lib/iap';
+import { applyReferralCode, validateIapReceipt } from '../Lib/api';
 
 export type User = {
 	id: string;
@@ -87,10 +89,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 	const upgradeToPremium = useCallback(async () => {
 		if (!user) return;
-		const upgraded = { ...user, isPremium: true };
-		setUser(upgraded);
-		await persist(upgraded);
-		Alert.alert('Premium Ativado', 'Você agora é Premium! Recursos desbloqueados.');
+		// Attempt IAP purchase and validate on backend
+		const purchase = await iapPurchase('premium_monthly');
+		if (!purchase.success || !purchase.receipt) {
+			Alert.alert('Compra falhou', 'Tente novamente mais tarde.');
+			return;
+		}
+		try {
+			const validation = await validateIapReceipt(user.id, purchase.receipt, purchase.productId);
+			if (!validation.ok || !validation.isPremium) throw new Error('invalid');
+			const upgraded = { ...user, isPremium: true };
+			setUser(upgraded);
+			await persist(upgraded);
+			Alert.alert('Premium Ativado', 'Você agora é Premium! Recursos desbloqueados.');
+		} catch (e) {
+			Alert.alert('Validação falhou', 'Não foi possível validar a assinatura.');
+		}
 	}, [user]);
 
 	const startTrial = useCallback(async () => {
@@ -107,10 +121,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 	const applyReferral = useCallback(async (code: string) => {
 		if (!user) return;
-		const updated = { ...user, referralCode: code } as User;
-		setUser(updated);
-		await persist(updated);
-		Alert.alert('Referral aplicado', 'Código aplicado com sucesso.');
+		try {
+			const resp = await applyReferralCode(user.id, code);
+			if (!resp.ok) throw new Error('failed');
+			const updated = { ...user, referralCode: code } as User;
+			setUser(updated);
+			await persist(updated);
+			Alert.alert('Referral aplicado', 'Código aplicado com sucesso.');
+		} catch (e) {
+			Alert.alert('Falha no referral', 'Não foi possível aplicar o código.');
+		}
 	}, [user]);
 
 	const downgradeToFree = useCallback(async () => {

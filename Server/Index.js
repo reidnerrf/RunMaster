@@ -207,6 +207,24 @@ app.post('/challenges/:id/join', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/iap/validate', async (req, res) => {
+	try {
+		const { userId, receipt, productId } = req.body || {};
+		if (!userId || !receipt) return res.status(400).json({ error: 'userId and receipt required' });
+		// TODO: validate with RevenueCat/StoreKit/Billing backend. For now, accept mock.
+		return res.json({ ok: true, isPremium: true, productId });
+	} catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/referral/apply', async (req, res) => {
+	try {
+		const { userId, code } = req.body || {};
+		if (!userId || !code) return res.status(400).json({ error: 'userId and code required' });
+		// TODO: lookup code in DB, mark redemption. For now accept one-off.
+		return res.json({ ok: true, applied: true });
+	} catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/config', async (req, res) => {
 	try {
 		const { userId = '', group = '' } = req.query || {};

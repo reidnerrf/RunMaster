@@ -107,3 +107,15 @@ export async function getRemoteConfig(userId?: string, group?: string): Promise<
 	if (!res.ok) throw new Error('Failed to fetch remote config');
 	return res.json();
 }
+
+export async function validateIapReceipt(userId: string, receipt: string, productId?: string): Promise<{ ok: boolean; isPremium?: boolean }> {
+	const res = await fetch(BASE_URL + '/iap/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, receipt, productId }) });
+	if (!res.ok) throw new Error('IAP validation failed');
+	return res.json();
+}
+
+export async function applyReferralCode(userId: string, code: string): Promise<{ ok: boolean; applied?: boolean }> {
+	const res = await fetch(BASE_URL + '/referral/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, code }) });
+	if (!res.ok) throw new Error('Referral apply failed');
+	return res.json();
+}
