@@ -20,6 +20,10 @@ import { getSettings, setSafetyLayers } from '../Lib/settings';
 import { buildMockRoute, nextTbt, TbtStep } from '../Lib/tbt';
 import TbtOverlay from '../components/TbtOverlay';
 import { cueHaptic, speakInstruction } from '../Lib/tbt_voice';
+import BackToStartBadge from '../components/BackToStartBadge';
+import { buildShareUrl, getLive, pingLive, startLive, stopLive } from '../Lib/live';
+import * as Clipboard from 'expo-clipboard';
+import * as Linking from 'expo-linking';
 
 export default function RunScreen() {
   const nav = useNavigation();
@@ -42,6 +46,9 @@ export default function RunScreen() {
   const [tbtIdx, setTbtIdx] = useState(0);
   const [tbtInfo, setTbtInfo] = useState<{ instruction?: string; distanceM?: number; offRoute?: boolean } | null>(null);
   const lastCueRef = useRef<'100'|'20'|null>(null);
+
+  const [liveLink, setLiveLink] = useState<string | null>(null);
+  const startPointRef = useRef<{ lat: number; lon: number } | null>(null);
 
   useEffect(() => {
     const p = state.path[0];
@@ -66,6 +73,28 @@ export default function RunScreen() {
   useEffect(() => {
     getSettings().then((s) => setLayers(s.safetyLayers)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (state.path[0] && !startPointRef.current) startPointRef.current = { lat: state.path[0].latitude, lon: state.path[0].longitude };
+  }, [state.path]);
+
+  useEffect(() => { (async () => { const s = await getLive(); if (s?.active) setLiveLink(buildShareUrl(s.id)); })(); }, []);
+  useEffect(() => {
+    if (!liveLink) return; const t = setInterval(() => { pingLive().catch(() => {}); }, 15000); return () => clearInterval(t);
+  }, [liveLink]);
+
+  const toggleLive = async () => {
+    if (liveLink) { await stopLive(); setLiveLink(null); return; }
+    const s = await startLive(); setLiveLink(buildShareUrl(s.id));
+  };
+
+  const shareOrCopy = async () => {
+    if (!liveLink) return; try { await Clipboard.setStringAsync(liveLink); } catch {}
+  };
+
+  const callSOS = async () => {
+    const tel = 'tel:190'; try { await Linking.openURL(tel); } catch {}
+  };
 
   // Start automatically with 3-2-1 for guided workouts
   useEffect(() => {
@@ -120,6 +149,7 @@ export default function RunScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} overlayMetrics={{ distanceKm: state.distanceKm, paceStr: state.paceStr, calories: state.calories }} />
         <TbtOverlay instruction={tbtInfo?.instruction} distanceM={tbtInfo?.distanceM} offRoute={tbtInfo?.offRoute} />
+        <BackToStartBadge start={startPointRef.current || undefined} current={state.path[state.path.length-1] ? { lat: state.path[state.path.length-1].latitude, lon: state.path[state.path.length-1].longitude } : undefined} />
         {state.isAutoPaused && (
           <View style={[styles.autoPauseBadge, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={{ color: theme.colors.muted }}>Pausado automaticamente</Text>
@@ -187,6 +217,9 @@ export default function RunScreen() {
         )}
         <ActionButton label="Finalizar" color="#EF476F" onPress={finishRun} />
         <IconButton onPress={() => {}} color="#1DB954"><Text>🎵</Text></IconButton>
+        <IconButton onPress={toggleLive} color={liveLink ? '#FF7E47' : '#95A5A6'}><Text>📡</Text></IconButton>
+        <IconButton onPress={shareOrCopy} color="#8E44AD"><Text>🔗</Text></IconButton>
+        <IconButton onPress={callSOS} color="#E74C3C"><Text>🆘</Text></IconButton>
       </View>
 
       {countdown !== null && (
