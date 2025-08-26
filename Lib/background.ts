@@ -75,7 +75,7 @@ export async function startBackground(runId: string) {
         showsBackgroundLocationIndicator: true,
         pausesUpdatesAutomatically: false,
         foregroundService: {
-          notificationTitle: 'RunMaster',
+          notificationTitle: 'Pulse',
           notificationBody: 'Rastreamento de corrida ativo',
         },
       });

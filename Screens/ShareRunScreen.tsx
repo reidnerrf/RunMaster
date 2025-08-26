@@ -1,10 +1,10 @@
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Share, Image } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import MapTrace from '../components/MapTrace';
+import SectionTitle from '../components/SectionTitle';
 import { useTheme } from '../hooks/useTheme';
 import { getRuns, Run } from '../Lib/runStore';
-import SectionTitle from '../components/SectionTitle';
-import MapTrace from '../components/MapTrace';
 
 export default function ShareRunScreen() {
   const { theme } = useTheme();
@@ -22,7 +22,7 @@ export default function ShareRunScreen() {
 
   const onShare = async () => {
     if (!run) return;
-    const msg = `🏃‍♂️ Minha corrida: ${run.distanceKm.toFixed(2)} km em ${run.durationSec/60 | 0} min • Pace ${run.avgPace} • via RunMaster`;
+    const msg = `🏃‍♂️ Minha corrida: ${run.distanceKm.toFixed(2)} km em ${run.durationSec/60 | 0} min • Pace ${run.avgPace} • via Pulse`;
     await Share.share({ message: msg });
   };
 
@@ -33,7 +33,7 @@ export default function ShareRunScreen() {
       <SectionTitle title="Compartilhar" subtitle="Mostre sua conquista" />
 
       <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
-        <Text style={[styles.title, { color: theme.colors.text }]}>RunMaster</Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Pulse</Text>
         <Text style={{ color: theme.colors.muted }}>{new Date(run.startedAt).toLocaleString()}</Text>
         <View style={{ marginVertical: 10 }}>
           <MapTrace points={run.path || []} height={160} />

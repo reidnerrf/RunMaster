@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
 export default function WelcomeScreen() {
@@ -9,7 +9,7 @@ export default function WelcomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={[styles.card, theme.shadows.heavy, { backgroundColor: theme.colors.card }]}> 
-        <Text style={[styles.logo, { color: theme.colors.text }]}>RunMaster</Text>
+        <Text style={[styles.logo, { color: theme.colors.text }]}>Pulse</Text>
         <Text style={[styles.tag, { color: theme.colors.muted }]}>Corra, evolua, conquiste.</Text>
         <Pressable onPress={() => nav.navigate('Login' as never)} style={[styles.btn, { backgroundColor: theme.colors.primary }]}>
           <Text style={styles.btnText}>Começar</Text>

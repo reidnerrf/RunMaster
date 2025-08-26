@@ -5,6 +5,7 @@ export const Colors = {
     text: '#262626',
     primary: '#FF7E47',
     secondary: '#FFA97C',
+
     gold: '#FFD700',
     muted: '#8E8E93',
     border: '#E9E9EA',
@@ -15,8 +16,10 @@ export const Colors = {
     background: '#262626',
     card: '#2F2F2F',
     text: '#FFFFFF',
+
     primary: '#FF7E47',
     secondary: '#FFA97C',
+
     gold: '#FFD700',
     muted: '#A1A1AA',
     border: '#3A3A3C',

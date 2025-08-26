@@ -1,21 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Switch } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import AnimatedBadge from '../components/AnimatedBadge';
-import IconButton from '../components/IconButton';
-import { useAuth } from '../hooks/useAuth';
-import { MetricGrid } from '../components/Metrics';
-import ActionButton from '../components/ActionButton';
-import { useGate } from '../hooks/useGate';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '../hooks/useTheme';
+import React, { useEffect, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { addRun } from '../Lib/runStore';
 import AchievementToast from '../components/AchievementToast';
-import { useRunTracker, formatHHMMSS } from '../hooks/useRunTracker';
-import MapLive from '../components/MapLive';
+import ActionButton from '../components/ActionButton';
+import AnimatedBadge from '../components/AnimatedBadge';
 import CoachAudio from '../components/CoachAudio';
+import IconButton from '../components/IconButton';
+import MapLive from '../components/MapLive';
+import { MetricGrid } from '../components/Metrics';
 import POIOverlay from '../components/POIOverlay';
+import { useAuth } from '../hooks/useAuth';
+import { useGate } from '../hooks/useGate';
+import { formatHHMMSS, useRunTracker } from '../hooks/useRunTracker';
+import { useTheme } from '../hooks/useTheme';
+import { addRun } from '../Lib/runStore';
 import { getSettings, setSafetyLayers } from '../Lib/settings';
 import { buildMockRoute, nextTbt, TbtStep } from '../Lib/tbt';
 import TbtOverlay from '../components/TbtOverlay';
@@ -159,7 +159,7 @@ export default function RunScreen() {
       {isPremium && <CoachAudio active={state.status === 'running'} paceStr={state.paceStr} distanceKm={state.distanceKm} heartRate={state.heartRate} elapsedSec={state.elapsedSec} />}
       {isPremium && <POIOverlay path={state.path} enabled={state.status === 'running'} onPoisChanged={(pois) => {
         setLivePois(pois.filter(p => !p.collected).map(p => ({ id: p.id, latitude: p.latitude, longitude: p.longitude, type: 'collectible' as const, label: p.type === 'coin' ? 'Moeda' : 'Estrela' })));
-      }} />
+      }} />}
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 + insets.bottom }}>
         <View style={styles.topRow}>

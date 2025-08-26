@@ -1,4 +1,4 @@
-// Simple Express + Mongoose API for RunMaster
+// Simple Express + Mongoose API for Pulse
 // Deploy anywhere (Railway, Render, Fly, etc.). Set MONGODB_URI env variable.
 
 const express = require('express');
@@ -35,7 +35,7 @@ const RouteSchema = new mongoose.Schema({
 const SavedRoute = mongoose.model('Route', RouteSchema);
 
 app.get('/', (req, res) => {
-  res.json({ ok: true, service: 'RunMaster API' });
+  res.json({ ok: true, service: 'Pulse API' });
 });
 
 app.get('/runs', async (req, res) => {
@@ -118,7 +118,7 @@ app.get('/export/run/:id.pdf', async (req, res) => {
     res.setHeader('Content-Disposition', `inline; filename=run_${id}.pdf`);
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
     doc.pipe(res);
-    doc.fontSize(18).text('RunMaster - Resumo da Corrida', { align: 'center' });
+    doc.fontSize(18).text('Pulse - Resumo da Corrida', { align: 'center' });
     doc.moveDown();
     doc.fontSize(12).text(`Início: ${new Date(run.startedAt).toLocaleString()}`);
     doc.text(`Duração: ${(run.durationSec/60|0)} min`);
@@ -210,7 +210,7 @@ app.post('/challenges/:id/join', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 async function main() {
-  const mongo = process.env.MONGODB_URI || 'mongodb://localhost:27017/runmaster';
+  const mongo = process.env.MONGODB_URI || 'mongodb://localhost:27017/pulse';
   await mongoose.connect(mongo);
   console.log('Connected to MongoDB');
   app.listen(PORT, () => console.log(`API listening on ${PORT}`));
