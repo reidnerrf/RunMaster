@@ -17,6 +17,9 @@ import Shimmer from '../../components/ui/Shimmer';
 import BlurCard from '../../components/ui/BlurCard';
 import { initNavigationSdk, requestOfflineTiles, startTurnByTurn } from '../../Lib/navigation';
 import { t } from '../../Lib/i18n';
+import { getNearbyEvents, enrichRoutesWithEvents } from '../../Lib/events';
+import RitualPicker from '../../components/RitualPicker';
+import { RunnerProfileType } from '../../Lib/rituals';
 
 export default function HomeScreen() {
   const nav = useNavigation();
@@ -26,6 +29,9 @@ export default function HomeScreen() {
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [dailyGoalKm, setDailyGoalKm] = useState<number>(5);
+  const [showRitualPicker, setShowRitualPicker] = useState(false);
+  const [currentProfile, setCurrentProfile] = useState<RunnerProfileType>('endurance');
+  const [recommendations, setRecommendations] = useState<any[]>([]);
 
   useEffect(() => {
     suggestPlan({ city: 'São Paulo', goal: 'easy', distancePreferenceKm: 5 }).then(setAI).catch(() => {});
@@ -40,6 +46,16 @@ export default function HomeScreen() {
     setSavedRoutes(next);
     setSavedMsg('Rota salva!');
     setTimeout(() => setSavedMsg(null), 1500);
+  };
+
+  const handleStartRun = () => {
+    setShowRitualPicker(true);
+  };
+
+  const handleRitualSelect = (ritual: any) => {
+    console.log('Ritual selecionado:', ritual);
+    // Aqui você pode salvar o ritual selecionado e navegar para a corrida
+    nav.navigate('Run' as never);
   };
 
   return (
@@ -57,7 +73,10 @@ export default function HomeScreen() {
           </IconButton>
         </View>
         <View style={styles.centerBtn}>
-          <PulsingButton label={t('start_run')} onPress={() => nav.navigate('Run' as never)} />
+          <PulsingButton 
+            label={t('start_run')} 
+            onPress={handleStartRun} 
+          />
         </View>
       </View>
 
@@ -109,6 +128,41 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Rotas Temáticas com Eventos */}
+        <SectionTitle title="Rotas Temáticas" subtitle="Recomendadas para você" />
+        {recommendations && recommendations.length > 0 ? (
+          recommendations.slice(0, 3).map((route, index) => (
+            <BlurCard key={route.id} style={styles.routeCard}>
+              <View style={styles.routeHeader}>
+                <View style={styles.routeInfo}>
+                  <Text style={[styles.routeTitle, { color: theme.colors.text }]}>{route.name}</Text>
+                  <Text style={{ color: theme.colors.muted }}>
+                    {route.distance}km • {route.estimatedTime}min • {route.difficulty}
+                  </Text>
+                  {/* Event Badge */}
+                  {route.name.includes('•') && (
+                    <View style={styles.eventBadge}>
+                      <Text style={styles.eventIcon}>🎉</Text>
+                      <Text style={[styles.eventText, { color: theme.colors.primary }]}>Evento Local</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.routeTheme}>
+                  <Text style={styles.themeIcon}>
+                    {route.theme === 'parks' ? '🌳' : 
+                     route.theme === 'historical' ? '🏛️' : 
+                     route.theme === 'gastronomic' ? '🍕' : '🏃'}
+                  </Text>
+                </View>
+              </View>
+            </BlurCard>
+          ))
+        ) : (
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+            <Text style={{ color: theme.colors.muted }}>Carregando rotas temáticas...</Text>
+          </View>
+        )}
+
         <SectionTitle title="Favoritos" subtitle="Rotas salvas" actionLabel="Ver todas" onAction={() => nav.navigate('SavedRoutes' as never)} />
         {savedRoutes.length === 0 ? (
           <View style={[styles.card, { backgroundColor: theme.colors.card, alignItems: 'center' }]}> 
@@ -143,6 +197,12 @@ export default function HomeScreen() {
 
         <FlowHint steps={["Mapa/Rotas", "Iniciar Corrida", "Feed Social", "Upgrade Premium"]} />
       </ScrollView>
+      <RitualPicker
+        visible={showRitualPicker}
+        onClose={() => setShowRitualPicker(false)}
+        onSelect={handleRitualSelect}
+        currentProfile={currentProfile}
+      />
     </View>
   );
 }
@@ -162,4 +222,36 @@ const styles = StyleSheet.create({
   routeBtn: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
   playBtn: { borderWidth: 1, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, marginTop: 8 },
   savedItem: { borderRadius: 12, padding: 12, marginBottom: 8 },
+  routeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  routeInfo: {
+    flex: 1,
+  },
+  routeTheme: {
+    marginLeft: 12,
+  },
+  themeIcon: {
+    fontSize: 24,
+  },
+  eventBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    alignSelf: 'flex-start',
+  },
+  eventIcon: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  eventText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
 });
