@@ -22,6 +22,9 @@ import { IconButton } from '../components/IconButton';
 import { Shimmer } from '../components/ui/Shimmer';
 import { BlurCard } from '../components/ui/BlurCard';
 import { Heart, MapPin, Shield, Trophy, Leaf, Users, TrendingUp, Target } from 'lucide-react-native';
+import { autoAdjustPaceZones } from '../Lib/analysis';
+import { smartRecovery } from '../Lib/recovery';
+import { createCreativeChallengesManager } from '../Lib/challengesCreative';
 
 const { width } = Dimensions.get('window');
 
@@ -41,6 +44,9 @@ export default function WellnessScreen() {
   const [charityStats, setCharityStats] = useState<any>(null);
   const [safetyAlerts, setSafetyAlerts] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [dynamicZones, setDynamicZones] = useState<any>(null);
+  const [recoveryAdvice, setRecoveryAdvice] = useState<any>(null);
+  const [creativeChallenge, setCreativeChallenge] = useState<any>(null);
 
   useEffect(() => {
     initializeManagers();
@@ -103,6 +109,30 @@ export default function WellnessScreen() {
       const userLocation = { lat: -23.5505, lng: -46.6333 }; // São Paulo
       const routes = territory.getRecommendations(userLocation);
       setRecommendations(routes);
+
+      // Zonas dinâmicas (simulando histórico)
+      const recentRuns = [
+        { date: Date.now()-86400000*1, distanceKm: 6.2, durationSec: 1900 },
+        { date: Date.now()-86400000*3, distanceKm: 10, durationSec: 3300 },
+        { date: Date.now()-86400000*6, distanceKm: 5, durationSec: 1600 },
+        { date: Date.now()-86400000*10, distanceKm: 12, durationSec: 4200 },
+      ];
+      const dz = autoAdjustPaceZones(recentRuns);
+      setDynamicZones(dz);
+
+      // Recuperação inteligente (simulado)
+      const rec = smartRecovery({
+        recentLoads: recentRuns.map((r,i)=> ({ date: r.date, load: r.distanceKm * (i%2?70:50) })),
+        hrv: 58,
+        sleepHours: 7.2,
+        sleepQuality: 75,
+        soreness: 35,
+      });
+      setRecoveryAdvice(rec);
+
+      // Desafio criativo
+      const cc = createCreativeChallengesManager().getActive()[0];
+      setCreativeChallenge(cc);
 
     } catch (error) {
       console.error('Error loading initial data:', error);
@@ -283,6 +313,42 @@ export default function WellnessScreen() {
                                 wellnessSummary.weeklyTrend === 'declining' ? '📉 Declinando' : '➡️ Estável'}
             </ThemedText>
           </View>
+        </BlurCard>
+      )}
+
+      {dynamicZones && (
+        <BlurCard style={styles.card}>
+          <View style={styles.cardHeader}>
+            <TrendingUp color={theme.colors.primary} size={24} />
+            <ThemedText style={styles.cardTitle}>Zonas Dinâmicas</ThemedText>
+          </View>
+          <ThemedText style={styles.cardDescription}>Base easy: {dynamicZones.baseEasyMinPerKm.toFixed(2)} min/km • Índice: {dynamicZones.performanceIndex} • Tendência: {dynamicZones.trend}</ThemedText>
+        </BlurCard>
+      )}
+
+      {recoveryAdvice && (
+        <BlurCard style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Target color={theme.colors.primary} size={24} />
+            <ThemedText style={styles.cardTitle}>Recuperação Inteligente</ThemedText>
+          </View>
+          <ThemedText style={styles.cardDescription}>{recoveryAdvice.message}</ThemedText>
+          <View>
+            {recoveryAdvice.tips.map((t: string, i: number)=> (
+              <ThemedText key={i} style={{ fontSize: 14, opacity: 0.8 }}>• {t}</ThemedText>
+            ))}
+          </View>
+        </BlurCard>
+      )}
+
+      {creativeChallenge && (
+        <BlurCard style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Target color={theme.colors.primary} size={24} />
+            <ThemedText style={styles.cardTitle}>Desafio Criativo</ThemedText>
+          </View>
+          <ThemedText style={styles.cardDescription}>{creativeChallenge.name} — {creativeChallenge.description}</ThemedText>
+          <ThemedText style={{ fontSize: 14, opacity: 0.8 }}>Recompensa: {creativeChallenge.reward}</ThemedText>
         </BlurCard>
       )}
 
