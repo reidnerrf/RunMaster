@@ -10,6 +10,7 @@ export type MainTabParamList = {
   Wellness: undefined;
   Community: undefined;
   Mentorship: undefined;
+  Explorer: undefined;
   Social: undefined;
   Stats: undefined;
   Profile: undefined;
