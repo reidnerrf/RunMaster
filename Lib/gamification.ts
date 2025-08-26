@@ -2,93 +2,253 @@ export interface Achievement {
   id: string;
   name: string;
   description: string;
-  category: 'distance' | 'streak' | 'speed' | 'social' | 'charity' | 'special';
-  icon: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  category: 'distance' | 'streak' | 'speed' | 'social' | 'charity' | 'challenge' | 'special' | 'seasonal' | 'milestone' | 'competition';
+  difficulty: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
+  rarity: number; // 0-100 (percentual de usuários que possuem)
   points: number;
+  xpReward: number;
+  icon: string;
   isSecret: boolean;
-  requirements: {
-    type: 'distance' | 'streak' | 'speed' | 'social' | 'charity' | 'custom';
-    value: number;
-    description: string;
-  }[];
+  isHidden: boolean;
+  requirements: AchievementRequirement[];
+  rewards: AchievementReward[];
   unlockedAt?: number;
-  progress?: number;
-  maxProgress?: number;
+  progress?: number; // 0-100
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+  maxTier: number; // máximo de vezes que pode ser desbloqueado
+  currentTier: number;
+  isRepeatable: boolean;
+  cooldown?: number; // tempo em ms entre desbloqueios
+  lastUnlocked?: number;
+}
+
+export interface AchievementRequirement {
+  type: 'distance' | 'time' | 'count' | 'streak' | 'speed' | 'elevation' | 'social' | 'charity' | 'challenge' | 'combination';
+  value: number;
+  unit?: string;
+  condition: 'greater_than' | 'less_than' | 'equal_to' | 'multiple_of' | 'consecutive' | 'total';
+  timeframe?: number; // ms
+  location?: string;
+  weather?: string;
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
+  dayOfWeek?: number[]; // 0-6 (domingo-sábado)
+  month?: number[]; // 1-12
+  season?: 'spring' | 'summer' | 'autumn' | 'winter';
+  equipment?: string[];
+  route?: string;
+  companion?: string;
+  challenge?: string;
+  social?: {
+    followers: number;
+    likes: number;
+    shares: number;
+    comments: number;
+  };
+}
+
+export interface AchievementReward {
+  type: 'points' | 'xp' | 'badge' | 'title' | 'item' | 'currency' | 'feature' | 'discount';
+  value: number | string;
+  description: string;
+  isUnlocked: boolean;
 }
 
 export interface Collectible {
   id: string;
   name: string;
   description: string;
-  type: 'badge' | 'medal' | 'trophy' | 'title' | 'avatar' | 'theme';
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  imageUrl?: string;
-  unlockCondition: string;
-  isUnlocked: boolean;
-  unlockedAt?: number;
-  collection?: string; // Nome da coleção
+  category: 'badge' | 'medal' | 'trophy' | 'title' | 'emote' | 'avatar' | 'banner' | 'theme' | 'sound' | 'animation';
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
+  rarityScore: number; // 0-1000
+  points: number;
+  xpReward: number;
+  icon: string;
+  isAnimated: boolean;
+  isLimited: boolean;
+  availableUntil?: number;
+  isSeasonal: boolean;
+  season?: string;
+  year?: number;
+  collection: string;
+  setSize: number;
+  currentSet: number;
+  isComplete: boolean;
+  unlockMethod: 'achievement' | 'purchase' | 'event' | 'challenge' | 'social' | 'random' | 'special';
+  requirements?: CollectibleRequirement[];
+  tradeable: boolean;
+  giftable: boolean;
+  marketValue: number;
+  unlockDate?: number;
+}
+
+export interface CollectibleRequirement {
+  type: 'level' | 'achievement' | 'points' | 'social' | 'charity' | 'challenge' | 'time' | 'location';
+  value: number | string;
+  condition: 'greater_than' | 'less_than' | 'equal_to' | 'completed' | 'owned';
 }
 
 export interface UserProfile {
   userId: string;
-  username: string;
-  avatarUrl?: string;
   level: number;
   experience: number;
   totalPoints: number;
+  currentPoints: number;
+  rank: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'master' | 'grandmaster' | 'legend';
+  rankProgress: number; // 0-100
   achievements: string[]; // IDs das conquistas
   collectibles: string[]; // IDs dos colecionáveis
+  badges: string[];
   titles: string[];
-  currentTitle: string;
-  streak: number;
-  longestStreak: number;
-  totalDistance: number;
-  totalRuns: number;
-  totalTime: number;
-  bestPace: number;
-  rank: number;
-  joinDate: number;
-  lastActive: Date;
+  stats: {
+    totalRuns: number;
+    totalDistance: number;
+    totalTime: number;
+    averagePace: string;
+    bestPace: string;
+    longestStreak: number;
+    currentStreak: number;
+    totalElevation: number;
+    totalCalories: number;
+    personalBests: {
+      '5k': string;
+      '10k': string;
+      'half_marathon': string;
+      'marathon': string;
+    };
+    weeklyDistance: number;
+    monthlyDistance: number;
+    yearlyDistance: number;
+    weeklyGoal: number;
+    monthlyGoal: number;
+    yearlyGoal: number;
+    goalCompletion: number; // percentual
+  };
+  preferences: {
+    showAchievements: boolean;
+    showCollectibles: boolean;
+    showStats: boolean;
+    showRank: boolean;
+    notifications: boolean;
+    privacy: 'public' | 'friends' | 'private';
+  };
+  lastUpdated: number;
+  createdAt: number;
 }
 
 export interface Leaderboard {
   id: string;
   name: string;
-  category: 'distance' | 'streak' | 'speed' | 'points' | 'charity';
-  timeFrame: 'daily' | 'weekly' | 'monthly' | 'allTime';
-  entries: Array<{
-    userId: string;
-    username: string;
-    avatarUrl?: string;
-    value: number;
-    rank: number;
-    lastUpdated: number;
-  }>;
+  type: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'all_time' | 'event' | 'challenge' | 'category';
+  category?: string;
+  metric: 'distance' | 'time' | 'pace' | 'elevation' | 'calories' | 'points' | 'xp' | 'streak' | 'achievements';
+  timeFrame: {
+    start: number;
+    end: number;
+  };
+  participants: number;
+  entries: LeaderboardEntry[];
   lastUpdated: number;
+  isActive: boolean;
+  rewards: LeaderboardReward[];
+  requirements: LeaderboardRequirement[];
+}
+
+export interface LeaderboardEntry {
+  userId: string;
+  username: string;
+  avatarUrl?: string;
+  rank: number;
+  value: number;
+  displayValue: string;
+  change: 'up' | 'down' | 'stable' | 'new';
+  previousRank?: number;
+  previousValue?: number;
+  metadata: {
+    runs: number;
+    distance: number;
+    time: number;
+    pace: string;
+    achievements: number;
+    collectibles: number;
+  };
+  lastUpdated: number;
+}
+
+export interface LeaderboardReward {
+  type: 'points' | 'xp' | 'badge' | 'title' | 'item' | 'currency';
+  value: number | string;
+  rank: number; // rank mínimo para receber
+  description: string;
+}
+
+export interface LeaderboardRequirement {
+  type: 'level' | 'achievement' | 'points' | 'participation';
+  value: number | string;
+  condition: 'greater_than' | 'less_than' | 'equal_to' | 'completed';
 }
 
 export interface Quest {
   id: string;
   name: string;
   description: string;
-  type: 'daily' | 'weekly' | 'special';
-  requirements: {
-    type: 'distance' | 'streak' | 'speed' | 'social' | 'charity';
-    value: number;
-    description: string;
-  }[];
-  rewards: {
-    experience: number;
-    points: number;
-    collectibles?: string[];
-    achievements?: string[];
-  };
+  type: 'daily' | 'weekly' | 'monthly' | 'seasonal' | 'special' | 'event' | 'challenge';
+  category: 'distance' | 'time' | 'social' | 'charity' | 'exploration' | 'competition' | 'collection';
+  difficulty: 'easy' | 'medium' | 'hard' | 'extreme';
+  points: number;
+  xpReward: number;
+  requirements: QuestRequirement[];
+  rewards: QuestReward[];
+  startDate: number;
+  endDate: number;
+  isActive: boolean;
   isCompleted: boolean;
-  progress: number;
-  maxProgress: number;
-  expiresAt: number;
-  startedAt: number;
+  progress: number; // 0-100
+  completedAt?: number;
+  isRepeatable: boolean;
+  cooldown?: number;
+  lastCompleted?: number;
+  completionCount: number;
+  maxCompletions: number;
+  streak: number;
+  maxStreak: number;
+}
+
+export interface QuestRequirement {
+  type: 'distance' | 'time' | 'count' | 'streak' | 'speed' | 'elevation' | 'social' | 'charity' | 'challenge' | 'location' | 'weather' | 'timeOfDay' | 'combination';
+  value: number;
+  unit?: string;
+  condition: 'greater_than' | 'less_than' | 'equal_to' | 'multiple_of' | 'consecutive' | 'total' | 'average';
+  timeframe?: number;
+  location?: string;
+  weather?: string;
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
+  dayOfWeek?: number[];
+  month?: number[];
+  season?: 'spring' | 'summer' | 'autumn' | 'winter';
+  equipment?: string[];
+  route?: string;
+  companion?: string;
+  challenge?: string;
+  social?: {
+    followers: number;
+    likes: number;
+    shares: number;
+    comments: number;
+    invites: number;
+    groupActivities: number;
+  };
+}
+
+export interface QuestReward {
+  type: 'points' | 'xp' | 'badge' | 'title' | 'item' | 'currency' | 'feature' | 'discount' | 'bonus';
+  value: number | string;
+  description: string;
+  isUnlocked: boolean;
+  bonus?: {
+    type: 'multiplier' | 'bonus_points' | 'extra_xp' | 'special_item';
+    value: number | string;
+    condition: string;
+  };
 }
 
 export class GamificationManager {
@@ -97,390 +257,477 @@ export class GamificationManager {
   private userProfiles: UserProfile[] = [];
   private leaderboards: Leaderboard[] = [];
   private quests: Quest[] = [];
+  private collections: Map<string, string[]> = new Map();
 
   constructor() {
     this.initializeAchievements();
     this.initializeCollectibles();
-    this.initializeLeaderboards();
     this.initializeQuests();
+    this.initializeLeaderboards();
   }
 
   private initializeAchievements() {
-    // Conquistas de Distância
-    const distanceAchievements: Achievement[] = [
+    const achievements: Achievement[] = [
+      // Conquistas de Distância - Níveis Difíceis
       {
-        id: 'first_5k',
-        name: 'Primeiro 5K',
-        description: 'Complete sua primeira corrida de 5km',
+        id: 'achievement_distance_1000km',
+        name: 'Maratonista de Ferro',
+        description: 'Complete 1000km de corrida',
         category: 'distance',
-        icon: '🏃‍♂️',
-        rarity: 'common',
-        points: 50,
-        isSecret: false,
-        requirements: [{ type: 'distance', value: 5, description: 'Corra 5km' }]
-      },
-      {
-        id: 'first_10k',
-        name: 'Primeiro 10K',
-        description: 'Complete sua primeira corrida de 10km',
-        category: 'distance',
-        icon: '🏃‍♂️',
-        rarity: 'common',
-        points: 100,
-        isSecret: false,
-        requirements: [{ type: 'distance', value: 10, description: 'Corra 10km' }]
-      },
-      {
-        id: 'half_marathon',
-        name: 'Meia Maratona',
-        description: 'Complete uma meia maratona (21km)',
-        category: 'distance',
-        icon: '🏃‍♂️',
-        rarity: 'rare',
-        points: 250,
-        isSecret: false,
-        requirements: [{ type: 'distance', value: 21, description: 'Corra 21km' }]
-      },
-      {
-        id: 'marathon',
-        name: 'Maratona',
-        description: 'Complete uma maratona (42km)',
-        category: 'distance',
-        icon: '🏃‍♂️',
-        rarity: 'epic',
-        points: 500,
-        isSecret: false,
-        requirements: [{ type: 'distance', value: 42, description: 'Corra 42km' }]
-      },
-      {
-        id: 'ultra_marathon',
-        name: 'Ultra Maratona',
-        description: 'Complete uma ultra maratona (50km+)',
-        category: 'distance',
-        icon: '🏃‍♂️',
-        rarity: 'legendary',
+        difficulty: 'legendary',
+        rarity: 2,
         points: 1000,
+        xpReward: 5000,
+        icon: '🏃‍♂️',
         isSecret: false,
-        requirements: [{ type: 'distance', value: 50, description: 'Corra 50km' }]
-      }
-    ];
+        isHidden: false,
+        requirements: [
+          {
+            type: 'distance',
+            value: 1000,
+            unit: 'km',
+            condition: 'greater_than'
+          }
+        ],
+        rewards: [
+          { type: 'badge', value: 'marathon_iron', description: 'Badge Maratonista de Ferro', isUnlocked: false },
+          { type: 'title', value: 'Maratonista de Ferro', description: 'Título exclusivo', isUnlocked: false }
+        ],
+        tier: 'diamond',
+        maxTier: 5,
+        currentTier: 1,
+        isRepeatable: true,
+        cooldown: 30 * 24 * 60 * 60 * 1000 // 30 dias
+      },
+      
+      {
+        id: 'achievement_distance_5000km',
+        name: 'Ultra Maratonista',
+        description: 'Complete 5000km de corrida',
+        category: 'distance',
+        difficulty: 'mythic',
+        rarity: 0.5,
+        points: 5000,
+        xpReward: 25000,
+        icon: '🏃‍♂️',
+        isSecret: false,
+        isHidden: false,
+        requirements: [
+          {
+            type: 'distance',
+            value: 5000,
+            unit: 'km',
+            condition: 'greater_than'
+          }
+        ],
+        rewards: [
+          { type: 'badge', value: 'ultra_marathon', description: 'Badge Ultra Maratonista', isUnlocked: false },
+          { type: 'title', value: 'Ultra Maratonista', description: 'Título lendário', isUnlocked: false }
+        ],
+        tier: 'diamond',
+        maxTier: 1,
+        currentTier: 1,
+        isRepeatable: false
+      },
 
-    // Conquistas de Streak
-    const streakAchievements: Achievement[] = [
+      // Conquistas de Streak - Extremamente Difíceis
       {
-        id: 'week_streak',
-        name: 'Semana Consistente',
-        description: 'Corra por 7 dias consecutivos',
-        category: 'streak',
-        icon: '🔥',
-        rarity: 'common',
-        points: 75,
-        isSecret: false,
-        requirements: [{ type: 'streak', value: 7, description: '7 dias seguidos' }]
-      },
-      {
-        id: 'month_streak',
-        name: 'Mês Consistente',
-        description: 'Corra por 30 dias consecutivos',
-        category: 'streak',
-        icon: '🔥',
-        rarity: 'rare',
-        points: 300,
-        isSecret: false,
-        requirements: [{ type: 'streak', value: 30, description: '30 dias seguidos' }]
-      },
-      {
-        id: 'year_streak',
-        name: 'Ano Consistente',
+        id: 'achievement_streak_365',
+        name: 'Corredor do Ano',
         description: 'Corra por 365 dias consecutivos',
         category: 'streak',
-        icon: '🔥',
-        rarity: 'legendary',
+        difficulty: 'mythic',
+        rarity: 0.1,
+        points: 10000,
+        xpReward: 50000,
+        icon: '📅',
+        isSecret: false,
+        isHidden: false,
+        requirements: [
+          {
+            type: 'streak',
+            value: 365,
+            unit: 'days',
+            condition: 'consecutive'
+          }
+        ],
+        rewards: [
+          { type: 'badge', value: 'year_runner', description: 'Badge Corredor do Ano', isUnlocked: false },
+          { type: 'title', value: 'Corredor do Ano', description: 'Título mítico', isUnlocked: false },
+          { type: 'feature', value: 'exclusive_theme', description: 'Tema exclusivo', isUnlocked: false }
+        ],
+        tier: 'diamond',
+        maxTier: 1,
+        currentTier: 1,
+        isRepeatable: false
+      },
+
+      // Conquistas de Velocidade - Elite
+      {
+        id: 'achievement_speed_sub3_marathon',
+        name: 'Sub-3 Maratonista',
+        description: 'Complete uma maratona em menos de 3 horas',
+        category: 'speed',
+        difficulty: 'legendary',
+        rarity: 1,
         points: 2000,
-        isSecret: false,
-        requirements: [{ type: 'streak', value: 365, description: '365 dias seguidos' }]
-      }
-    ];
-
-    // Conquistas de Velocidade
-    const speedAchievements: Achievement[] = [
-      {
-        id: 'sub_5_pace',
-        name: 'Sub-5 Pace',
-        description: 'Mantenha ritmo abaixo de 5min/km por 5km',
-        category: 'speed',
+        xpReward: 10000,
         icon: '⚡',
-        rarity: 'rare',
-        points: 150,
         isSecret: false,
-        requirements: [{ type: 'speed', value: 5, description: '5km em ritmo <5min/km' }]
+        isHidden: false,
+        requirements: [
+          {
+            type: 'time',
+            value: 3 * 60 * 60, // 3 horas em segundos
+            unit: 'seconds',
+            condition: 'less_than'
+          },
+          {
+            type: 'distance',
+            value: 42.2,
+            unit: 'km',
+            condition: 'equal_to'
+          }
+        ],
+        rewards: [
+          { type: 'badge', value: 'sub3_marathon', description: 'Badge Sub-3', isUnlocked: false },
+          { type: 'title', value: 'Sub-3 Maratonista', description: 'Título de elite', isUnlocked: false }
+        ],
+        tier: 'platinum',
+        maxTier: 1,
+        currentTier: 1,
+        isRepeatable: false
       },
-      {
-        id: 'sub_4_pace',
-        name: 'Sub-4 Pace',
-        description: 'Mantenha ritmo abaixo de 4min/km por 5km',
-        category: 'speed',
-        icon: '⚡',
-        rarity: 'epic',
-        points: 300,
-        isSecret: false,
-        requirements: [{ type: 'speed', value: 4, description: '5km em ritmo <4min/km' }]
-      }
-    ];
 
-    // Conquistas Sociais
-    const socialAchievements: Achievement[] = [
+      // Conquistas Sociais - Complexas
       {
-        id: 'first_group_run',
-        name: 'Corrida em Grupo',
-        description: 'Participe de sua primeira corrida em grupo',
+        id: 'achievement_social_influencer',
+        name: 'Influenciador da Corrida',
+        description: 'Alcance 10.000 seguidores e inspire 1000 pessoas a correr',
         category: 'social',
-        icon: '👥',
-        rarity: 'common',
-        points: 50,
+        difficulty: 'epic',
+        rarity: 5,
+        points: 800,
+        xpReward: 4000,
+        icon: '🌟',
         isSecret: false,
-        requirements: [{ type: 'social', value: 1, description: '1 corrida em grupo' }]
+        isHidden: false,
+        requirements: [
+          {
+            type: 'social',
+            value: 10000,
+            condition: 'greater_than',
+            social: { followers: 10000, likes: 0, shares: 0, comments: 0 }
+          },
+          {
+            type: 'social',
+            value: 1000,
+            condition: 'greater_than',
+            social: { followers: 0, likes: 0, shares: 0, comments: 0 }
+          }
+        ],
+        rewards: [
+          { type: 'badge', value: 'influencer', description: 'Badge Influenciador', isUnlocked: false },
+          { type: 'title', value: 'Influenciador da Corrida', description: 'Título social', isUnlocked: false }
+        ],
+        tier: 'gold',
+        maxTier: 1,
+        currentTier: 1,
+        isRepeatable: false
       },
-      {
-        id: 'community_leader',
-        name: 'Líder da Comunidade',
-        description: 'Seja o primeiro em um ranking de comunidade',
-        category: 'social',
-        icon: '👑',
-        rarity: 'epic',
-        points: 400,
-        isSecret: false,
-        requirements: [{ type: 'social', value: 1, description: '1º lugar em ranking' }]
-      }
-    ];
 
-    // Conquistas de Caridade
-    const charityAchievements: Achievement[] = [
+      // Conquistas de Caridade - Especiais
       {
-        id: 'first_donation',
-        name: 'Primeira Doação',
-        description: 'Faça sua primeira doação convertendo KM',
+        id: 'achievement_charity_1000km',
+        name: 'Corredor Solidário',
+        description: 'Doe 1000km para causas sociais',
         category: 'charity',
+        difficulty: 'epic',
+        rarity: 8,
+        points: 600,
+        xpReward: 3000,
         icon: '❤️',
-        rarity: 'common',
-        points: 100,
         isSecret: false,
-        requirements: [{ type: 'charity', value: 1, description: '1 doação' }]
+        isHidden: false,
+        requirements: [
+          {
+            type: 'charity',
+            value: 1000,
+            unit: 'km',
+            condition: 'greater_than'
+          }
+        ],
+        rewards: [
+          { type: 'badge', value: 'charity_runner', description: 'Badge Solidário', isUnlocked: false },
+          { type: 'title', value: 'Corredor Solidário', description: 'Título de caridade', isUnlocked: false }
+        ],
+        tier: 'gold',
+        maxTier: 1,
+        currentTier: 1,
+        isRepeatable: true,
+        cooldown: 90 * 24 * 60 * 60 * 1000 // 90 dias
       },
+
+      // Conquistas de Desafio - Extremamente Difíceis
       {
-        id: 'charity_champion',
-        name: 'Campeão da Caridade',
-        description: 'Doe pelo menos R$ 100 convertendo KM',
-        category: 'charity',
-        icon: '💝',
-        rarity: 'epic',
-        points: 500,
+        id: 'achievement_challenge_100_completed',
+        name: 'Mestre dos Desafios',
+        description: 'Complete 100 desafios diferentes',
+        category: 'challenge',
+        difficulty: 'mythic',
+        rarity: 0.2,
+        points: 8000,
+        xpReward: 40000,
+        icon: '🏆',
         isSecret: false,
-        requirements: [{ type: 'charity', value: 100, description: 'R$ 100 doados' }]
+        isHidden: false,
+        requirements: [
+          {
+            type: 'challenge',
+            value: 100,
+            condition: 'greater_than'
+          }
+        ],
+        rewards: [
+          { type: 'badge', value: 'challenge_master', description: 'Badge Mestre dos Desafios', isUnlocked: false },
+          { type: 'title', value: 'Mestre dos Desafios', description: 'Título supremo', isUnlocked: false },
+          { type: 'feature', value: 'custom_challenges', description: 'Criar desafios personalizados', isUnlocked: false }
+        ],
+        tier: 'diamond',
+        maxTier: 1,
+        currentTier: 1,
+        isRepeatable: false
+      },
+
+      // Conquistas Sazonais - Limitadas
+      {
+        id: 'achievement_seasonal_winter_warrior',
+        name: 'Guerreiro do Inverno',
+        description: 'Corra 100km em temperaturas abaixo de 0°C',
+        category: 'seasonal',
+        difficulty: 'rare',
+        rarity: 15,
+        points: 400,
+        xpReward: 2000,
+        icon: '❄️',
+        isSecret: false,
+        isHidden: false,
+        requirements: [
+          {
+            type: 'distance',
+            value: 100,
+            unit: 'km',
+            condition: 'greater_than'
+          },
+          {
+            type: 'weather',
+            value: 0,
+            unit: 'celsius',
+            condition: 'less_than'
+          },
+          {
+            type: 'season',
+            value: 1,
+            condition: 'equal_to',
+            season: 'winter'
+          }
+        ],
+        rewards: [
+          { type: 'badge', value: 'winter_warrior', description: 'Badge Guerreiro do Inverno', isUnlocked: false },
+          { type: 'title', value: 'Guerreiro do Inverno', description: 'Título sazonal', isUnlocked: false }
+        ],
+        tier: 'silver',
+        maxTier: 1,
+        currentTier: 1,
+        isRepeatable: true,
+        cooldown: 365 * 24 * 60 * 60 * 1000 // 1 ano
       }
     ];
 
-    this.achievements.push(
-      ...distanceAchievements,
-      ...streakAchievements,
-      ...speedAchievements,
-      ...socialAchievements,
-      ...charityAchievements
-    );
+    this.achievements.push(...achievements);
   }
 
   private initializeCollectibles() {
     const collectibles: Collectible[] = [
-      // Badges
+      // Coleções de Badges - Extremamente Raras
       {
-        id: 'badge_beginner',
-        name: 'Badge Iniciante',
-        description: 'Para corredores que estão começando',
-        type: 'badge',
-        rarity: 'common',
-        unlockCondition: 'Complete sua primeira corrida',
-        isUnlocked: false
-      },
-      {
-        id: 'badge_consistent',
-        name: 'Badge Consistente',
-        description: 'Para corredores que mantêm a rotina',
-        type: 'badge',
-        rarity: 'rare',
-        unlockCondition: 'Corra por 30 dias consecutivos',
-        isUnlocked: false
-      },
-      {
-        id: 'badge_speedster',
-        name: 'Badge Speedster',
-        description: 'Para corredores rápidos',
-        type: 'badge',
-        rarity: 'epic',
-        unlockCondition: 'Mantenha ritmo <4min/km por 10km',
-        isUnlocked: false
-      },
-
-      // Medals
-      {
-        id: 'medal_5k',
-        name: 'Medalha 5K',
-        description: 'Medalha de bronze para 5km',
-        type: 'medal',
-        rarity: 'common',
-        unlockCondition: 'Complete uma corrida de 5km',
-        isUnlocked: false
-      },
-      {
-        id: 'medal_10k',
-        name: 'Medalha 10K',
-        description: 'Medalha de prata para 10km',
-        type: 'medal',
-        rarity: 'rare',
-        unlockCondition: 'Complete uma corrida de 10km',
-        isUnlocked: false
-      },
-      {
-        id: 'medal_21k',
-        name: 'Medalha 21K',
-        description: 'Medalha de ouro para meia maratona',
-        type: 'medal',
-        rarity: 'epic',
-        unlockCondition: 'Complete uma meia maratona',
-        isUnlocked: false
+        id: 'collectible_badge_marathon_legend',
+        name: 'Badge Maratona Lendária',
+        description: 'Badge exclusivo para maratonistas lendários',
+        category: 'badge',
+        rarity: 'mythic',
+        rarityScore: 950,
+        points: 2000,
+        xpReward: 10000,
+        icon: '🏃‍♂️',
+        isAnimated: true,
+        isLimited: true,
+        availableUntil: Date.now() + 365 * 24 * 60 * 60 * 1000,
+        isSeasonal: false,
+        collection: 'marathon_legends',
+        setSize: 5,
+        currentSet: 1,
+        isComplete: false,
+        unlockMethod: 'achievement',
+        requirements: [
+          { type: 'achievement', value: 'achievement_distance_5000km', condition: 'completed' }
+        ],
+        tradeable: false,
+        giftable: false,
+        marketValue: 10000
       },
 
-      // Trophies
+      // Coleções de Títulos - Únicos
       {
-        id: 'trophy_marathon',
-        name: 'Troféu Maratona',
-        description: 'Troféu especial para maratonistas',
-        type: 'trophy',
-        rarity: 'legendary',
-        unlockCondition: 'Complete uma maratona',
-        isUnlocked: false
-      },
-
-      // Titles
-      {
-        id: 'title_runner',
-        name: 'Corredor',
-        description: 'Título básico para corredores',
-        type: 'title',
-        rarity: 'common',
-        unlockCondition: 'Complete 10 corridas',
-        isUnlocked: false
-      },
-      {
-        id: 'title_athlete',
-        name: 'Atleta',
-        description: 'Título para corredores experientes',
-        type: 'title',
-        rarity: 'rare',
-        unlockCondition: 'Complete 100 corridas',
-        isUnlocked: false
-      },
-      {
-        id: 'title_champion',
-        name: 'Campeão',
-        description: 'Título para corredores elite',
-        type: 'title',
-        rarity: 'epic',
-        unlockCondition: 'Seja 1º em 5 rankings diferentes',
-        isUnlocked: false
+        id: 'collectible_title_legendary_runner',
+        name: 'Corredor Lendário',
+        description: 'Título exclusivo para corredores lendários',
+        category: 'title',
+        rarity: 'mythic',
+        rarityScore: 1000,
+        points: 5000,
+        xpReward: 25000,
+        icon: '👑',
+        isAnimated: true,
+        isLimited: true,
+        availableUntil: Date.now() + 2 * 365 * 24 * 60 * 60 * 1000,
+        isSeasonal: false,
+        collection: 'legendary_titles',
+        setSize: 3,
+        currentSet: 1,
+        isComplete: false,
+        unlockMethod: 'achievement',
+        requirements: [
+          { type: 'level', value: 100, condition: 'greater_than' },
+          { type: 'achievement', value: 'achievement_streak_365', condition: 'completed' }
+        ],
+        tradeable: false,
+        giftable: false,
+        marketValue: 50000
       }
     ];
 
     this.collectibles.push(...collectibles);
   }
 
-  private initializeLeaderboards() {
-    const leaderboards: Leaderboard[] = [
-      {
-        id: 'daily_distance',
-        name: 'Distância Diária',
-        category: 'distance',
-        timeFrame: 'daily',
-        entries: [],
-        lastUpdated: Date.now()
-      },
-      {
-        id: 'weekly_distance',
-        name: 'Distância Semanal',
-        category: 'distance',
-        timeFrame: 'weekly',
-        entries: [],
-        lastUpdated: Date.now()
-      },
-      {
-        id: 'monthly_distance',
-        name: 'Distância Mensal',
-        category: 'distance',
-        timeFrame: 'monthly',
-        entries: [],
-        lastUpdated: Date.now()
-      },
-      {
-        id: 'all_time_points',
-        name: 'Pontos Totais',
-        category: 'points',
-        timeFrame: 'allTime',
-        entries: [],
-        lastUpdated: Date.now()
-      },
-      {
-        id: 'charity_ranking',
-        name: 'Ranking de Caridade',
-        category: 'charity',
-        timeFrame: 'allTime',
-        entries: [],
-        lastUpdated: Date.now()
-      }
-    ];
-
-    this.leaderboards.push(...leaderboards);
-  }
-
   private initializeQuests() {
     const quests: Quest[] = [
-      // Quest Diária
+      // Quest Diária - Difícil
       {
-        id: 'daily_5k',
-        name: '5K Diário',
-        description: 'Corra 5km hoje',
+        id: 'quest_daily_ultra_distance',
+        name: 'Corredor de Ultra Distância',
+        description: 'Complete 30km em um único dia',
         type: 'daily',
-        requirements: [{ type: 'distance', value: 5, description: '5km' }],
-        rewards: {
-          experience: 100,
-          points: 50
-        },
+        category: 'distance',
+        difficulty: 'hard',
+        points: 300,
+        xpReward: 1500,
+        requirements: [
+          {
+            type: 'distance',
+            value: 30,
+            unit: 'km',
+            condition: 'greater_than',
+            timeframe: 24 * 60 * 60 * 1000 // 24 horas
+          }
+        ],
+        rewards: [
+          { type: 'points', value: 300, description: '300 pontos', isUnlocked: false },
+          { type: 'xp', value: 1500, description: '1500 XP', isUnlocked: false },
+          { type: 'bonus', value: 'streak_multiplier', description: 'Multiplicador de streak', isUnlocked: false }
+        ],
+        startDate: Date.now(),
+        endDate: Date.now() + 24 * 60 * 60 * 1000,
+        isActive: true,
         isCompleted: false,
         progress: 0,
-        maxProgress: 5,
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-        startedAt: Date.now()
+        isRepeatable: true,
+        cooldown: 24 * 60 * 60 * 1000,
+        completionCount: 0,
+        maxCompletions: 1,
+        streak: 0,
+        maxStreak: 7
       },
 
-      // Quest Semanal
+      // Quest Semanal - Extremamente Difícil
       {
-        id: 'weekly_30k',
-        name: '30K Semanal',
-        description: 'Corra 30km esta semana',
+        id: 'quest_weekly_marathon_training',
+        name: 'Treino de Maratona',
+        description: 'Complete 100km em uma semana com pelo menos 5 dias de treino',
         type: 'weekly',
-        requirements: [{ type: 'distance', value: 30, description: '30km' }],
-        rewards: {
-          experience: 300,
-          points: 150,
-          collectibles: ['badge_consistent']
-        },
+        category: 'distance',
+        difficulty: 'extreme',
+        points: 1000,
+        xpReward: 5000,
+        requirements: [
+          {
+            type: 'distance',
+            value: 100,
+            unit: 'km',
+            condition: 'greater_than',
+            timeframe: 7 * 24 * 60 * 60 * 1000 // 7 dias
+          },
+          {
+            type: 'count',
+            value: 5,
+            unit: 'days',
+            condition: 'greater_than',
+            timeframe: 7 * 24 * 60 * 60 * 1000
+          }
+        ],
+        rewards: [
+          { type: 'points', value: 1000, description: '1000 pontos', isUnlocked: false },
+          { type: 'xp', value: 5000, description: '5000 XP', isUnlocked: false },
+          { type: 'badge', value: 'marathon_training', description: 'Badge de Treino', isUnlocked: false }
+        ],
+        startDate: Date.now(),
+        endDate: Date.now() + 7 * 24 * 60 * 60 * 1000,
+        isActive: true,
         isCompleted: false,
         progress: 0,
-        maxProgress: 30,
-        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-        startedAt: Date.now()
+        isRepeatable: true,
+        cooldown: 7 * 24 * 60 * 60 * 1000,
+        completionCount: 0,
+        maxCompletions: 1,
+        streak: 0,
+        maxStreak: 4
       }
     ];
 
     this.quests.push(...quests);
+  }
+
+  private initializeLeaderboards() {
+    const leaderboards: Leaderboard[] = [
+      // Leaderboard Mensal - Competitivo
+      {
+        id: 'leaderboard_monthly_distance',
+        name: 'Ranking Mensal de Distância',
+        type: 'monthly',
+        category: 'distance',
+        metric: 'distance',
+        timeFrame: {
+          start: Date.now(),
+          end: Date.now() + 30 * 24 * 60 * 60 * 1000
+        },
+        participants: 0,
+        entries: [],
+        lastUpdated: Date.now(),
+        isActive: true,
+        rewards: [
+          { type: 'badge', value: 'monthly_champion', description: 'Badge Campeão Mensal', rank: 1 },
+          { type: 'title', value: 'Campeão Mensal', description: 'Título de campeão', rank: 1 },
+          { type: 'points', value: 1000, description: '1000 pontos', rank: 1 },
+          { type: 'badge', value: 'monthly_runner', description: 'Badge Corredor Mensal', rank: 10 },
+          { type: 'points', value: 500, description: '500 pontos', rank: 10 }
+        ],
+        requirements: [
+          { type: 'level', value: 5, condition: 'greater_than' }
+        ]
+      }
+    ];
+
+    this.leaderboards.push(...leaderboards);
   }
 
   // Obter perfil do usuário
@@ -499,19 +746,47 @@ export class GamificationManager {
       level: 1,
       experience: 0,
       totalPoints: 0,
+      currentPoints: 0,
+      rank: 'bronze',
+      rankProgress: 0,
       achievements: [],
       collectibles: [],
+      badges: [],
       titles: [],
-      currentTitle: 'Corredor',
-      streak: 0,
-      longestStreak: 0,
-      totalDistance: 0,
-      totalRuns: 0,
-      totalTime: 0,
-      bestPace: 0,
-      rank: 0,
-      joinDate: Date.now(),
-      lastActive: new Date()
+      stats: {
+        totalRuns: 0,
+        totalDistance: 0,
+        totalTime: 0,
+        averagePace: '0:00',
+        bestPace: '0:00',
+        longestStreak: 0,
+        currentStreak: 0,
+        totalElevation: 0,
+        totalCalories: 0,
+        personalBests: {
+          '5k': '0:00',
+          '10k': '0:00',
+          'half_marathon': '0:00',
+          'marathon': '0:00'
+        },
+        weeklyDistance: 0,
+        monthlyDistance: 0,
+        yearlyDistance: 0,
+        weeklyGoal: 0,
+        monthlyGoal: 0,
+        yearlyGoal: 0,
+        goalCompletion: 0
+      },
+      preferences: {
+        showAchievements: true,
+        showCollectibles: true,
+        showStats: true,
+        showRank: true,
+        notifications: true,
+        privacy: 'public'
+      },
+      lastUpdated: Date.now(),
+      createdAt: Date.now()
     };
 
     this.userProfiles.push(newProfile);
@@ -528,15 +803,15 @@ export class GamificationManager {
     const profile = this.getUserProfile(userId);
     if (!profile) return false;
 
-    profile.totalDistance += distance;
-    profile.totalRuns += 1;
-    profile.totalTime += time;
+    profile.stats.totalDistance += distance;
+    profile.stats.totalRuns += 1;
+    profile.stats.totalTime += time;
     
-    if (pace > 0 && (profile.bestPace === 0 || pace < profile.bestPace)) {
-      profile.bestPace = pace;
+    if (pace > 0 && (profile.stats.bestPace === '0:00' || pace < profile.stats.bestPace)) {
+      profile.stats.bestPace = pace.toFixed(2); // Formato HH:MM
     }
 
-    profile.lastActive = new Date();
+    profile.lastUpdated = Date.now();
 
     // Verificar conquistas
     this.checkAchievements(userId);
@@ -566,13 +841,13 @@ export class GamificationManager {
 
         switch (req.type) {
           case 'distance':
-            currentValue = profile.totalDistance;
+            currentValue = profile.stats.totalDistance;
             break;
           case 'streak':
-            currentValue = profile.streak;
+            currentValue = profile.stats.currentStreak;
             break;
           case 'speed':
-            currentValue = profile.bestPace > 0 ? 60 / profile.bestPace : 0; // km/h
+            currentValue = profile.stats.bestPace !== '0:00' ? 60 / parseFloat(profile.stats.bestPace) : 0; // km/h
             break;
           case 'social':
             // Implementar lógica social
@@ -580,6 +855,14 @@ export class GamificationManager {
             break;
           case 'charity':
             // Implementar lógica de caridade
+            currentValue = 0;
+            break;
+          case 'challenge':
+            // Implementar lógica de desafios
+            currentValue = 0;
+            break;
+          case 'combination':
+            // Implementar lógica de combinação
             currentValue = 0;
             break;
         }
@@ -609,7 +892,7 @@ export class GamificationManager {
     if (!profile || !achievement) return;
 
     profile.achievements.push(achievementId);
-    profile.totalPoints += achievement.points;
+    profile.currentPoints += achievement.points;
     achievement.unlockedAt = Date.now();
 
     // Verificar se desbloqueia colecionáveis
@@ -625,11 +908,9 @@ export class GamificationManager {
       if (profile.collectibles.includes(collectible.id)) return;
 
       // Lógica para desbloquear colecionáveis baseada em conquistas
-      if (collectible.id === 'badge_beginner' && profile.totalRuns >= 1) {
+      if (collectible.id === 'collectible_badge_marathon_legend' && profile.stats.totalDistance >= 5000) {
         this.unlockCollectible(userId, collectible.id);
-      } else if (collectible.id === 'badge_consistent' && profile.streak >= 30) {
-        this.unlockCollectible(userId, collectible.id);
-      } else if (collectible.id === 'medal_5k' && profile.totalDistance >= 5) {
+      } else if (collectible.id === 'collectible_title_legendary_runner' && profile.level >= 100 && profile.stats.currentStreak >= 365) {
         this.unlockCollectible(userId, collectible.id);
       }
     });
@@ -644,7 +925,7 @@ export class GamificationManager {
 
     profile.collectibles.push(collectibleId);
     collectible.isUnlocked = true;
-    collectible.unlockedAt = Date.now();
+    collectible.unlockDate = Date.now();
   }
 
   // Atualizar experiência e nível
@@ -653,7 +934,7 @@ export class GamificationManager {
     if (!profile) return;
 
     // Calcular experiência baseada em corridas e conquistas
-    const runExperience = profile.totalRuns * 50;
+    const runExperience = profile.stats.totalRuns * 50;
     const achievementExperience = profile.achievements.length * 100;
     const totalExperience = runExperience + achievementExperience;
 
@@ -673,22 +954,33 @@ export class GamificationManager {
       const entries = this.userProfiles
         .map(profile => {
           let value = 0;
-          switch (leaderboard.category) {
+          switch (leaderboard.metric) {
             case 'distance':
-              value = profile.totalDistance;
+              value = profile.stats.totalDistance;
+              break;
+            case 'time':
+              value = profile.stats.totalTime;
+              break;
+            case 'pace':
+              value = profile.stats.bestPace !== '0:00' ? 60 / parseFloat(profile.stats.bestPace) : 0; // km/h
+              break;
+            case 'elevation':
+              value = profile.stats.totalElevation;
+              break;
+            case 'calories':
+              value = profile.stats.totalCalories;
               break;
             case 'points':
-              value = profile.totalPoints;
+              value = profile.currentPoints;
+              break;
+            case 'xp':
+              value = profile.experience;
               break;
             case 'streak':
-              value = profile.streak;
+              value = profile.stats.currentStreak;
               break;
-            case 'speed':
-              value = profile.bestPace > 0 ? 60 / profile.bestPace : 0;
-              break;
-            case 'charity':
-              // Implementar lógica de caridade
-              value = 0;
+            case 'achievements':
+              value = profile.achievements.length;
               break;
           }
 
@@ -736,7 +1028,7 @@ export class GamificationManager {
   // Obter quests ativas do usuário
   public getUserQuests(userId: string): Quest[] {
     return this.quests.filter(quest => 
-      quest.expiresAt > Date.now() && !quest.isCompleted
+      quest.endDate > Date.now() && !quest.isCompleted
     );
   }
 
