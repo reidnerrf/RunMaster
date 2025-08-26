@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, Text } from 'react-native';
 import type { TrackPoint } from '../hooks/useRunTracker';
 import { useTheme } from '../hooks/useTheme';
 import MapTrace from './MapTrace';
@@ -15,9 +15,10 @@ export type MapLiveProps = {
   showLighting?: boolean;
   showAirQuality?: boolean;
   showWeather?: boolean;
+  overlayMetrics?: { distanceKm: number; paceStr: string; calories: number } | null;
 };
 
-export default function MapLive({ points, height = 260, pois = [], showLighting, showAirQuality, showWeather }: MapLiveProps) {
+export default function MapLive({ points, height = 260, pois = [], showLighting, showAirQuality, showWeather, overlayMetrics }: MapLiveProps) {
   const { theme } = useTheme();
   const mapRef = useRef<any>(null);
   const [aqLayer, setAqLayer] = useState<any[] | null>(null);
@@ -130,6 +131,12 @@ export default function MapLive({ points, height = 260, pois = [], showLighting,
           </Marker>
         ))}
       </MapView>
+      {overlayMetrics && (
+        <View style={[styles.overlay, { backgroundColor: 'rgba(38,38,38,0.85)', borderColor: theme.colors.border }]}> 
+          <Text style={[styles.ovTitle, { color: '#fff' }]}>{overlayMetrics.paceStr}</Text>
+          <Text style={{ color: '#fff' }}>{overlayMetrics.distanceKm.toFixed(2)} km • {overlayMetrics.calories} kcal</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -154,4 +161,6 @@ function aqColor(aqi: number): string {
 
 const styles = StyleSheet.create({
   poiDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2 },
+  overlay: { position: 'absolute', left: 12, right: 12, bottom: 12, borderRadius: 16, padding: 12, borderWidth: 1 },
+  ovTitle: { fontSize: 20, fontWeight: '900' },
 });

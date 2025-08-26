@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme, Theme as NavTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Toaster } from 'sonner-native';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -21,6 +21,12 @@ import { API_BASE_URL } from './Lib/config';
 import RunSummaryScreen from './Screens/RunSummaryScreen';
 import RouteDetailScreen from './Screens/routes/RouteDetailScreen';
 import SavedRoutesScreen from './Screens/routes/SavedRoutesScreen';
+import OnboardingScreen from './Screens/auth/OnboardingScreen';
+import PostSignupScreen from './Screens/auth/PostSignupScreen';
+import GoalsScreen from './Screens/profile/GoalsScreen';
+import CreateRouteScreen from './Screens/routes/CreateRouteScreen';
+import { useOnboarding } from './hooks/useOnboarding';
+let useFonts: any = () => [true]; try { useFonts = require('expo-font').useFonts; } catch {}
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -44,6 +50,9 @@ function RootStack() {
           <Stack.Screen name="Upgrade" component={UpgradeScreen} />
           <Stack.Screen name="ConnectSpotify" component={ConnectSpotifyScreen} />
           <Stack.Screen name="ConnectWatch" component={ConnectWatchScreen} />
+          <Stack.Screen name="Goals" component={GoalsScreen} />
+          <Stack.Screen name="CreateRoute" component={CreateRouteScreen} />
+          <Stack.Screen name="PostSignup" component={PostSignupScreen} />
         </>
       ) : (
         <>
@@ -61,11 +70,14 @@ function RootStack() {
 function AuthStackScreens() {
   // Small nested stack for auth screens
   const AuthStack = createNativeStackNavigator();
+  const { onboardingDone } = useOnboarding();
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      {!onboardingDone && <AuthStack.Screen name="Onboarding" component={OnboardingScreen} />}
       <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Signup" component={SignupScreen} />
+      <AuthStack.Screen name="PostSignup" component={PostSignupScreen} />
     </AuthStack.Navigator>
   );
 }
@@ -74,6 +86,20 @@ export default function App() {
   React.useEffect(() => {
     setApiBaseUrl(API_BASE_URL);
   }, []);
+
+  const [fontsLoaded] = useFonts({
+    EuclidCircularA: require('./assets/fonts/SpaceMono-Regular.ttf'),
+  });
+
+  React.useEffect(() => {
+    if (fontsLoaded) {
+      // set default font for all Text components
+      // @ts-ignore
+      if (!Text.defaultProps) Text.defaultProps = {};
+      // @ts-ignore
+      Text.defaultProps.style = [Text.defaultProps.style, { fontFamily: 'EuclidCircularA' }];
+    }
+  }, [fontsLoaded]);
 
   return (
     <SafeAreaProvider style={styles.container}>

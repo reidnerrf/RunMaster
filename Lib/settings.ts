@@ -8,8 +8,15 @@ export type SafetyLayers = {
   weather: boolean;
 };
 
+export type RoutePrefs = {
+  saferAtNight?: boolean;
+  avoidHills?: boolean;
+  circularLoop?: boolean;
+};
+
 export type AppSettings = {
   safetyLayers: SafetyLayers;
+  routePrefs?: RoutePrefs;
   spotifyConnected?: boolean;
   appleMusicConnected?: boolean;
   healthConnected?: boolean;
@@ -17,6 +24,7 @@ export type AppSettings = {
 
 const DEFAULT_SETTINGS: AppSettings = {
   safetyLayers: { lighting: false, airQuality: false, weather: false },
+  routePrefs: { saferAtNight: false, avoidHills: false, circularLoop: true },
   spotifyConnected: false,
   appleMusicConnected: false,
   healthConnected: false,
@@ -27,7 +35,7 @@ export async function getSettings(): Promise<AppSettings> {
   if (!raw) return { ...DEFAULT_SETTINGS };
   try {
     const parsed = JSON.parse(raw);
-    return { ...DEFAULT_SETTINGS, ...parsed, safetyLayers: { ...DEFAULT_SETTINGS.safetyLayers, ...(parsed.safetyLayers || {}) } } as AppSettings;
+    return { ...DEFAULT_SETTINGS, ...parsed, safetyLayers: { ...DEFAULT_SETTINGS.safetyLayers, ...(parsed.safetyLayers || {}) }, routePrefs: { ...DEFAULT_SETTINGS.routePrefs, ...(parsed.routePrefs || {}) } } as AppSettings;
   } catch {
     return { ...DEFAULT_SETTINGS };
   }
@@ -39,6 +47,7 @@ export async function setSettings(s: Partial<AppSettings>) {
     ...prev,
     ...s,
     safetyLayers: { ...prev.safetyLayers, ...(s.safetyLayers || {}) },
+    routePrefs: { ...prev.routePrefs, ...(s.routePrefs || {}) },
   };
   await Storage.setItem(SETTINGS_KEY, JSON.stringify(next));
   return next;
@@ -46,5 +55,9 @@ export async function setSettings(s: Partial<AppSettings>) {
 
 export async function setSafetyLayers(patch: Partial<SafetyLayers>) {
   return setSettings({ safetyLayers: patch as any });
+}
+
+export async function setRoutePrefs(patch: Partial<RoutePrefs>) {
+  return setSettings({ routePrefs: patch as any });
 }
 

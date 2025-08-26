@@ -1,7 +1,9 @@
 export type AuthStackParamList = {
+  Onboarding?: undefined;
   Welcome: undefined;
   Login: undefined;
   Signup: undefined;
+  PostSignup?: undefined;
 };
 
 export type MainTabParamList = {
@@ -23,4 +25,7 @@ export type RootStackParamList = {
   RouteDetail: { id: string };
   SavedRoutes: undefined;
   RunSummary: { runId: string };
+  Goals: undefined;
+  CreateRoute: undefined;
+  PostSignup: undefined;
 };

@@ -17,6 +17,13 @@ import { formatHHMMSS, useRunTracker } from '../hooks/useRunTracker';
 import { useTheme } from '../hooks/useTheme';
 import { addRun } from '../Lib/runStore';
 import { getSettings, setSafetyLayers } from '../Lib/settings';
+import { buildMockRoute, nextTbt, TbtStep } from '../Lib/tbt';
+import TbtOverlay from '../components/TbtOverlay';
+import { cueHaptic, speakInstruction } from '../Lib/tbt_voice';
+import BackToStartBadge from '../components/BackToStartBadge';
+import { buildShareUrl, getLive, pingLive, startLive, stopLive } from '../Lib/live';
+import * as Clipboard from 'expo-clipboard';
+import * as Linking from 'expo-linking';
 
 export default function RunScreen() {
   const nav = useNavigation();
@@ -34,9 +41,60 @@ export default function RunScreen() {
 
   const [livePois, setLivePois] = useState<{ id: string; latitude: number; longitude: number; type: 'water'|'toilet'|'park'|'challenge'|'collectible'; label?: string }[]>([]);
 
+  // TBT mock steps (centrados no primeiro ponto quando disponível)
+  const [tbtSteps, setTbtSteps] = useState<TbtStep[] | null>(null);
+  const [tbtIdx, setTbtIdx] = useState(0);
+  const [tbtInfo, setTbtInfo] = useState<{ instruction?: string; distanceM?: number; offRoute?: boolean } | null>(null);
+  const lastCueRef = useRef<'100'|'20'|null>(null);
+
+  const [liveLink, setLiveLink] = useState<string | null>(null);
+  const startPointRef = useRef<{ lat: number; lon: number } | null>(null);
+
+  useEffect(() => {
+    const p = state.path[0];
+    const center = p ? { lat: p.latitude, lon: p.longitude } : { lat: -23.55, lon: -46.63 };
+    setTbtSteps(buildMockRoute(center));
+  }, []);
+
+  useEffect(() => {
+    if (!tbtSteps || state.path.length === 0) return;
+    const last = state.path[state.path.length - 1];
+    const nxt = nextTbt({ lat: last.latitude, lon: last.longitude }, tbtSteps, tbtIdx);
+    setTbtIdx(nxt.currentIndex);
+    setTbtInfo({ instruction: nxt.nextInstruction, distanceM: nxt.distanceToNextM, offRoute: nxt.offRoute });
+    if (nxt.nextInstruction && typeof nxt.distanceToNextM === 'number') {
+      const d = nxt.distanceToNextM;
+      if (d <= 25 && lastCueRef.current !== '20') { lastCueRef.current = '20'; cueHaptic(20); speakInstruction('Agora ' + nxt.nextInstruction.toLowerCase()); }
+      else if (d <= 120 && lastCueRef.current !== '100') { lastCueRef.current = '100'; cueHaptic(100); speakInstruction('Em 100 metros: ' + nxt.nextInstruction.toLowerCase()); }
+      if (d > 150) lastCueRef.current = null;
+    }
+  }, [state.path, tbtSteps]);
+
   useEffect(() => {
     getSettings().then((s) => setLayers(s.safetyLayers)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (state.path[0] && !startPointRef.current) startPointRef.current = { lat: state.path[0].latitude, lon: state.path[0].longitude };
+  }, [state.path]);
+
+  useEffect(() => { (async () => { const s = await getLive(); if (s?.active) setLiveLink(buildShareUrl(s.id)); })(); }, []);
+  useEffect(() => {
+    if (!liveLink) return; const t = setInterval(() => { pingLive().catch(() => {}); }, 15000); return () => clearInterval(t);
+  }, [liveLink]);
+
+  const toggleLive = async () => {
+    if (liveLink) { await stopLive(); setLiveLink(null); return; }
+    const s = await startLive(); setLiveLink(buildShareUrl(s.id));
+  };
+
+  const shareOrCopy = async () => {
+    if (!liveLink) return; try { await Clipboard.setStringAsync(liveLink); } catch {}
+  };
+
+  const callSOS = async () => {
+    const tel = 'tel:190'; try { await Linking.openURL(tel); } catch {}
+  };
 
   // Start automatically with 3-2-1 for guided workouts
   useEffect(() => {
@@ -89,7 +147,9 @@ export default function RunScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} />
+      <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} overlayMetrics={{ distanceKm: state.distanceKm, paceStr: state.paceStr, calories: state.calories }} />
+        <TbtOverlay instruction={tbtInfo?.instruction} distanceM={tbtInfo?.distanceM} offRoute={tbtInfo?.offRoute} />
+        <BackToStartBadge start={startPointRef.current || undefined} current={state.path[state.path.length-1] ? { lat: state.path[state.path.length-1].latitude, lon: state.path[state.path.length-1].longitude } : undefined} />
         {state.isAutoPaused && (
           <View style={[styles.autoPauseBadge, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={{ color: theme.colors.muted }}>Pausado automaticamente</Text>
@@ -125,7 +185,7 @@ export default function RunScreen() {
 
         <AnimatedBadge label={state.distanceKm >= 1 ? '🔥 Acelere!' : 'Vamos!'} />
 
-        <View style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}>
+        <View style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}> 
           <Text style={[styles.coachTitle, { color: theme.colors.text }]}>Camadas de segurança</Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
             <Text style={{ color: theme.colors.text }}>Iluminação</Text>
@@ -142,14 +202,14 @@ export default function RunScreen() {
         </View>
 
         {!isPremium && (
-          <Pressable onPress={requirePremium(() => {}, 'run_coach')} style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}>
+          <Pressable onPress={requirePremium(() => {}, 'run_coach')} style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}> 
             <Text style={[styles.coachTitle, { color: theme.colors.text }]}>Coach Virtual (Premium)</Text>
             <Text style={[styles.coachBody, { color: theme.colors.muted }]}>Dicas por áudio adaptadas ao seu ritmo</Text>
           </Pressable>
         )}
       </ScrollView>
 
-      <View style={[styles.bottomBar, theme.shadows.light, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border, paddingBottom: 10 + insets.bottom }]}>
+      <View style={[styles.bottomBar, theme.shadows.light, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border, paddingBottom: 10 + insets.bottom }]}> 
         {state.status === 'running' ? (
           <ActionButton label="Pausar" color="#FFD166" textColor="#1E1E1E" onPress={pause} />
         ) : (
@@ -157,6 +217,9 @@ export default function RunScreen() {
         )}
         <ActionButton label="Finalizar" color="#EF476F" onPress={finishRun} />
         <IconButton onPress={() => {}} color="#1DB954"><Text>🎵</Text></IconButton>
+        <IconButton onPress={toggleLive} color={liveLink ? '#FF7E47' : '#95A5A6'}><Text>📡</Text></IconButton>
+        <IconButton onPress={shareOrCopy} color="#8E44AD"><Text>🔗</Text></IconButton>
+        <IconButton onPress={callSOS} color="#E74C3C"><Text>🆘</Text></IconButton>
       </View>
 
       {countdown !== null && (
