@@ -33,6 +33,7 @@ export default function POIOverlay({ path, enabled, onPoisChanged }: { path: Tra
         longitude: start.longitude + (Math.random() - 0.5) * 0.002,
       }));
       setPois(gen);
+      if (onPoisChanged) onPoisChanged(gen);
     }
   }, [enabled, path, pois.length]);
 
@@ -46,6 +47,7 @@ export default function POIOverlay({ path, enabled, onPoisChanged }: { path: Tra
       }
       return p;
     }));
+    if (onPoisChanged) onPoisChanged(pois);
   }, [enabled, path, pois.length]);
 
   // notify host about POIs to show markers on the map

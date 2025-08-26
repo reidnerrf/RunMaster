@@ -31,6 +31,7 @@ export default function RunScreen() {
   const [countdown, setCountdown] = useState<number | null>(null);
   const startedRef = useRef(false);
   const [layers, setLayers] = useState({ lighting: false, airQuality: false, weather: false });
+<<<<
   const [poiMarkers, setPoiMarkers] = useState<{ id: string; latitude: number; longitude: number; type: 'collectible' | 'challenge'; label?: string }[]>([]);
 
   useEffect(() => {
@@ -89,7 +90,8 @@ export default function RunScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={{ position: 'relative' }}>
-        <MapLive points={state.path} pois={poiMarkers} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} />
+
+        {state.path} pois={poiMarkers} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} />
         {state.isAutoPaused && (
           <View style={[styles.autoPauseBadge, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={{ color: theme.colors.muted }}>Pausado automaticamente</Text>
