@@ -6,13 +6,16 @@ import { getSettings, setSettings } from '../Lib/settings';
 export default function ConnectSpotifyScreen() {
   const [connected, setConnected] = useState(false);
 
-
-  React.useEffect(() => { getSettings().then((s) => setConnected(!!s.spotifyConnected)); }, []);
+  useEffect(() => {
+    getSettings().then((s) => setConnected(!!s.spotifyConnected)).catch(() => {});
+  }, []);
 
   const handleConnect = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    setConnected(true);
-    await setSettings({ spotifyConnected: true });
+    const next = !connected;
+    setConnected(next);
+    try { await setSettings({ spotifyConnected: next }); } catch {}
+
   };
 
   return (
