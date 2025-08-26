@@ -2,189 +2,147 @@ export interface Achievement {
   id: string;
   name: string;
   description: string;
-  category: 'distance' | 'streak' | 'speed' | 'social' | 'charity' | 'challenge' | 'special' | 'seasonal' | 'milestone' | 'competition';
-  difficulty: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
-  rarity: number; // 0-100 (percentual de usuários que possuem)
-  points: number;
-  xpReward: number;
-  icon: string;
-  isSecret: boolean;
-  isHidden: boolean;
-  requirements: AchievementRequirement[];
-  rewards: AchievementReward[];
-  unlockedAt?: number;
-  progress?: number; // 0-100
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
-  maxTier: number; // máximo de vezes que pode ser desbloqueado
-  currentTier: number;
-  isRepeatable: boolean;
-  cooldown?: number; // tempo em ms entre desbloqueios
-  lastUnlocked?: number;
-}
-
-export interface AchievementRequirement {
-  type: 'distance' | 'time' | 'count' | 'streak' | 'speed' | 'elevation' | 'social' | 'charity' | 'challenge' | 'combination';
-  value: number;
-  unit?: string;
-  condition: 'greater_than' | 'less_than' | 'equal_to' | 'multiple_of' | 'consecutive' | 'total';
-  timeframe?: number; // ms
-  location?: string;
-  weather?: string;
-  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
-  dayOfWeek?: number[]; // 0-6 (domingo-sábado)
-  month?: number[]; // 1-12
-  season?: 'spring' | 'summer' | 'autumn' | 'winter';
-  equipment?: string[];
-  route?: string;
-  companion?: string;
-  challenge?: string;
-  social?: {
-    followers: number;
-    likes: number;
-    shares: number;
-    comments: number;
+  category: 'distance' | 'streak' | 'speed' | 'social' | 'charity' | 'challenge' | 'ghost_run' | 'biomechanics' | 'wellness' | 'territory' | 'mentorship' | 'ar_navigation';
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'legendary' | 'mythic';
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'master';
+  requirements: {
+    type: 'single' | 'cumulative' | 'consecutive' | 'time_based' | 'combination';
+    value: number;
+    unit?: string;
+    timeFrame?: number; // em dias
+    conditions?: string[];
+    milestones?: number[];
   };
-}
-
-export interface AchievementReward {
-  type: 'points' | 'xp' | 'badge' | 'title' | 'item' | 'currency' | 'feature' | 'discount';
-  value: number | string;
-  description: string;
-  isUnlocked: boolean;
+  rewards: {
+    points: number;
+    xp: number;
+    badges: string[];
+    titles: string[];
+    specialEffects?: string[];
+    unlockables?: string[];
+  };
+  isHidden: boolean;
+  isSecret: boolean;
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
+  unlockDate?: number;
+  progress?: number;
+  maxProgress?: number;
 }
 
 export interface Collectible {
   id: string;
   name: string;
   description: string;
-  category: 'badge' | 'medal' | 'trophy' | 'title' | 'emote' | 'avatar' | 'banner' | 'theme' | 'sound' | 'animation';
+  type: 'badge' | 'medal' | 'trophy' | 'title' | 'emote' | 'avatar_frame' | 'route_skin' | 'sound_effect' | 'animation' | 'special_item';
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
-  rarityScore: number; // 0-1000
-  points: number;
-  xpReward: number;
-  icon: string;
-  isAnimated: boolean;
-  isLimited: boolean;
-  availableUntil?: number;
-  isSeasonal: boolean;
-  season?: string;
-  year?: number;
-  collection: string;
-  setSize: number;
-  currentSet: number;
-  isComplete: boolean;
-  unlockMethod: 'achievement' | 'purchase' | 'event' | 'challenge' | 'social' | 'random' | 'special';
-  requirements?: CollectibleRequirement[];
-  tradeable: boolean;
-  giftable: boolean;
-  marketValue: number;
+  category: 'achievement' | 'event' | 'seasonal' | 'limited' | 'challenge' | 'social' | 'premium';
+  unlockCondition: string;
   unlockDate?: number;
-}
-
-export interface CollectibleRequirement {
-  type: 'level' | 'achievement' | 'points' | 'social' | 'charity' | 'challenge' | 'time' | 'location';
-  value: number | string;
-  condition: 'greater_than' | 'less_than' | 'equal_to' | 'completed' | 'owned';
+  isEquipped: boolean;
+  isTradeable: boolean;
+  isLimited: boolean;
+  expirationDate?: number;
+  collection?: string;
+  set?: string;
+  powerLevel?: number;
+  specialEffects?: string[];
 }
 
 export interface UserProfile {
-  userId: string;
+  id: string;
   level: number;
-  experience: number;
+  xp: number;
+  totalXp: number;
+  points: number;
   totalPoints: number;
-  currentPoints: number;
-  rank: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'master' | 'grandmaster' | 'legend';
-  rankProgress: number; // 0-100
-  achievements: string[]; // IDs das conquistas
-  collectibles: string[]; // IDs dos colecionáveis
+  rank: 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'grandmaster' | 'legend' | 'mythic';
+  title: string;
   badges: string[];
-  titles: string[];
+  achievements: string[];
+  collectibles: string[];
   stats: {
     totalRuns: number;
     totalDistance: number;
     totalTime: number;
     averagePace: string;
-    bestPace: string;
     longestStreak: number;
     currentStreak: number;
-    totalElevation: number;
+    fastest5k: string;
+    fastest10k: string;
+    fastestHalfMarathon: string;
+    fastestMarathon: string;
     totalCalories: number;
-    personalBests: {
-      '5k': string;
-      '10k': string;
-      'half_marathon': string;
-      'marathon': string;
-    };
-    weeklyDistance: number;
-    monthlyDistance: number;
-    yearlyDistance: number;
-    weeklyGoal: number;
-    monthlyGoal: number;
-    yearlyGoal: number;
-    goalCompletion: number; // percentual
+    totalElevation: number;
+    totalRoutes: number;
+    ghostRunsCompleted: number;
+    eventsParticipated: number;
+    challengesCompleted: number;
+    socialActionsCompleted: number;
+    mentorshipSessions: number;
+    arRoutesCompleted: number;
+    biomechanicsSessions: number;
   };
   preferences: {
-    showAchievements: boolean;
-    showCollectibles: boolean;
-    showStats: boolean;
-    showRank: boolean;
-    notifications: boolean;
-    privacy: 'public' | 'friends' | 'private';
+    favoriteDistance: string;
+    favoriteSurface: string;
+    favoriteTimeOfDay: string;
+    goals: string[];
+    challenges: string[];
+  };
+  inventory: {
+    badges: string[];
+    medals: string[];
+    trophies: string[];
+    titles: string[];
+    emotes: string[];
+    avatarFrames: string[];
+    routeSkins: string[];
+    soundEffects: string[];
+    animations: string[];
+    specialItems: string[];
+  };
+  progress: {
+    currentLevelXp: number;
+    nextLevelXp: number;
+    levelProgress: number;
+    rankProgress: number;
+    achievementProgress: number;
+    collectionProgress: number;
   };
   lastUpdated: number;
-  createdAt: number;
 }
 
 export interface Leaderboard {
   id: string;
   name: string;
-  type: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'all_time' | 'event' | 'challenge' | 'category';
-  category?: string;
-  metric: 'distance' | 'time' | 'pace' | 'elevation' | 'calories' | 'points' | 'xp' | 'streak' | 'achievements';
+  type: 'daily' | 'weekly' | 'monthly' | 'seasonal' | 'all_time' | 'event' | 'challenge';
+  category: 'distance' | 'speed' | 'streak' | 'points' | 'achievements' | 'social' | 'overall';
   timeFrame: {
     start: number;
     end: number;
   };
-  participants: number;
-  entries: LeaderboardEntry[];
+  entries: Array<{
+    userId: string;
+    username: string;
+    avatarUrl?: string;
+    value: number;
+    unit: string;
+    rank: number;
+    previousRank?: number;
+    change: 'up' | 'down' | 'same' | 'new';
+    badges: string[];
+    title: string;
+    level: number;
+    xp: number;
+  }>;
+  totalParticipants: number;
   lastUpdated: number;
-  isActive: boolean;
-  rewards: LeaderboardReward[];
-  requirements: LeaderboardRequirement[];
-}
-
-export interface LeaderboardEntry {
-  userId: string;
-  username: string;
-  avatarUrl?: string;
-  rank: number;
-  value: number;
-  displayValue: string;
-  change: 'up' | 'down' | 'stable' | 'new';
-  previousRank?: number;
-  previousValue?: number;
-  metadata: {
-    runs: number;
-    distance: number;
-    time: number;
-    pace: string;
-    achievements: number;
-    collectibles: number;
+  rewards: {
+    top1: string[];
+    top3: string[];
+    top10: string[];
+    top100: string[];
   };
-  lastUpdated: number;
-}
-
-export interface LeaderboardReward {
-  type: 'points' | 'xp' | 'badge' | 'title' | 'item' | 'currency';
-  value: number | string;
-  rank: number; // rank mínimo para receber
-  description: string;
-}
-
-export interface LeaderboardRequirement {
-  type: 'level' | 'achievement' | 'points' | 'participation';
-  value: number | string;
-  condition: 'greater_than' | 'less_than' | 'equal_to' | 'completed';
 }
 
 export interface Quest {
@@ -192,62 +150,60 @@ export interface Quest {
   name: string;
   description: string;
   type: 'daily' | 'weekly' | 'monthly' | 'seasonal' | 'special' | 'event' | 'challenge';
-  category: 'distance' | 'time' | 'social' | 'charity' | 'exploration' | 'competition' | 'collection';
-  difficulty: 'easy' | 'medium' | 'hard' | 'extreme';
-  points: number;
-  xpReward: number;
-  requirements: QuestRequirement[];
-  rewards: QuestReward[];
-  startDate: number;
-  endDate: number;
-  isActive: boolean;
+  category: 'distance' | 'speed' | 'streak' | 'social' | 'exploration' | 'skill' | 'collection';
+  difficulty: 'easy' | 'medium' | 'hard' | 'expert' | 'legendary';
+  requirements: {
+    type: 'single' | 'multiple' | 'progressive' | 'time_based' | 'conditional';
+    tasks: Array<{
+      id: string;
+      description: string;
+      target: number;
+      current: number;
+      unit: string;
+      isCompleted: boolean;
+      reward: number;
+    }>;
+    timeLimit?: number; // em segundos
+    dependencies?: string[]; // IDs de outras quests
+  };
+  rewards: {
+    xp: number;
+    points: number;
+    badges: string[];
+    collectibles: string[];
+    specialRewards?: string[];
+  };
+  progress: number;
+  maxProgress: number;
   isCompleted: boolean;
-  progress: number; // 0-100
-  completedAt?: number;
-  isRepeatable: boolean;
-  cooldown?: number;
-  lastCompleted?: number;
-  completionCount: number;
-  maxCompletions: number;
+  isActive: boolean;
+  startDate: number;
+  endDate?: number;
+  completionDate?: number;
   streak: number;
   maxStreak: number;
 }
 
-export interface QuestRequirement {
-  type: 'distance' | 'time' | 'count' | 'streak' | 'speed' | 'elevation' | 'social' | 'charity' | 'challenge' | 'location' | 'weather' | 'timeOfDay' | 'combination';
-  value: number;
-  unit?: string;
-  condition: 'greater_than' | 'less_than' | 'equal_to' | 'multiple_of' | 'consecutive' | 'total' | 'average';
-  timeframe?: number;
-  location?: string;
-  weather?: string;
-  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
-  dayOfWeek?: number[];
-  month?: number[];
-  season?: 'spring' | 'summer' | 'autumn' | 'winter';
-  equipment?: string[];
-  route?: string;
-  companion?: string;
-  challenge?: string;
-  social?: {
-    followers: number;
-    likes: number;
-    shares: number;
-    comments: number;
-    invites: number;
-    groupActivities: number;
-  };
-}
-
-export interface QuestReward {
-  type: 'points' | 'xp' | 'badge' | 'title' | 'item' | 'currency' | 'feature' | 'discount' | 'bonus';
-  value: number | string;
+export interface Season {
+  id: string;
+  name: string;
   description: string;
-  isUnlocked: boolean;
-  bonus?: {
-    type: 'multiplier' | 'bonus_points' | 'extra_xp' | 'special_item';
-    value: number | string;
-    condition: string;
+  startDate: number;
+  endDate: number;
+  theme: string;
+  specialEvents: string[];
+  exclusiveRewards: string[];
+  leaderboards: string[];
+  challenges: string[];
+  isActive: boolean;
+  progress: number;
+  maxProgress: number;
+  rewards: {
+    bronze: string[];
+    silver: string[];
+    gold: string[];
+    platinum: string[];
+    diamond: string[];
   };
 }
 
@@ -257,794 +213,766 @@ export class GamificationManager {
   private userProfiles: UserProfile[] = [];
   private leaderboards: Leaderboard[] = [];
   private quests: Quest[] = [];
-  private collections: Map<string, string[]> = new Map();
+  private seasons: Season[] = [];
+  private currentSeason: Season | null = null;
 
   constructor() {
-    this.initializeAchievements();
+    this.initializeAdvancedAchievements();
     this.initializeCollectibles();
+    this.initializeSeasons();
     this.initializeQuests();
-    this.initializeLeaderboards();
   }
 
-  private initializeAchievements() {
-    const achievements: Achievement[] = [
-      // Conquistas de Distância - Níveis Difíceis
+  private initializeAdvancedAchievements() {
+    const advancedAchievements: Achievement[] = [
+      // Conquistas de Distância Avançadas
       {
-        id: 'achievement_distance_1000km',
-        name: 'Maratonista de Ferro',
-        description: 'Complete 1000km de corrida',
+        id: 'achievement_ultra_runner',
+        name: 'Ultra Runner',
+        description: 'Complete uma corrida de ultra maratona (50km+)',
         category: 'distance',
-        difficulty: 'legendary',
-        rarity: 2,
-        points: 1000,
-        xpReward: 5000,
-        icon: '🏃‍♂️',
-        isSecret: false,
+        difficulty: 'expert',
+        tier: 'platinum',
+        requirements: {
+          type: 'single',
+          value: 50,
+          unit: 'km',
+          conditions: ['single_run']
+        },
+        rewards: {
+          points: 1000,
+          xp: 5000,
+          badges: ['ultra_runner'],
+          titles: ['Ultra Runner'],
+          specialEffects: ['glow_effect'],
+          unlockables: ['ultra_route_access']
+        },
         isHidden: false,
-        requirements: [
-          {
-            type: 'distance',
-            value: 1000,
-            unit: 'km',
-            condition: 'greater_than'
-          }
-        ],
-        rewards: [
-          { type: 'badge', value: 'marathon_iron', description: 'Badge Maratonista de Ferro', isUnlocked: false },
-          { type: 'title', value: 'Maratonista de Ferro', description: 'Título exclusivo', isUnlocked: false }
-        ],
-        tier: 'diamond',
-        maxTier: 5,
-        currentTier: 1,
-        isRepeatable: true,
-        cooldown: 30 * 24 * 60 * 60 * 1000 // 30 dias
+        isSecret: false,
+        rarity: 'epic'
       },
       
       {
-        id: 'achievement_distance_5000km',
-        name: 'Ultra Maratonista',
-        description: 'Complete 5000km de corrida',
+        id: 'achievement_century_run',
+        name: 'Century Runner',
+        description: 'Complete uma corrida de 100km em uma única sessão',
         category: 'distance',
-        difficulty: 'mythic',
-        rarity: 0.5,
-        points: 5000,
-        xpReward: 25000,
-        icon: '🏃‍♂️',
-        isSecret: false,
-        isHidden: false,
-        requirements: [
-          {
-            type: 'distance',
-            value: 5000,
-            unit: 'km',
-            condition: 'greater_than'
-          }
-        ],
-        rewards: [
-          { type: 'badge', value: 'ultra_marathon', description: 'Badge Ultra Maratonista', isUnlocked: false },
-          { type: 'title', value: 'Ultra Maratonista', description: 'Título lendário', isUnlocked: false }
-        ],
-        tier: 'diamond',
-        maxTier: 1,
-        currentTier: 1,
-        isRepeatable: false
-      },
-
-      // Conquistas de Streak - Extremamente Difíceis
-      {
-        id: 'achievement_streak_365',
-        name: 'Corredor do Ano',
-        description: 'Corra por 365 dias consecutivos',
-        category: 'streak',
-        difficulty: 'mythic',
-        rarity: 0.1,
-        points: 10000,
-        xpReward: 50000,
-        icon: '📅',
-        isSecret: false,
-        isHidden: false,
-        requirements: [
-          {
-            type: 'streak',
-            value: 365,
-            unit: 'days',
-            condition: 'consecutive'
-          }
-        ],
-        rewards: [
-          { type: 'badge', value: 'year_runner', description: 'Badge Corredor do Ano', isUnlocked: false },
-          { type: 'title', value: 'Corredor do Ano', description: 'Título mítico', isUnlocked: false },
-          { type: 'feature', value: 'exclusive_theme', description: 'Tema exclusivo', isUnlocked: false }
-        ],
-        tier: 'diamond',
-        maxTier: 1,
-        currentTier: 1,
-        isRepeatable: false
-      },
-
-      // Conquistas de Velocidade - Elite
-      {
-        id: 'achievement_speed_sub3_marathon',
-        name: 'Sub-3 Maratonista',
-        description: 'Complete uma maratona em menos de 3 horas',
-        category: 'speed',
         difficulty: 'legendary',
-        rarity: 1,
-        points: 2000,
-        xpReward: 10000,
-        icon: '⚡',
-        isSecret: false,
+        tier: 'diamond',
+        requirements: {
+          type: 'single',
+          value: 100,
+          unit: 'km',
+          conditions: ['single_run', 'no_breaks']
+        },
+        rewards: {
+          points: 5000,
+          xp: 25000,
+          badges: ['century_runner'],
+          titles: ['Century Runner', 'Iron Legs'],
+          specialEffects: ['fire_trail', 'legendary_aura'],
+          unlockables: ['century_club_access', 'special_medal']
+        },
         isHidden: false,
-        requirements: [
-          {
-            type: 'time',
-            value: 3 * 60 * 60, // 3 horas em segundos
-            unit: 'seconds',
-            condition: 'less_than'
-          },
-          {
-            type: 'distance',
-            value: 42.2,
-            unit: 'km',
-            condition: 'equal_to'
-          }
-        ],
-        rewards: [
-          { type: 'badge', value: 'sub3_marathon', description: 'Badge Sub-3', isUnlocked: false },
-          { type: 'title', value: 'Sub-3 Maratonista', description: 'Título de elite', isUnlocked: false }
-        ],
+        isSecret: false,
+        rarity: 'legendary'
+      },
+
+      // Conquistas de Velocidade Avançadas
+      {
+        id: 'achievement_speed_demon',
+        name: 'Speed Demon',
+        description: 'Mantenha pace de 3:00/km por 10km consecutivos',
+        category: 'speed',
+        difficulty: 'expert',
         tier: 'platinum',
-        maxTier: 1,
-        currentTier: 1,
-        isRepeatable: false
-      },
-
-      // Conquistas Sociais - Complexas
-      {
-        id: 'achievement_social_influencer',
-        name: 'Influenciador da Corrida',
-        description: 'Alcance 10.000 seguidores e inspire 1000 pessoas a correr',
-        category: 'social',
-        difficulty: 'epic',
-        rarity: 5,
-        points: 800,
-        xpReward: 4000,
-        icon: '🌟',
-        isSecret: false,
+        requirements: {
+          type: 'consecutive',
+          value: 10,
+          unit: 'km',
+          conditions: ['pace_3min_km', 'consecutive']
+        },
+        rewards: {
+          points: 800,
+          xp: 4000,
+          badges: ['speed_demon'],
+          titles: ['Speed Demon'],
+          specialEffects: ['speed_lines'],
+          unlockables: ['speed_training_plan']
+        },
         isHidden: false,
-        requirements: [
-          {
-            type: 'social',
-            value: 10000,
-            condition: 'greater_than',
-            social: { followers: 10000, likes: 0, shares: 0, comments: 0 }
-          },
-          {
-            type: 'social',
-            value: 1000,
-            condition: 'greater_than',
-            social: { followers: 0, likes: 0, shares: 0, comments: 0 }
-          }
-        ],
-        rewards: [
-          { type: 'badge', value: 'influencer', description: 'Badge Influenciador', isUnlocked: false },
-          { type: 'title', value: 'Influenciador da Corrida', description: 'Título social', isUnlocked: false }
-        ],
-        tier: 'gold',
-        maxTier: 1,
-        currentTier: 1,
-        isRepeatable: false
-      },
-
-      // Conquistas de Caridade - Especiais
-      {
-        id: 'achievement_charity_1000km',
-        name: 'Corredor Solidário',
-        description: 'Doe 1000km para causas sociais',
-        category: 'charity',
-        difficulty: 'epic',
-        rarity: 8,
-        points: 600,
-        xpReward: 3000,
-        icon: '❤️',
         isSecret: false,
-        isHidden: false,
-        requirements: [
-          {
-            type: 'charity',
-            value: 1000,
-            unit: 'km',
-            condition: 'greater_than'
-          }
-        ],
-        rewards: [
-          { type: 'badge', value: 'charity_runner', description: 'Badge Solidário', isUnlocked: false },
-          { type: 'title', value: 'Corredor Solidário', description: 'Título de caridade', isUnlocked: false }
-        ],
-        tier: 'gold',
-        maxTier: 1,
-        currentTier: 1,
-        isRepeatable: true,
-        cooldown: 90 * 24 * 60 * 60 * 1000 // 90 dias
+        rarity: 'epic'
       },
 
-      // Conquistas de Desafio - Extremamente Difíceis
+      // Conquistas de Streak Avançadas
       {
-        id: 'achievement_challenge_100_completed',
-        name: 'Mestre dos Desafios',
-        description: 'Complete 100 desafios diferentes',
+        id: 'achievement_streak_master',
+        name: 'Streak Master',
+        description: 'Mantenha uma sequência de 365 dias consecutivos',
+        category: 'streak',
+        difficulty: 'legendary',
+        tier: 'diamond',
+        requirements: {
+          type: 'consecutive',
+          value: 365,
+          unit: 'days',
+          conditions: ['daily_run', 'consecutive']
+        },
+        rewards: {
+          points: 10000,
+          xp: 50000,
+          badges: ['streak_master'],
+          titles: ['Streak Master', 'Year Runner'],
+          specialEffects: ['golden_aura', 'streak_counter'],
+          unlockables: ['streak_master_club', 'special_achievement']
+        },
+        isHidden: false,
+        isSecret: false,
+        rarity: 'legendary'
+      },
+
+      // Conquistas de Ghost Run Avançadas
+      {
+        id: 'achievement_ghost_hunter',
+        name: 'Ghost Hunter',
+        description: 'Complete 50 ghost runs diferentes',
+        category: 'ghost_run',
+        difficulty: 'advanced',
+        tier: 'gold',
+        requirements: {
+          type: 'cumulative',
+          value: 50,
+          unit: 'ghost_runs',
+          conditions: ['different_ghosts', 'completed']
+        },
+        rewards: {
+          points: 600,
+          xp: 3000,
+          badges: ['ghost_hunter'],
+          titles: ['Ghost Hunter'],
+          specialEffects: ['ghost_trail'],
+          unlockables: ['exclusive_ghost_runs']
+        },
+        isHidden: false,
+        isSecret: false,
+        rarity: 'rare'
+      },
+
+      // Conquistas de Biomecânica Avançadas
+      {
+        id: 'achievement_biomechanics_master',
+        name: 'Biomechanics Master',
+        description: 'Mantenha score de biomecânica acima de 95 por 30 dias consecutivos',
+        category: 'biomechanics',
+        difficulty: 'expert',
+        tier: 'platinum',
+        requirements: {
+          type: 'consecutive',
+          value: 30,
+          unit: 'days',
+          conditions: ['biomechanics_score_95', 'consecutive']
+        },
+        rewards: {
+          points: 1200,
+          xp: 6000,
+          badges: ['biomechanics_master'],
+          titles: ['Biomechanics Master'],
+          specialEffects: ['perfect_form_aura'],
+          unlockables: ['advanced_biomechanics_analysis']
+        },
+        isHidden: false,
+        isSecret: false,
+        rarity: 'epic'
+      },
+
+      // Conquistas de AR Navigation Avançadas
+      {
+        id: 'achievement_ar_explorer',
+        name: 'AR Explorer',
+        description: 'Complete 100 rotas usando navegação AR',
+        category: 'ar_navigation',
+        difficulty: 'advanced',
+        tier: 'gold',
+        requirements: {
+          type: 'cumulative',
+          value: 100,
+          unit: 'ar_routes',
+          conditions: ['ar_navigation', 'completed']
+        },
+        rewards: {
+          points: 700,
+          xp: 3500,
+          badges: ['ar_explorer'],
+          titles: ['AR Explorer'],
+          specialEffects: ['ar_glow'],
+          unlockables: ['exclusive_ar_routes']
+        },
+        isHidden: false,
+        isSecret: false,
+        rarity: 'rare'
+      },
+
+      // Conquistas de Mentoria Avançadas
+      {
+        id: 'achievement_mentorship_legend',
+        name: 'Mentorship Legend',
+        description: 'Complete 100 sessões de mentoria como mentor',
+        category: 'mentorship',
+        difficulty: 'legendary',
+        tier: 'diamond',
+        requirements: {
+          type: 'cumulative',
+          value: 100,
+          unit: 'mentorship_sessions',
+          conditions: ['as_mentor', 'completed']
+        },
+        rewards: {
+          points: 8000,
+          xp: 40000,
+          badges: ['mentorship_legend'],
+          titles: ['Mentorship Legend', 'Sage Runner'],
+          specialEffects: ['wisdom_aura', 'mentor_glow'],
+          unlockables: ['mentorship_hall_of_fame', 'special_title']
+        },
+        isHidden: false,
+        isSecret: false,
+        rarity: 'legendary'
+      },
+
+      // Conquistas Secretas/Míticas
+      {
+        id: 'achievement_runner_god',
+        name: 'Runner God',
+        description: 'Complete todas as conquistas de nível mítico',
         category: 'challenge',
         difficulty: 'mythic',
-        rarity: 0.2,
-        points: 8000,
-        xpReward: 40000,
-        icon: '🏆',
-        isSecret: false,
-        isHidden: false,
-        requirements: [
-          {
-            type: 'challenge',
-            value: 100,
-            condition: 'greater_than'
-          }
-        ],
-        rewards: [
-          { type: 'badge', value: 'challenge_master', description: 'Badge Mestre dos Desafios', isUnlocked: false },
-          { type: 'title', value: 'Mestre dos Desafios', description: 'Título supremo', isUnlocked: false },
-          { type: 'feature', value: 'custom_challenges', description: 'Criar desafios personalizados', isUnlocked: false }
-        ],
-        tier: 'diamond',
-        maxTier: 1,
-        currentTier: 1,
-        isRepeatable: false
-      },
-
-      // Conquistas Sazonais - Limitadas
-      {
-        id: 'achievement_seasonal_winter_warrior',
-        name: 'Guerreiro do Inverno',
-        description: 'Corra 100km em temperaturas abaixo de 0°C',
-        category: 'seasonal',
-        difficulty: 'rare',
-        rarity: 15,
-        points: 400,
-        xpReward: 2000,
-        icon: '❄️',
-        isSecret: false,
-        isHidden: false,
-        requirements: [
-          {
-            type: 'distance',
-            value: 100,
-            unit: 'km',
-            condition: 'greater_than'
-          },
-          {
-            type: 'weather',
-            value: 0,
-            unit: 'celsius',
-            condition: 'less_than'
-          },
-          {
-            type: 'season',
-            value: 1,
-            condition: 'equal_to',
-            season: 'winter'
-          }
-        ],
-        rewards: [
-          { type: 'badge', value: 'winter_warrior', description: 'Badge Guerreiro do Inverno', isUnlocked: false },
-          { type: 'title', value: 'Guerreiro do Inverno', description: 'Título sazonal', isUnlocked: false }
-        ],
-        tier: 'silver',
-        maxTier: 1,
-        currentTier: 1,
-        isRepeatable: true,
-        cooldown: 365 * 24 * 60 * 60 * 1000 // 1 ano
+        tier: 'master',
+        requirements: {
+          type: 'combination',
+          value: 1,
+          conditions: ['all_mythic_achievements'],
+          milestones: [10, 25, 50, 100]
+        },
+        rewards: {
+          points: 50000,
+          xp: 250000,
+          badges: ['runner_god'],
+          titles: ['Runner God', 'Divine Runner', 'Immortal'],
+          specialEffects: ['divine_aura', 'god_rays', 'celestial_music'],
+          unlockables: ['runner_god_club', 'exclusive_content', 'special_medal']
+        },
+        isHidden: true,
+        isSecret: true,
+        rarity: 'mythic'
       }
     ];
 
-    this.achievements.push(...achievements);
+    this.achievements.push(...advancedAchievements);
   }
 
   private initializeCollectibles() {
-    const collectibles: Collectible[] = [
-      // Coleções de Badges - Extremamente Raras
+    const advancedCollectibles: Collectible[] = [
+      // Badges Avançados
       {
-        id: 'collectible_badge_marathon_legend',
-        name: 'Badge Maratona Lendária',
-        description: 'Badge exclusivo para maratonistas lendários',
-        category: 'badge',
-        rarity: 'mythic',
-        rarityScore: 950,
-        points: 2000,
-        xpReward: 10000,
-        icon: '🏃‍♂️',
-        isAnimated: true,
-        isLimited: true,
-        availableUntil: Date.now() + 365 * 24 * 60 * 60 * 1000,
-        isSeasonal: false,
-        collection: 'marathon_legends',
-        setSize: 5,
-        currentSet: 1,
-        isComplete: false,
-        unlockMethod: 'achievement',
-        requirements: [
-          { type: 'achievement', value: 'achievement_distance_5000km', condition: 'completed' }
-        ],
-        tradeable: false,
-        giftable: false,
-        marketValue: 10000
+        id: 'badge_ultra_marathoner',
+        name: 'Ultra Marathoner',
+        description: 'Conquistado por completar uma ultra maratona',
+        type: 'badge',
+        rarity: 'epic',
+        category: 'achievement',
+        unlockCondition: 'Complete achievement_ultra_runner',
+        isEquipped: false,
+        isTradeable: false,
+        isLimited: false,
+        powerLevel: 85,
+        specialEffects: ['glow_effect']
       },
 
-      // Coleções de Títulos - Únicos
+      // Títulos Avançados
       {
-        id: 'collectible_title_legendary_runner',
-        name: 'Corredor Lendário',
-        description: 'Título exclusivo para corredores lendários',
-        category: 'title',
+        id: 'title_runner_god',
+        name: 'Runner God',
+        description: 'Título mítico para os maiores corredores',
+        type: 'title',
         rarity: 'mythic',
-        rarityScore: 1000,
-        points: 5000,
-        xpReward: 25000,
-        icon: '👑',
-        isAnimated: true,
+        category: 'achievement',
+        unlockCondition: 'Complete achievement_runner_god',
+        isEquipped: false,
+        isTradeable: false,
         isLimited: true,
-        availableUntil: Date.now() + 2 * 365 * 24 * 60 * 60 * 1000,
-        isSeasonal: false,
-        collection: 'legendary_titles',
-        setSize: 3,
-        currentSet: 1,
-        isComplete: false,
-        unlockMethod: 'achievement',
-        requirements: [
-          { type: 'level', value: 100, condition: 'greater_than' },
-          { type: 'achievement', value: 'achievement_streak_365', condition: 'completed' }
-        ],
-        tradeable: false,
-        giftable: false,
-        marketValue: 50000
+        powerLevel: 100,
+        specialEffects: ['divine_aura', 'god_rays']
+      },
+
+      // Medalhas Especiais
+      {
+        id: 'medal_century_club',
+        name: 'Century Club Medal',
+        description: 'Medalha exclusiva para membros do Century Club',
+        type: 'medal',
+        rarity: 'legendary',
+        category: 'achievement',
+        unlockCondition: 'Complete achievement_century_run',
+        isEquipped: false,
+        isTradeable: false,
+        isLimited: true,
+        powerLevel: 95,
+        specialEffects: ['golden_glow', 'precious_metal']
       }
     ];
 
-    this.collectibles.push(...collectibles);
+    this.collectibles.push(...advancedCollectibles);
+  }
+
+  private initializeSeasons() {
+    const newSeason: Season = {
+      id: 'season_2024_spring',
+      name: 'Spring Running 2024',
+      description: 'Temporada de primavera com foco em velocidade e resistência',
+      startDate: Date.now(),
+      endDate: Date.now() + 90 * 24 * 60 * 60 * 1000, // 90 dias
+      theme: 'Spring Speed',
+      specialEvents: ['spring_speed_challenge', 'flower_run_5k', 'spring_marathon'],
+      exclusiveRewards: ['spring_medal', 'flower_badge', 'speed_title'],
+      leaderboards: ['spring_speed', 'spring_distance', 'spring_achievements'],
+      challenges: ['spring_streak', 'speed_improvement', 'distance_goals'],
+      isActive: true,
+      progress: 0,
+      maxProgress: 1000,
+      rewards: {
+        bronze: ['spring_bronze_medal'],
+        silver: ['spring_silver_medal', 'spring_badge'],
+        gold: ['spring_gold_medal', 'spring_title'],
+        platinum: ['spring_platinum_medal', 'exclusive_spring_content'],
+        diamond: ['spring_diamond_medal', 'legendary_spring_reward']
+      }
+    };
+
+    this.seasons.push(newSeason);
+    this.currentSeason = newSeason;
   }
 
   private initializeQuests() {
-    const quests: Quest[] = [
-      // Quest Diária - Difícil
+    const advancedQuests: Quest[] = [
+      // Quest Diária Avançada
       {
-        id: 'quest_daily_ultra_distance',
-        name: 'Corredor de Ultra Distância',
-        description: 'Complete 30km em um único dia',
+        id: 'quest_daily_speed_challenge',
+        name: 'Speed Challenge',
+        description: 'Complete uma corrida com pace melhor que seu recorde pessoal',
         type: 'daily',
-        category: 'distance',
+        category: 'speed',
         difficulty: 'hard',
-        points: 300,
-        xpReward: 1500,
-        requirements: [
-          {
-            type: 'distance',
-            value: 30,
-            unit: 'km',
-            condition: 'greater_than',
-            timeframe: 24 * 60 * 60 * 1000 // 24 horas
-          }
-        ],
-        rewards: [
-          { type: 'points', value: 300, description: '300 pontos', isUnlocked: false },
-          { type: 'xp', value: 1500, description: '1500 XP', isUnlocked: false },
-          { type: 'bonus', value: 'streak_multiplier', description: 'Multiplicador de streak', isUnlocked: false }
-        ],
-        startDate: Date.now(),
-        endDate: Date.now() + 24 * 60 * 60 * 1000,
-        isActive: true,
-        isCompleted: false,
+        requirements: {
+          type: 'single',
+          tasks: [
+            {
+              id: 'task_beat_personal_record',
+              description: 'Corra com pace melhor que seu recorde pessoal',
+              target: 1,
+              current: 0,
+              unit: 'run',
+              isCompleted: false,
+              reward: 100
+            }
+          ]
+        },
+        rewards: {
+          xp: 200,
+          points: 50,
+          badges: ['speed_improver'],
+          collectibles: ['speed_medal']
+        },
         progress: 0,
-        isRepeatable: true,
-        cooldown: 24 * 60 * 60 * 1000,
-        completionCount: 0,
-        maxCompletions: 1,
+        maxProgress: 1,
+        isCompleted: false,
+        isActive: true,
+        startDate: Date.now(),
         streak: 0,
-        maxStreak: 7
+        maxStreak: 0
       },
 
-      // Quest Semanal - Extremamente Difícil
+      // Quest Semanal Avançada
       {
-        id: 'quest_weekly_marathon_training',
-        name: 'Treino de Maratona',
-        description: 'Complete 100km em uma semana com pelo menos 5 dias de treino',
+        id: 'quest_weekly_distance_master',
+        name: 'Distance Master',
+        description: 'Complete 50km em uma semana com pelo menos 5 corridas',
         type: 'weekly',
         category: 'distance',
-        difficulty: 'extreme',
-        points: 1000,
-        xpReward: 5000,
-        requirements: [
-          {
-            type: 'distance',
-            value: 100,
-            unit: 'km',
-            condition: 'greater_than',
-            timeframe: 7 * 24 * 60 * 60 * 1000 // 7 dias
-          },
-          {
-            type: 'count',
-            value: 5,
-            unit: 'days',
-            condition: 'greater_than',
-            timeframe: 7 * 24 * 60 * 60 * 1000
-          }
-        ],
-        rewards: [
-          { type: 'points', value: 1000, description: '1000 pontos', isUnlocked: false },
-          { type: 'xp', value: 5000, description: '5000 XP', isUnlocked: false },
-          { type: 'badge', value: 'marathon_training', description: 'Badge de Treino', isUnlocked: false }
-        ],
-        startDate: Date.now(),
-        endDate: Date.now() + 7 * 24 * 60 * 60 * 1000,
-        isActive: true,
-        isCompleted: false,
+        difficulty: 'expert',
+        requirements: {
+          type: 'multiple',
+          tasks: [
+            {
+              id: 'task_weekly_distance',
+              description: 'Complete 50km em uma semana',
+              target: 50,
+              current: 0,
+              unit: 'km',
+              isCompleted: false,
+              reward: 500
+            },
+            {
+              id: 'task_weekly_runs',
+              description: 'Complete pelo menos 5 corridas',
+              target: 5,
+              current: 0,
+              unit: 'runs',
+              isCompleted: false,
+              reward: 300
+            }
+          ]
+        },
+        rewards: {
+          xp: 1000,
+          points: 200,
+          badges: ['distance_master'],
+          collectibles: ['weekly_distance_medal']
+        },
         progress: 0,
-        isRepeatable: true,
-        cooldown: 7 * 24 * 60 * 60 * 1000,
-        completionCount: 0,
-        maxCompletions: 1,
+        maxProgress: 2,
+        isCompleted: false,
+        isActive: true,
+        startDate: Date.now(),
         streak: 0,
-        maxStreak: 4
+        maxStreak: 0
       }
     ];
 
-    this.quests.push(...quests);
+    this.quests.push(...advancedQuests);
   }
 
-  private initializeLeaderboards() {
-    const leaderboards: Leaderboard[] = [
-      // Leaderboard Mensal - Competitivo
-      {
-        id: 'leaderboard_monthly_distance',
-        name: 'Ranking Mensal de Distância',
-        type: 'monthly',
-        category: 'distance',
-        metric: 'distance',
-        timeFrame: {
-          start: Date.now(),
-          end: Date.now() + 30 * 24 * 60 * 60 * 1000
-        },
-        participants: 0,
-        entries: [],
-        lastUpdated: Date.now(),
-        isActive: true,
-        rewards: [
-          { type: 'badge', value: 'monthly_champion', description: 'Badge Campeão Mensal', rank: 1 },
-          { type: 'title', value: 'Campeão Mensal', description: 'Título de campeão', rank: 1 },
-          { type: 'points', value: 1000, description: '1000 pontos', rank: 1 },
-          { type: 'badge', value: 'monthly_runner', description: 'Badge Corredor Mensal', rank: 10 },
-          { type: 'points', value: 500, description: '500 pontos', rank: 10 }
-        ],
-        requirements: [
-          { type: 'level', value: 5, condition: 'greater_than' }
-        ]
-      }
-    ];
+  // Obter conquistas por dificuldade
+  public getAchievementsByDifficulty(difficulty: string): Achievement[] {
+    return this.achievements.filter(a => a.difficulty === difficulty);
+  }
 
-    this.leaderboards.push(...leaderboards);
+  // Obter conquistas por categoria
+  public getAchievementsByCategory(category: string): Achievement[] {
+    return this.achievements.filter(a => a.category === category);
+  }
+
+  // Obter conquistas por raridade
+  public getAchievementsByRarity(rarity: string): Achievement[] {
+    return this.achievements.filter(a => a.rarity === rarity);
+  }
+
+  // Obter conquistas secretas
+  public getSecretAchievements(): Achievement[] {
+    return this.achievements.filter(a => a.isSecret);
+  }
+
+  // Obter conquistas ocultas
+  public getHiddenAchievements(): Achievement[] {
+    return this.achievements.filter(a => a.isHidden);
+  }
+
+  // Obter conquistas por tier
+  public getAchievementsByTier(tier: string): Achievement[] {
+    return this.achievements.filter(a => a.tier === tier);
+  }
+
+  // Obter conquistas por usuário
+  public getUserAchievements(userId: string): Achievement[] {
+    const userProfile = this.userProfiles.find(p => p.id === userId);
+    if (!userProfile) return [];
+
+    return this.achievements.filter(a => 
+      userProfile.achievements.includes(a.id)
+    );
+  }
+
+  // Obter conquistas disponíveis para usuário
+  public getAvailableAchievements(userId: string): Achievement[] {
+    const userProfile = this.userProfiles.find(p => p.id === userId);
+    if (!userProfile) return [];
+
+    return this.achievements.filter(a => 
+      !userProfile.achievements.includes(a.id) && 
+      this.checkAchievementRequirements(a, userProfile)
+    );
+  }
+
+  // Verificar requisitos de conquista
+  private checkAchievementRequirements(achievement: Achievement, userProfile: UserProfile): boolean {
+    // Implementar lógica de verificação baseada nos requisitos
+    // Esta é uma implementação simplificada
+    return true;
+  }
+
+  // Obter colecionáveis por usuário
+  public getUserCollectibles(userId: string): Collectible[] {
+    const userProfile = this.userProfiles.find(p => p.id === userId);
+    if (!userProfile) return [];
+
+    return this.collectibles.filter(c => 
+      userProfile.collectibles.includes(c.id)
+    );
+  }
+
+  // Obter colecionáveis por raridade
+  public getCollectiblesByRarity(rarity: string): Collectible[] {
+    return this.collectibles.filter(c => c.rarity === rarity);
+  }
+
+  // Obter colecionáveis por categoria
+  public getCollectiblesByCategory(category: string): Collectible[] {
+    return this.collectibles.filter(c => c.category === category);
+  }
+
+  // Obter colecionáveis limitados
+  public getLimitedCollectibles(): Collectible[] {
+    return this.collectibles.filter(c => c.isLimited);
+  }
+
+  // Obter colecionáveis colecionáveis
+  public getCollectibleSets(): { [key: string]: Collectible[] } {
+    const sets: { [key: string]: Collectible[] } = {};
+    
+    this.collectibles.forEach(collectible => {
+      if (collectible.set) {
+        if (!sets[collectible.set]) {
+          sets[collectible.set] = [];
+        }
+        sets[collectible.set].push(collectible);
+      }
+    });
+
+    return sets;
   }
 
   // Obter perfil do usuário
   public getUserProfile(userId: string): UserProfile | undefined {
-    return this.userProfiles.find(profile => profile.userId === userId);
+    return this.userProfiles.find(p => p.id === userId);
   }
 
-  // Criar perfil do usuário
-  public createUserProfile(userId: string, username: string): UserProfile {
-    const existingProfile = this.getUserProfile(userId);
-    if (existingProfile) return existingProfile;
+  // Atualizar perfil do usuário
+  public updateUserProfile(userId: string, updates: Partial<UserProfile>): UserProfile | null {
+    const profile = this.userProfiles.find(p => p.id === userId);
+    if (!profile) return null;
 
-    const newProfile: UserProfile = {
-      userId,
-      username,
-      level: 1,
-      experience: 0,
-      totalPoints: 0,
-      currentPoints: 0,
-      rank: 'bronze',
-      rankProgress: 0,
-      achievements: [],
-      collectibles: [],
-      badges: [],
-      titles: [],
-      stats: {
-        totalRuns: 0,
-        totalDistance: 0,
-        totalTime: 0,
-        averagePace: '0:00',
-        bestPace: '0:00',
-        longestStreak: 0,
-        currentStreak: 0,
-        totalElevation: 0,
-        totalCalories: 0,
-        personalBests: {
-          '5k': '0:00',
-          '10k': '0:00',
-          'half_marathon': '0:00',
-          'marathon': '0:00'
-        },
-        weeklyDistance: 0,
-        monthlyDistance: 0,
-        yearlyDistance: 0,
-        weeklyGoal: 0,
-        monthlyGoal: 0,
-        yearlyGoal: 0,
-        goalCompletion: 0
-      },
-      preferences: {
-        showAchievements: true,
-        showCollectibles: true,
-        showStats: true,
-        showRank: true,
-        notifications: true,
-        privacy: 'public'
-      },
-      lastUpdated: Date.now(),
-      createdAt: Date.now()
-    };
-
-    this.userProfiles.push(newProfile);
-    return newProfile;
+    Object.assign(profile, updates);
+    profile.lastUpdated = Date.now();
+    return profile;
   }
 
-  // Atualizar estatísticas do usuário
-  public updateUserStats(
-    userId: string,
-    distance: number,
-    time: number,
-    pace: number
-  ): boolean {
-    const profile = this.getUserProfile(userId);
+  // Adicionar XP ao usuário
+  public addUserXP(userId: string, xp: number): boolean {
+    const profile = this.userProfiles.find(p => p.id === userId);
     if (!profile) return false;
 
-    profile.stats.totalDistance += distance;
-    profile.stats.totalRuns += 1;
-    profile.stats.totalTime += time;
+    profile.xp += xp;
+    profile.totalXp += xp;
     
-    if (pace > 0 && (profile.stats.bestPace === '0:00' || pace < profile.stats.bestPace)) {
-      profile.stats.bestPace = pace.toFixed(2); // Formato HH:MM
-    }
-
+    // Verificar se subiu de nível
+    this.checkLevelUp(profile);
+    
     profile.lastUpdated = Date.now();
-
-    // Verificar conquistas
-    this.checkAchievements(userId);
-
-    // Atualizar experiência e nível
-    this.updateExperienceAndLevel(userId);
-
-    // Atualizar rankings
-    this.updateLeaderboards();
-
     return true;
   }
 
-  // Verificar conquistas
-  private checkAchievements(userId: string): void {
-    const profile = this.getUserProfile(userId);
-    if (!profile) return;
-
-    this.achievements.forEach(achievement => {
-      if (profile.achievements.includes(achievement.id)) return; // Já desbloqueada
-
-      let isUnlocked = true;
-      let progress = 0;
-
-      achievement.requirements.forEach(req => {
-        let currentValue = 0;
-
-        switch (req.type) {
-          case 'distance':
-            currentValue = profile.stats.totalDistance;
-            break;
-          case 'streak':
-            currentValue = profile.stats.currentStreak;
-            break;
-          case 'speed':
-            currentValue = profile.stats.bestPace !== '0:00' ? 60 / parseFloat(profile.stats.bestPace) : 0; // km/h
-            break;
-          case 'social':
-            // Implementar lógica social
-            currentValue = 0;
-            break;
-          case 'charity':
-            // Implementar lógica de caridade
-            currentValue = 0;
-            break;
-          case 'challenge':
-            // Implementar lógica de desafios
-            currentValue = 0;
-            break;
-          case 'combination':
-            // Implementar lógica de combinação
-            currentValue = 0;
-            break;
-        }
-
-        if (currentValue < req.value) {
-          isUnlocked = false;
-        }
-
-        progress = Math.max(progress, Math.min(currentValue, req.value));
-      });
-
-      if (isUnlocked) {
-        this.unlockAchievement(userId, achievement.id);
-      } else {
-        // Atualizar progresso
-        achievement.progress = progress;
-        achievement.maxProgress = Math.max(...achievement.requirements.map(r => r.value));
-      }
-    });
-  }
-
-  // Desbloquear conquista
-  private unlockAchievement(userId: string, achievementId: string): void {
-    const profile = this.getUserProfile(userId);
-    const achievement = this.achievements.find(a => a.id === achievementId);
+  // Verificar se usuário subiu de nível
+  private checkLevelUp(profile: UserProfile): void {
+    const xpForNextLevel = this.calculateXPForLevel(profile.level + 1);
     
-    if (!profile || !achievement) return;
-
-    profile.achievements.push(achievementId);
-    profile.currentPoints += achievement.points;
-    achievement.unlockedAt = Date.now();
-
-    // Verificar se desbloqueia colecionáveis
-    this.checkCollectibles(userId);
-  }
-
-  // Verificar colecionáveis
-  private checkCollectibles(userId: string): void {
-    const profile = this.getUserProfile(userId);
-    if (!profile) return;
-
-    this.collectibles.forEach(collectible => {
-      if (profile.collectibles.includes(collectible.id)) return;
-
-      // Lógica para desbloquear colecionáveis baseada em conquistas
-      if (collectible.id === 'collectible_badge_marathon_legend' && profile.stats.totalDistance >= 5000) {
-        this.unlockCollectible(userId, collectible.id);
-      } else if (collectible.id === 'collectible_title_legendary_runner' && profile.level >= 100 && profile.stats.currentStreak >= 365) {
-        this.unlockCollectible(userId, collectible.id);
-      }
-    });
-  }
-
-  // Desbloquear colecionável
-  private unlockCollectible(userId: string, collectibleId: string): void {
-    const profile = this.getUserProfile(userId);
-    const collectible = this.collectibles.find(c => c.id === collectibleId);
-    
-    if (!profile || !collectible) return;
-
-    profile.collectibles.push(collectibleId);
-    collectible.isUnlocked = true;
-    collectible.unlockDate = Date.now();
-  }
-
-  // Atualizar experiência e nível
-  private updateExperienceAndLevel(userId: string): void {
-    const profile = this.getUserProfile(userId);
-    if (!profile) return;
-
-    // Calcular experiência baseada em corridas e conquistas
-    const runExperience = profile.stats.totalRuns * 50;
-    const achievementExperience = profile.achievements.length * 100;
-    const totalExperience = runExperience + achievementExperience;
-
-    profile.experience = totalExperience;
-
-    // Calcular nível (1 nível a cada 1000 XP)
-    const newLevel = Math.floor(totalExperience / 1000) + 1;
-    if (newLevel > profile.level) {
-      profile.level = newLevel;
-      // Pode adicionar recompensas por nível aqui
+    if (profile.xp >= xpForNextLevel) {
+      profile.level++;
+      profile.xp -= xpForNextLevel;
+      profile.currentLevelXp = profile.xp;
+      profile.nextLevelXp = this.calculateXPForLevel(profile.level + 1);
+      
+      // Verificar se subiu de rank
+      this.checkRankUp(profile);
+      
+      // Atualizar progresso
+      this.updateProgress(profile);
     }
   }
 
-  // Atualizar rankings
-  private updateLeaderboards(): void {
-    this.leaderboards.forEach(leaderboard => {
-      const entries = this.userProfiles
-        .map(profile => {
-          let value = 0;
-          switch (leaderboard.metric) {
-            case 'distance':
-              value = profile.stats.totalDistance;
-              break;
-            case 'time':
-              value = profile.stats.totalTime;
-              break;
-            case 'pace':
-              value = profile.stats.bestPace !== '0:00' ? 60 / parseFloat(profile.stats.bestPace) : 0; // km/h
-              break;
-            case 'elevation':
-              value = profile.stats.totalElevation;
-              break;
-            case 'calories':
-              value = profile.stats.totalCalories;
-              break;
-            case 'points':
-              value = profile.currentPoints;
-              break;
-            case 'xp':
-              value = profile.experience;
-              break;
-            case 'streak':
-              value = profile.stats.currentStreak;
-              break;
-            case 'achievements':
-              value = profile.achievements.length;
-              break;
-          }
-
-          return {
-            userId: profile.userId,
-            username: profile.username,
-            avatarUrl: profile.avatarUrl,
-            value,
-            rank: 0,
-            lastUpdated: Date.now()
-          };
-        })
-        .filter(entry => entry.value > 0)
-        .sort((a, b) => b.value - a.value)
-        .map((entry, index) => ({
-          ...entry,
-          rank: index + 1
-        }));
-
-      leaderboard.entries = entries;
-      leaderboard.lastUpdated = Date.now();
-    });
+  // Calcular XP necessário para um nível
+  private calculateXPForLevel(level: number): number {
+    // Fórmula exponencial para XP necessário
+    return Math.floor(100 * Math.pow(1.5, level - 1));
   }
 
-  // Obter conquistas do usuário
-  public getUserAchievements(userId: string): Achievement[] {
-    const profile = this.getUserProfile(userId);
-    if (!profile) return [];
-
-    return this.achievements.filter(achievement => 
-      profile.achievements.includes(achievement.id)
-    );
+  // Verificar se usuário subiu de rank
+  private checkRankUp(profile: UserProfile): void {
+    const ranks = ['novice', 'apprentice', 'journeyman', 'expert', 'master', 'grandmaster', 'legend', 'mythic'];
+    const currentRankIndex = ranks.indexOf(profile.rank);
+    
+    if (currentRankIndex < ranks.length - 1) {
+      const nextRank = ranks[currentRankIndex + 1];
+      const requiredLevel = this.getRequiredLevelForRank(nextRank);
+      
+      if (profile.level >= requiredLevel) {
+        profile.rank = nextRank as UserProfile['rank'];
+      }
+    }
   }
 
-  // Obter colecionáveis do usuário
-  public getUserCollectibles(userId: string): Collectible[] {
-    const profile = this.getUserProfile(userId);
-    if (!profile) return [];
-
-    return this.collectibles.filter(collectible => 
-      profile.collectibles.includes(collectible.id)
-    );
+  // Obter nível necessário para um rank
+  private getRequiredLevelForRank(rank: string): number {
+    const rankRequirements: { [key: string]: number } = {
+      'novice': 1,
+      'apprentice': 10,
+      'journeyman': 25,
+      'expert': 50,
+      'master': 100,
+      'grandmaster': 200,
+      'legend': 500,
+      'mythic': 1000
+    };
+    
+    return rankRequirements[rank] || 1;
   }
 
-  // Obter quests ativas do usuário
-  public getUserQuests(userId: string): Quest[] {
-    return this.quests.filter(quest => 
-      quest.endDate > Date.now() && !quest.isCompleted
-    );
+  // Atualizar progresso do usuário
+  private updateProgress(profile: UserProfile): void {
+    // Progresso do nível atual
+    profile.progress.currentLevelXp = profile.xp;
+    profile.progress.nextLevelXp = this.calculateXPForLevel(profile.level + 1);
+    profile.progress.levelProgress = (profile.xp / profile.progress.nextLevelXp) * 100;
+    
+    // Progresso do rank
+    const currentRankIndex = ['novice', 'apprentice', 'journeyman', 'expert', 'master', 'grandmaster', 'legend', 'mythic'].indexOf(profile.rank);
+    const nextRank = ['novice', 'apprentice', 'journeyman', 'expert', 'master', 'grandmaster', 'legend', 'mythic'][currentRankIndex + 1];
+    
+    if (nextRank) {
+      const currentLevel = profile.level;
+      const requiredLevel = this.getRequiredLevelForRank(nextRank);
+      const previousLevel = currentRankIndex > 0 ? this.getRequiredLevelForRank(['novice', 'apprentice', 'journeyman', 'expert', 'master', 'grandmaster', 'legend', 'mythic'][currentRankIndex - 1]) : 1;
+      
+      profile.progress.rankProgress = ((currentLevel - previousLevel) / (requiredLevel - previousLevel)) * 100;
+    }
+    
+    // Progresso das conquistas
+    const totalAchievements = this.achievements.length;
+    const userAchievements = profile.achievements.length;
+    profile.progress.achievementProgress = (userAchievements / totalAchievements) * 100;
+    
+    // Progresso das coleções
+    const totalCollectibles = this.collectibles.length;
+    const userCollectibles = profile.collectibles.length;
+    profile.progress.collectionProgress = (userCollectibles / totalCollectibles) * 100;
   }
 
-  // Obter ranking específico
-  public getLeaderboard(leaderboardId: string): Leaderboard | undefined {
-    return this.leaderboards.find(lb => lb.id === leaderboardId);
+  // Obter leaderboards
+  public getLeaderboards(type?: string): Leaderboard[] {
+    if (type) {
+      return this.leaderboards.filter(l => l.type === type);
+    }
+    return this.leaderboards;
   }
 
-  // Obter todas as conquistas disponíveis
-  public getAllAchievements(): Achievement[] {
-    return this.achievements;
+  // Obter leaderboard por categoria
+  public getLeaderboardByCategory(category: string): Leaderboard | undefined {
+    return this.leaderboards.find(l => l.category === category);
   }
 
-  // Obter todos os colecionáveis disponíveis
-  public getAllCollectibles(): Collectible[] {
-    return this.collectibles;
+  // Obter quests ativas
+  public getActiveQuests(userId: string): Quest[] {
+    return this.quests.filter(q => q.isActive && !q.isCompleted);
+  }
+
+  // Obter quests por tipo
+  public getQuestsByType(type: string): Quest[] {
+    return this.quests.filter(q => q.type === type);
+  }
+
+  // Obter quests por dificuldade
+  public getQuestsByDifficulty(difficulty: string): Quest[] {
+    return this.quests.filter(q => q.difficulty === difficulty);
+  }
+
+  // Obter quests por categoria
+  public getQuestsByCategory(category: string): Quest[] {
+    return this.quests.filter(q => q.category === category);
+  }
+
+  // Obter quests completadas
+  public getCompletedQuests(userId: string): Quest[] {
+    return this.quests.filter(q => q.isCompleted);
+  }
+
+  // Obter temporada atual
+  public getCurrentSeason(): Season | null {
+    return this.currentSeason;
+  }
+
+  // Obter temporadas
+  public getSeasons(): Season[] {
+    return this.seasons;
+  }
+
+  // Obter temporada por ID
+  public getSeasonById(seasonId: string): Season | undefined {
+    return this.seasons.find(s => s.id === seasonId);
+  }
+
+  // Obter estatísticas gerais
+  public getGeneralStats(): {
+    totalAchievements: number;
+    totalCollectibles: number;
+    totalUsers: number;
+    averageLevel: number;
+    averageRank: string;
+    mostRareAchievement: string;
+    mostRareCollectible: string;
+    totalXP: number;
+    totalPoints: number;
+  } {
+    const totalAchievements = this.achievements.length;
+    const totalCollectibles = this.collectibles.length;
+    const totalUsers = this.userProfiles.length;
+    
+    const totalXP = this.userProfiles.reduce((sum, p) => sum + p.totalXp, 0);
+    const totalPoints = this.userProfiles.reduce((sum, p) => sum + p.totalPoints, 0);
+    
+    const averageLevel = totalUsers > 0 ? 
+      this.userProfiles.reduce((sum, p) => sum + p.level, 0) / totalUsers : 0;
+    
+    // Rank mais comum
+    const rankCounts = this.userProfiles.reduce((acc, profile) => {
+      acc[profile.rank] = (acc[profile.rank] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const averageRank = Object.entries(rankCounts)
+      .sort(([,a], [,b]) => b - a)[0]?.[0] || 'novice';
+    
+    // Conquista mais rara
+    const mostRareAchievement = this.achievements
+      .sort((a, b) => this.getRarityValue(b.rarity) - this.getRarityValue(a.rarity))[0]?.name || 'N/A';
+    
+    // Colecionável mais raro
+    const mostRareCollectible = this.collectibles
+      .sort((a, b) => this.getRarityValue(b.rarity) - this.getRarityValue(a.rarity))[0]?.name || 'N/A';
+
+    return {
+      totalAchievements,
+      totalCollectibles,
+      totalUsers,
+      averageLevel: Math.round(averageLevel * 100) / 100,
+      averageRank,
+      mostRareAchievement,
+      mostRareCollectible,
+      totalXP,
+      totalPoints
+    };
+  }
+
+  // Obter valor numérico da raridade
+  private getRarityValue(rarity: string): number {
+    const rarityValues: { [key: string]: number } = {
+      'common': 1,
+      'uncommon': 2,
+      'rare': 3,
+      'epic': 4,
+      'legendary': 5,
+      'mythic': 6
+    };
+    
+    return rarityValues[rarity] || 0;
   }
 }
 

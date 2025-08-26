@@ -2,451 +2,569 @@ export interface PremiumPlan {
   id: string;
   name: string;
   description: string;
-  type: 'free' | 'trial' | 'monthly' | 'annual' | 'lifetime';
-  price: number;
-  currency: string;
-  originalPrice?: number;
-  discount?: number;
-  duration: number; // dias
-  features: PremiumFeature[];
+  type: 'free' | 'premium_monthly' | 'premium_annual' | 'premium_lifetime';
+  price: {
+    amount: number;
+    currency: string;
+    originalAmount?: number;
+    discountPercentage?: number;
+    billingCycle: 'monthly' | 'annual' | 'lifetime';
+    trialDays: number;
+  };
+  features: {
+    basic: string[];
+    premium: string[];
+    exclusive: string[];
+    limitations: {
+      free: string[];
+      premium: string[];
+    };
+  };
+  benefits: {
+    immediate: string[];
+    longTerm: string[];
+    exclusive: string[];
+  };
+  restrictions: {
+    free: string[];
+    premium: string[];
+  };
   isPopular: boolean;
   isBestValue: boolean;
   isActive: boolean;
-  maxUsers?: number;
-  maxStorage?: number; // GB
-  priority: number; // para ordenação
-  createdAt: number;
-  updatedAt: number;
+}
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  planId: string;
+  status: 'active' | 'cancelled' | 'expired' | 'trial' | 'past_due' | 'unpaid';
+  startDate: number;
+  endDate: number;
+  trialEndDate?: number;
+  nextBillingDate?: number;
+  autoRenew: boolean;
+  paymentMethod: {
+    type: 'credit_card' | 'debit_card' | 'paypal' | 'apple_pay' | 'google_pay';
+    last4?: string;
+    brand?: string;
+    expiryMonth?: number;
+    expiryYear?: number;
+  };
+  billingHistory: BillingEvent[];
+  features: string[];
+  usage: {
+    currentPeriod: {
+      start: number;
+      end: number;
+      usage: { [key: string]: number };
+      limits: { [key: string]: number };
+    };
+    totalUsage: { [key: string]: number };
+  };
+  metadata: {
+    source: 'app' | 'website' | 'promo' | 'referral';
+    campaign?: string;
+    referrer?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+  };
+}
+
+export interface BillingEvent {
+  id: string;
+  subscriptionId: string;
+  type: 'subscription_start' | 'renewal' | 'trial_start' | 'trial_end' | 'cancellation' | 'refund' | 'charge_failed';
+  amount: number;
+  currency: string;
+  date: number;
+  description: string;
+  status: 'success' | 'failed' | 'pending' | 'refunded';
+  receiptUrl?: string;
+  errorMessage?: string;
 }
 
 export interface PremiumFeature {
   id: string;
   name: string;
   description: string;
-  category: 'core' | 'advanced' | 'exclusive' | 'social' | 'analytics' | 'customization';
-  isAvailable: boolean;
-  isHighlighted: boolean;
-  icon: string;
-  details: string[];
-  limitations?: {
-    free: string;
-    premium: string;
+  category: 'core' | 'advanced' | 'exclusive' | 'social' | 'analytics' | 'training' | 'safety' | 'wellness';
+  access: 'free' | 'premium' | 'premium_plus';
+  limitations: {
+    free: {
+      count?: number;
+      duration?: number;
+      features?: string[];
+      restrictions?: string[];
+    };
+    premium: {
+      count?: number;
+      duration?: number;
+      features?: string[];
+      restrictions?: string[];
+    };
   };
+  isPopular: boolean;
+  isEssential: boolean;
+  upgradePrompt: string;
 }
 
-export interface UserSubscription {
-  id: string;
-  userId: string;
-  planId: string;
-  status: 'active' | 'expired' | 'cancelled' | 'pending' | 'trial';
-  startDate: number;
-  endDate: number;
-  trialEndDate?: number;
-  autoRenew: boolean;
-  paymentMethod: string;
-  lastPayment: number;
-  nextPayment?: number;
-  totalPayments: number;
-  amount: number;
-  currency: string;
-  platform: 'ios' | 'android' | 'web' | 'stripe' | 'paypal';
-  receiptData?: string;
-  isTrial: boolean;
-  trialDaysUsed: number;
-  maxTrialDays: number;
-  cancellationReason?: string;
-  cancelledAt?: number;
-  refundedAt?: number;
-  refundAmount?: number;
-  notes?: string;
-}
-
-export interface PremiumGate {
-  featureId: string;
-  isLocked: boolean;
-  lockReason: string;
-  upgradeMessage: string;
-  trialAvailable: boolean;
-  trialDaysLeft: number;
-  planRequired: string;
-  alternatives?: string[];
-}
-
-export interface PremiumAnalytics {
-  totalSubscribers: number;
-  activeSubscriptions: number;
-  trialConversions: number;
-  monthlyRevenue: number;
-  annualRevenue: number;
-  churnRate: number;
-  averageLifetime: number;
-  popularPlans: string[];
-  conversionFunnel: {
-    trialStarts: number;
-    trialCompletions: number;
-    subscriptions: number;
-    renewals: number;
-  };
+export interface PremiumManager {
+  plans: PremiumPlan[];
+  features: PremiumFeature[];
+  subscriptions: Subscription[];
+  userFeatures: Map<string, string[]>;
+  trialUsers: Map<string, number>;
 }
 
 export class PremiumManager {
   private plans: PremiumPlan[] = [];
   private features: PremiumFeature[] = [];
-  private subscriptions: UserSubscription[] = [];
-  private userTrials: Map<string, any> = new Map();
+  private subscriptions: Subscription[] = [];
+  private userFeatures: Map<string, string[]> = new Map();
+  private trialUsers: Map<string, number> = new Map();
 
   constructor() {
-    this.initializeFeatures();
-    this.initializePlans();
+    this.initializePremiumPlans();
+    this.initializePremiumFeatures();
   }
 
-  private initializeFeatures() {
-    const features: PremiumFeature[] = [
-      // Features Core (Free)
-      {
-        id: 'feature_basic_tracking',
-        name: 'Rastreamento Básico',
-        description: 'Rastreie suas corridas com GPS básico',
-        category: 'core',
-        isAvailable: true,
-        isHighlighted: false,
-        icon: '📍',
-        details: [
-          'Rastreamento GPS básico',
-          'Distância e tempo',
-          'Histórico de 30 dias',
-          'Estatísticas básicas'
-        ],
-        limitations: {
-          free: 'Até 10 corridas por mês',
-          premium: 'Corridas ilimitadas'
-        }
-      },
-
-      {
-        id: 'feature_basic_community',
-        name: 'Comunidade Básica',
-        description: 'Participe de comunidades e desafios básicos',
-        category: 'social',
-        isAvailable: true,
-        isHighlighted: false,
-        icon: '👥',
-        details: [
-          'Participar de comunidades',
-          'Desafios básicos',
-          'Rankings simples',
-          'Chat básico'
-        ],
-        limitations: {
-          free: '1 comunidade ativa',
-          premium: 'Comunidades ilimitadas'
-        }
-      },
-
-      // Features Avançadas (Premium)
-      {
-        id: 'feature_advanced_analytics',
-        name: 'Análise Avançada',
-        description: 'Análise detalhada de performance e progresso',
-        category: 'analytics',
-        isAvailable: false,
-        isHighlighted: true,
-        icon: '📊',
-        details: [
-          'Análise biomecânica avançada',
-          'Predição de lesões',
-          'Análise de tendências',
-          'Relatórios personalizados',
-          'Exportação de dados'
-        ]
-      },
-
-      {
-        id: 'feature_ai_coach',
-        name: 'Coach Virtual IA',
-        description: 'Coach personalizado com inteligência artificial',
-        category: 'exclusive',
-        isAvailable: false,
-        isHighlighted: true,
-        icon: '🤖',
-        details: [
-          'Planos de treino personalizados',
-          'Recomendações nutricionais',
-          'Análise de performance preditiva',
-          'Comandos de voz',
-          'Adaptação automática'
-        ]
-      },
-
-      {
-        id: 'feature_ar_navigation',
-        name: 'Navegação AR',
-        description: 'Navegação em realidade aumentada',
-        category: 'exclusive',
-        isAvailable: false,
-        isHighlighted: true,
-        icon: '🥽',
-        details: [
-          'Setas AR no mundo real',
-          'Navegação turn-by-turn',
-          'Elementos 3D interativos',
-          'Calibração automática',
-          'Rotas temáticas'
-        ]
-      },
-
-      {
-        id: 'feature_ghost_runs',
-        name: 'Corridas Fantasma',
-        description: 'Corra contra corredores famosos e recordes',
-        category: 'exclusive',
-        isAvailable: false,
-        isHighlighted: true,
-        icon: '👻',
-        details: [
-          'Ghost runs de atletas olímpicos',
-          'Recordes mundiais',
-          'Desafios históricos',
-          'Rankings globais',
-          'Conquistas exclusivas'
-        ]
-      },
-
-      {
-        id: 'feature_mentorship',
-        name: 'Sistema de Mentoria',
-        description: 'Conecte-se com mentores experientes',
-        category: 'social',
-        isAvailable: false,
-        isHighlighted: true,
-        icon: '🎓',
-        details: [
-          'Perfis de mentores verificados',
-          'Planos de treino personalizados',
-          'Sessões de mentoria',
-          'Chat privado',
-          'Feedback em tempo real'
-        ]
-      },
-
-      {
-        id: 'feature_biomechanics',
-        name: 'Análise Biomecânica',
-        description: 'Análise avançada usando apenas o smartphone',
-        category: 'advanced',
-        isAvailable: false,
-        isHighlighted: true,
-        icon: '🔬',
-        details: [
-          'Análise de cadência',
-          'Detecção de assimetria',
-          'Análise de impacto',
-          'Recomendações personalizadas',
-          'Relatórios detalhados'
-        ]
-      },
-
-      {
-        id: 'feature_events_integration',
-        name: 'Integração com Eventos',
-        description: 'Acesso completo a eventos locais e globais',
-        category: 'social',
-        isAvailable: false,
-        isHighlighted: true,
-        icon: '🎯',
-        details: [
-          'Eventos exclusivos',
-          'Inscrições prioritárias',
-          'Descontos especiais',
-          'Meetups premium',
-          'Networking exclusivo'
-        ]
-      },
-
-      {
-        id: 'feature_customization',
-        name: 'Personalização Avançada',
-        description: 'Personalize completamente sua experiência',
-        category: 'customization',
-        isAvailable: false,
-        isHighlighted: false,
-        icon: '🎨',
-        details: [
-          'Temas personalizados',
-          'Widgets customizáveis',
-          'Notificações avançadas',
-          'Layout personalizado',
-          'Atalhos personalizados'
-        ]
-      },
-
-      {
-        id: 'feature_priority_support',
-        name: 'Suporte Prioritário',
-        description: 'Suporte técnico prioritário 24/7',
-        category: 'exclusive',
-        isAvailable: false,
-        isHighlighted: false,
-        icon: '🎧',
-        details: [
-          'Suporte 24/7',
-          'Resposta em até 2 horas',
-          'Suporte por videochamada',
-          'Atendimento personalizado',
-          'Resolução garantida'
-        ]
-      }
-    ];
-
-    this.features.push(...features);
-  }
-
-  private initializePlans() {
+  private initializePremiumPlans() {
     const plans: PremiumPlan[] = [
       // Plano Gratuito
       {
         id: 'plan_free',
-        name: 'Gratuito',
-        description: 'Acesso básico para começar sua jornada',
+        name: 'Free',
+        description: 'Acesso básico para começar sua jornada de corrida',
         type: 'free',
-        price: 0,
-        currency: 'BRL',
-        duration: 0,
-        features: [
-          'feature_basic_tracking',
-          'feature_basic_community'
-        ],
+        price: {
+          amount: 0,
+          currency: 'BRL',
+          billingCycle: 'monthly',
+          trialDays: 0
+        },
+        features: {
+          basic: [
+            'Rastreamento básico de corridas',
+            'Histórico de 10 corridas',
+            'Estatísticas básicas',
+            '3 rotas salvas',
+            'Comunidade básica',
+            'Desafios diários simples',
+            'Suporte por email'
+          ],
+          premium: [],
+          exclusive: [],
+          limitations: {
+            free: [
+              'Máximo 10 corridas no histórico',
+              'Apenas 3 rotas salvas',
+              'Estatísticas limitadas',
+              'Sem análise avançada',
+              'Sem coach IA',
+              'Sem rotas temáticas',
+              'Sem ghost runs',
+              'Sem AR navigation',
+              'Sem biomechanics',
+              'Sem mentoria',
+              'Sem eventos premium',
+              'Sem gamificação avançada'
+            ],
+            premium: []
+          }
+        },
+        benefits: {
+          immediate: [
+            'Comece a correr imediatamente',
+            'Acesso básico a todas as funcionalidades essenciais',
+            'Comunidade de corredores'
+          ],
+          longTerm: [
+            'Desenvolvimento gradual de hábitos',
+            'Progresso visível',
+            'Base sólida para upgrade'
+          ],
+          exclusive: []
+        },
+        restrictions: {
+          free: [
+            'Anúncios limitados',
+            'Funcionalidades premium bloqueadas',
+            'Suporte básico'
+          ],
+          premium: []
+        },
         isPopular: false,
         isBestValue: false,
-        isActive: true,
-        priority: 1,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+        isActive: true
       },
 
-      // Plano Trial (7 dias)
+      // Plano Premium Mensal
       {
-        id: 'plan_trial',
-        name: 'Trial Premium',
-        description: 'Experimente todas as funcionalidades premium por 7 dias',
-        type: 'trial',
-        price: 0,
-        currency: 'BRL',
-        duration: 7,
-        features: [
-          'feature_advanced_analytics',
-          'feature_ai_coach',
-          'feature_ar_navigation',
-          'feature_ghost_runs',
-          'feature_mentorship',
-          'feature_biomechanics',
-          'feature_events_integration',
-          'feature_customization',
-          'feature_priority_support'
-        ],
-        isPopular: false,
-        isBestValue: false,
-        isActive: true,
-        priority: 2,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-
-      // Plano Mensal
-      {
-        id: 'plan_monthly',
+        id: 'plan_premium_monthly',
         name: 'Premium Mensal',
         description: 'Acesso completo a todas as funcionalidades premium',
-        type: 'monthly',
-        price: 19.90,
-        currency: 'BRL',
-        duration: 30,
-        features: [
-          'feature_advanced_analytics',
-          'feature_ai_coach',
-          'feature_ar_navigation',
-          'feature_ghost_runs',
-          'feature_mentorship',
-          'feature_biomechanics',
-          'feature_events_integration',
-          'feature_customization',
-          'feature_priority_support'
-        ],
-        isPopular: false,
-        isBestValue: false,
-        isActive: true,
-        priority: 3,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-
-      // Plano Anual (Melhor Valor)
-      {
-        id: 'plan_annual',
-        name: 'Premium Anual',
-        description: 'Melhor valor com 40% de desconto',
-        type: 'annual',
-        price: 119.90,
-        currency: 'BRL',
-        originalPrice: 238.80,
-        discount: 40,
-        duration: 365,
-        features: [
-          'feature_advanced_analytics',
-          'feature_ai_coach',
-          'feature_ar_navigation',
-          'feature_ghost_runs',
-          'feature_mentorship',
-          'feature_biomechanics',
-          'feature_events_integration',
-          'feature_customization',
-          'feature_priority_support'
-        ],
+        type: 'premium_monthly',
+        price: {
+          amount: 19.90,
+          currency: 'BRL',
+          billingCycle: 'monthly',
+          trialDays: 7
+        },
+        features: {
+          basic: [
+            'Tudo do plano gratuito',
+            'Rastreamento ilimitado de corridas',
+            'Histórico completo',
+            'Estatísticas avançadas',
+            'Rotas ilimitadas',
+            'Análise de performance',
+            'Coach IA personalizado',
+            'Rotas temáticas',
+            'Ghost runs',
+            'AR Navigation',
+            'Biomechanics analysis',
+            'Mentoria',
+            'Eventos premium',
+            'Gamificação avançada',
+            'Sem anúncios'
+          ],
+          premium: [
+            'Coach IA com voz',
+            'Análise preditiva de lesões',
+            'Planos de treino adaptativos',
+            'Métricas de bem-estar',
+            'Sistema de segurança avançado',
+            'Integração com wearables',
+            'Exportação de dados',
+            'Suporte prioritário'
+          ],
+          exclusive: [
+            'Funcionalidades beta',
+            'Conteúdo exclusivo',
+            'Eventos especiais',
+            'Desafios premium'
+          ],
+          limitations: {
+            free: [],
+            premium: [
+              'Algumas funcionalidades beta podem ter limitações',
+              'Eventos especiais podem ter custo adicional'
+            ]
+          }
+        },
+        benefits: {
+          immediate: [
+            '7 dias de teste gratuito',
+            'Acesso imediato a todas as funcionalidades',
+            'Experiência premium sem anúncios'
+          ],
+          longTerm: [
+            'Melhoria contínua da performance',
+            'Treinos personalizados e adaptativos',
+            'Comunidade premium exclusiva'
+          ],
+          exclusive: [
+            'Funcionalidades em desenvolvimento',
+            'Conteúdo exclusivo da equipe',
+            'Acesso antecipado a novos recursos'
+          ]
+        },
+        restrictions: {
+          free: [],
+          premium: [
+            'Cancelamento a qualquer momento',
+            'Sem compromisso de longo prazo',
+            'Flexibilidade total'
+          ]
+        },
         isPopular: true,
-        isBestValue: true,
-        isActive: true,
-        priority: 4,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+        isBestValue: false,
+        isActive: true
       },
 
-      // Plano Lifetime
+      // Plano Premium Anual
       {
-        id: 'plan_lifetime',
-        name: 'Premium Vitalício',
-        description: 'Acesso permanente a todas as funcionalidades',
-        type: 'lifetime',
-        price: 499.90,
-        currency: 'BRL',
-        duration: 36500, // 100 anos
-        features: [
-          'feature_advanced_analytics',
-          'feature_ai_coach',
-          'feature_ar_navigation',
-          'feature_ghost_runs',
-          'feature_mentorship',
-          'feature_biomechanics',
-          'feature_events_integration',
-          'feature_customization',
-          'feature_priority_support'
-        ],
+        id: 'plan_premium_annual',
+        name: 'Premium Anual',
+        description: 'Melhor valor com desconto de 40% no plano anual',
+        type: 'premium_annual',
+        price: {
+          amount: 119.90,
+          currency: 'BRL',
+          originalAmount: 238.80,
+          discountPercentage: 40,
+          billingCycle: 'annual',
+          trialDays: 7
+        },
+        features: {
+          basic: [
+            'Tudo do plano premium mensal',
+            'Desconto de 40% no preço anual',
+            'Economia de R$ 118,90 por ano'
+          ],
+          premium: [
+            'Todas as funcionalidades premium',
+            'Conteúdo exclusivo anual',
+            'Eventos especiais prioritários'
+          ],
+          exclusive: [
+            'Badge de membro anual',
+            'Conteúdo exclusivo da equipe',
+            'Acesso antecipado a funcionalidades',
+            'Desafios exclusivos anuais'
+          ],
+          limitations: {
+            free: [],
+            premium: [
+              'Compromisso anual',
+              'Renovação automática'
+            ]
+          }
+        },
+        benefits: {
+          immediate: [
+            '7 dias de teste gratuito',
+            'Desconto imediato de 40%',
+            'Acesso a todas as funcionalidades'
+          ],
+          longTerm: [
+            'Economia significativa',
+            'Compromisso com objetivos de longo prazo',
+            'Progresso contínuo e sustentável'
+          ],
+          exclusive: [
+            'Status de membro anual',
+            'Conteúdo exclusivo',
+            'Eventos especiais'
+          ]
+        },
+        restrictions: {
+          free: [],
+          premium: [
+            'Compromisso anual',
+            'Renovação automática',
+            'Cancelamento após o período anual'
+          ]
+        },
+        isPopular: false,
+        isBestValue: true,
+        isActive: true
+      },
+
+      // Plano Premium Lifetime
+      {
+        id: 'plan_premium_lifetime',
+        name: 'Premium Lifetime',
+        description: 'Acesso vitalício a todas as funcionalidades premium',
+        type: 'premium_lifetime',
+        price: {
+          amount: 499.90,
+          currency: 'BRL',
+          originalAmount: 1194.80,
+          discountPercentage: 58,
+          billingCycle: 'lifetime',
+          trialDays: 7
+        },
+        features: {
+          basic: [
+            'Tudo dos planos premium',
+            'Acesso vitalício',
+            'Sem renovação',
+            'Sem compromisso mensal/anual'
+          ],
+          premium: [
+            'Todas as funcionalidades premium',
+            'Atualizações futuras incluídas',
+            'Conteúdo exclusivo vitalício'
+          ],
+          exclusive: [
+            'Badge de membro vitalício',
+            'Status VIP permanente',
+            'Conteúdo exclusivo vitalício',
+            'Eventos especiais prioritários',
+            'Suporte VIP dedicado'
+          ],
+          limitations: {
+            free: [],
+            premium: [
+              'Pagamento único',
+              'Sem renovação automática'
+            ]
+          }
+        },
+        benefits: {
+          immediate: [
+            '7 dias de teste gratuito',
+            'Acesso imediato a todas as funcionalidades',
+            'Economia de longo prazo'
+          ],
+          longTerm: [
+            'Economia máxima a longo prazo',
+            'Sem preocupações com renovação',
+            'Investimento único para toda a vida'
+          ],
+          exclusive: [
+            'Status VIP permanente',
+            'Conteúdo exclusivo vitalício',
+            'Suporte dedicado'
+          ]
+        },
+        restrictions: {
+          free: [],
+          premium: [
+            'Pagamento único',
+            'Sem renovação',
+            'Sem reembolso após 30 dias'
+          ]
+        },
         isPopular: false,
         isBestValue: false,
-        isActive: true,
-        priority: 5,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+        isActive: true
       }
     ];
 
     this.plans.push(...plans);
   }
 
+  private initializePremiumFeatures() {
+    const features: PremiumFeature[] = [
+      // Funcionalidades Core
+      {
+        id: 'feature_basic_tracking',
+        name: 'Rastreamento Básico',
+        description: 'Rastreamento básico de corridas com GPS',
+        category: 'core',
+        access: 'free',
+        limitations: {
+          free: { count: 10, restrictions: ['Apenas corridas básicas'] },
+          premium: { count: -1, restrictions: ['Rastreamento completo'] }
+        },
+        isPopular: true,
+        isEssential: true,
+        upgradePrompt: 'Desbloqueie rastreamento ilimitado com Premium'
+      },
+
+      // Funcionalidades Avançadas
+      {
+        id: 'feature_ai_coach',
+        name: 'Coach IA Personalizado',
+        description: 'Coach virtual com IA que aprende e se adapta',
+        category: 'advanced',
+        access: 'premium',
+        limitations: {
+          free: { count: 0, restrictions: ['Bloqueado para usuários gratuitos'] },
+          premium: { count: -1, restrictions: ['Acesso completo'] }
+        },
+        isPopular: true,
+        isEssential: false,
+        upgradePrompt: 'Desbloqueie seu coach IA personalizado com Premium'
+      },
+
+      // Funcionalidades Exclusivas
+      {
+        id: 'feature_ar_navigation',
+        name: 'Navegação AR',
+        description: 'Navegação em realidade aumentada',
+        category: 'exclusive',
+        access: 'premium',
+        limitations: {
+          free: { count: 0, restrictions: ['Bloqueado para usuários gratuitos'] },
+          premium: { count: -1, restrictions: ['Acesso completo'] }
+        },
+        isPopular: false,
+        isEssential: false,
+        upgradePrompt: 'Experimente a navegação do futuro com Premium'
+      },
+
+      // Funcionalidades de Treino
+      {
+        id: 'feature_adaptive_training',
+        name: 'Planos de Treino Adaptativos',
+        description: 'Planos que se ajustam automaticamente ao seu progresso',
+        category: 'training',
+        access: 'premium',
+        limitations: {
+          free: { count: 0, restrictions: ['Bloqueado para usuários gratuitos'] },
+          premium: { count: -1, restrictions: ['Acesso completo'] }
+        },
+        isPopular: true,
+        isEssential: false,
+        upgradePrompt: 'Desbloqueie treinos personalizados com Premium'
+      },
+
+      // Funcionalidades de Segurança
+      {
+        id: 'feature_safety_manager',
+        name: 'Sistema de Segurança Avançado',
+        description: 'Alertas inteligentes e rastreamento de segurança',
+        category: 'safety',
+        access: 'premium',
+        limitations: {
+          free: { count: 0, restrictions: ['Bloqueado para usuários gratuitos'] },
+          premium: { count: -1, restrictions: ['Acesso completo'] }
+        },
+        isPopular: true,
+        isEssential: false,
+        upgradePrompt: 'Mantenha-se seguro com recursos premium de segurança'
+      },
+
+      // Funcionalidades de Bem-estar
+      {
+        id: 'feature_wellness_metrics',
+        name: 'Métricas de Bem-estar',
+        description: 'Análise completa de saúde e bem-estar',
+        category: 'wellness',
+        access: 'premium',
+        limitations: {
+          free: { count: 0, restrictions: ['Bloqueado para usuários gratuitos'] },
+          premium: { count: -1, restrictions: ['Acesso completo'] }
+        },
+        isPopular: true,
+        isEssential: false,
+        upgradePrompt: 'Monitore sua saúde completa com Premium'
+      },
+
+      // Funcionalidades Sociais
+      {
+        id: 'feature_community_premium',
+        name: 'Comunidade Premium',
+        description: 'Acesso a grupos exclusivos e desafios premium',
+        category: 'social',
+        access: 'premium',
+        limitations: {
+          free: { count: 0, restrictions: ['Bloqueado para usuários gratuitos'] },
+          premium: { count: -1, restrictions: ['Acesso completo'] }
+        },
+        isPopular: true,
+        isEssential: false,
+        upgradePrompt: 'Junte-se à comunidade premium exclusiva'
+      },
+
+      // Funcionalidades de Análise
+      {
+        id: 'feature_advanced_analytics',
+        name: 'Análise Avançada',
+        description: 'Estatísticas detalhadas e insights personalizados',
+        category: 'analytics',
+        access: 'premium',
+        limitations: {
+          free: { count: 0, restrictions: ['Bloqueado para usuários gratuitos'] },
+          premium: { count: -1, restrictions: ['Acesso completo'] }
+        },
+        isPopular: true,
+        isEssential: false,
+        upgradePrompt: 'Desbloqueie insights avançados com Premium'
+      }
+    ];
+
+    this.features.push(...features);
+  }
+
   // Obter planos disponíveis
   public getAvailablePlans(): PremiumPlan[] {
-    return this.plans
-      .filter(plan => plan.isActive)
-      .sort((a, b) => a.priority - b.priority);
+    return this.plans.filter(plan => plan.isActive);
   }
 
   // Obter plano por ID
@@ -459,475 +577,288 @@ export class PremiumManager {
     return this.plans.find(plan => plan.type === 'free');
   }
 
-  // Obter plano trial
-  public getTrialPlan(): PremiumPlan | undefined {
-    return this.plans.find(plan => plan.type === 'trial');
+  // Obter planos premium
+  public getPremiumPlans(): PremiumPlan[] {
+    return this.plans.filter(plan => plan.type !== 'free' && plan.isActive);
   }
 
-  // Obter plano mais popular
-  public getPopularPlan(): PremiumPlan | undefined {
-    return this.plans.find(plan => plan.isPopular);
-  }
-
-  // Obter plano com melhor valor
+  // Obter melhor valor
   public getBestValuePlan(): PremiumPlan | undefined {
     return this.plans.find(plan => plan.isBestValue);
   }
 
-  // Obter features disponíveis
-  public getAvailableFeatures(): PremiumFeature[] {
-    return this.features.filter(feature => feature.isAvailable);
+  // Obter plano mais popular
+  public getMostPopularPlan(): PremiumPlan | undefined {
+    return this.plans.find(plan => plan.isPopular);
   }
 
-  // Obter feature por ID
-  public getFeatureById(featureId: string): PremiumFeature | undefined {
-    return this.features.find(feature => feature.id === featureId);
+  // Obter funcionalidades por categoria
+  public getFeaturesByCategory(category: string): PremiumFeature[] {
+    return this.features.filter(feature => feature.category === category);
   }
 
-  // Obter features premium
-  public getPremiumFeatures(): PremiumFeature[] {
-    return this.features.filter(feature => !feature.isAvailable);
+  // Obter funcionalidades por acesso
+  public getFeaturesByAccess(access: string): PremiumFeature[] {
+    return this.features.filter(feature => feature.access === access);
   }
 
-  // Obter features destacadas
-  public getHighlightedFeatures(): PremiumFeature[] {
-    return this.features.filter(feature => feature.isHighlighted);
+  // Obter funcionalidades populares
+  public getPopularFeatures(): PremiumFeature[] {
+    return this.features.filter(feature => feature.isPopular);
   }
 
-  // Verificar se usuário tem acesso a uma feature
+  // Obter funcionalidades essenciais
+  public getEssentialFeatures(): PremiumFeature[] {
+    return this.features.filter(feature => feature.isEssential);
+  }
+
+  // Verificar se usuário tem acesso a funcionalidade
   public hasFeatureAccess(userId: string, featureId: string): boolean {
-    const subscription = this.getActiveSubscription(userId);
-    if (!subscription) return false;
-
-    const plan = this.getPlanById(subscription.planId);
-    if (!plan) return false;
-
-    return plan.features.includes(featureId);
+    const userFeatures = this.userFeatures.get(userId) || [];
+    const feature = this.features.find(f => f.id === featureId);
+    
+    if (!feature) return false;
+    
+    if (feature.access === 'free') return true;
+    
+    return userFeatures.includes(featureId);
   }
 
-  // Verificar se feature está bloqueada
-  public isFeatureLocked(userId: string, featureId: string): PremiumGate {
-    const hasAccess = this.hasFeatureAccess(userId, featureId);
-    const subscription = this.getActiveSubscription(userId);
-    const trial = this.getUserTrial(userId);
-
-    if (hasAccess) {
-      return {
-        featureId,
-        isLocked: false,
-        lockReason: '',
-        upgradeMessage: '',
-        trialAvailable: false,
-        trialDaysLeft: 0,
-        planRequired: '',
-        alternatives: []
-      };
-    }
-
-    const feature = this.getFeatureById(featureId);
-    const trialPlan = this.getTrialPlan();
-    const bestValuePlan = this.getBestValuePlan();
-
-    let lockReason = 'Funcionalidade premium';
-    let upgradeMessage = 'Atualize para Premium para acessar esta funcionalidade';
-    let planRequired = 'Premium';
-    let alternatives: string[] = [];
-
-    if (trial && trial.isActive && trialPlan) {
-      lockReason = 'Trial expirado';
-      upgradeMessage = 'Seu trial expirou. Atualize para continuar usando';
-      planRequired = 'Premium';
-    } else if (!trial && trialPlan) {
-      lockReason = 'Funcionalidade premium';
-      upgradeMessage = 'Experimente gratuitamente por 7 dias';
-      planRequired = 'Trial';
-      alternatives = ['Trial gratuito', 'Premium mensal', 'Premium anual'];
-    } else {
-      alternatives = ['Premium mensal', 'Premium anual', 'Premium vitalício'];
-    }
-
-    return {
-      featureId,
-      isLocked: true,
-      lockReason,
-      upgradeMessage,
-      trialAvailable: !trial || !trial.isActive,
-      trialDaysLeft: trial ? Math.max(0, trial.daysLeft) : 7,
-      planRequired,
-      alternatives
-    };
+  // Verificar se usuário está em período de teste
+  public isUserInTrial(userId: string): boolean {
+    const trialEnd = this.trialUsers.get(userId);
+    if (!trialEnd) return false;
+    
+    return Date.now() < trialEnd;
   }
 
-  // Iniciar trial para usuário
-  public startTrial(userId: string): UserSubscription | null {
-    const existingTrial = this.getUserTrial(userId);
-    if (existingTrial && existingTrial.isActive) {
-      throw new Error('Usuário já possui trial ativo');
-    }
-
-    const trialPlan = this.getTrialPlan();
-    if (!trialPlan) {
-      throw new Error('Plano trial não disponível');
-    }
-
-    const now = Date.now();
-    const trialEndDate = now + (trialPlan.duration * 24 * 60 * 60 * 1000);
-
-    const subscription: UserSubscription = {
-      id: `trial_${userId}_${Date.now()}`,
-      userId,
-      planId: trialPlan.id,
-      status: 'trial',
-      startDate: now,
-      endDate: trialEndDate,
-      trialEndDate,
-      autoRenew: false,
-      paymentMethod: 'trial',
-      lastPayment: now,
-      totalPayments: 0,
-      amount: 0,
-      currency: trialPlan.currency,
-      platform: 'web',
-      isTrial: true,
-      trialDaysUsed: 0,
-      maxTrialDays: trialPlan.duration
-    };
-
-    this.subscriptions.push(subscription);
-    return subscription;
+  // Iniciar período de teste
+  public startTrial(userId: string, planId: string): boolean {
+    const plan = this.getPlanById(planId);
+    if (!plan || plan.type === 'free') return false;
+    
+    const trialEnd = Date.now() + (plan.price.trialDays * 24 * 60 * 60 * 1000);
+    this.trialUsers.set(userId, trialEnd);
+    
+    // Dar acesso temporário às funcionalidades premium
+    this.grantTemporaryAccess(userId, plan);
+    
+    return true;
   }
 
-  // Ativar assinatura premium
-  public activateSubscription(
+  // Conceder acesso temporário
+  private grantTemporaryAccess(userId: string, plan: PremiumPlan): void {
+    const premiumFeatures = this.features.filter(f => f.access === 'premium');
+    const featureIds = premiumFeatures.map(f => f.id);
+    
+    this.userFeatures.set(userId, featureIds);
+  }
+
+  // Criar assinatura
+  public createSubscription(
     userId: string,
     planId: string,
-    paymentMethod: string,
-    platform: 'ios' | 'android' | 'web' | 'stripe' | 'paypal',
-    receiptData?: string
-  ): UserSubscription | null {
+    paymentMethod: any
+  ): Subscription | null {
     const plan = this.getPlanById(planId);
-    if (!plan || plan.type === 'free') {
-      throw new Error('Plano inválido');
-    }
-
-    // Cancelar trial se existir
-    this.cancelTrial(userId);
-
+    if (!plan || plan.type === 'free') return null;
+    
     const now = Date.now();
-    const endDate = now + (plan.duration * 24 * 60 * 60 * 1000);
-
-    const subscription: UserSubscription = {
-      id: `sub_${userId}_${Date.now()}`,
+    let endDate: number;
+    
+    if (plan.type === 'premium_lifetime') {
+      endDate = now + (100 * 365 * 24 * 60 * 60 * 1000); // 100 anos
+    } else if (plan.type === 'premium_annual') {
+      endDate = now + (365 * 24 * 60 * 60 * 1000); // 1 ano
+    } else {
+      endDate = now + (30 * 24 * 60 * 60 * 1000); // 1 mês
+    }
+    
+    const subscription: Subscription = {
+      id: `sub_${Date.now()}`,
       userId,
       planId,
       status: 'active',
       startDate: now,
       endDate,
-      autoRenew: true,
+      trialEndDate: this.trialUsers.get(userId),
+      nextBillingDate: plan.type !== 'premium_lifetime' ? endDate : undefined,
+      autoRenew: plan.type !== 'premium_lifetime',
       paymentMethod,
-      lastPayment: now,
-      nextPayment: plan.type === 'monthly' || plan.type === 'annual' ? endDate : undefined,
-      totalPayments: 1,
-      amount: plan.price,
-      currency: plan.currency,
-      platform,
-      receiptData,
-      isTrial: false,
-      trialDaysUsed: 0,
-      maxTrialDays: 0
+      billingHistory: [],
+      features: this.getPlanFeatures(plan),
+      usage: {
+        currentPeriod: {
+          start: now,
+          end,
+          usage: {},
+          limits: {}
+        },
+        totalUsage: {}
+      },
+      metadata: {
+        source: 'app'
+      }
     };
-
+    
     this.subscriptions.push(subscription);
+    
+    // Remover do período de teste
+    this.trialUsers.delete(userId);
+    
+    // Conceder acesso às funcionalidades
+    this.userFeatures.set(userId, subscription.features);
+    
     return subscription;
   }
 
-  // Renovar assinatura
-  public renewSubscription(subscriptionId: string): boolean {
-    const subscription = this.subscriptions.find(s => s.id === subscriptionId);
-    if (!subscription || subscription.status !== 'active') return false;
-
-    const plan = this.getPlanById(subscription.planId);
-    if (!plan || plan.type === 'lifetime') return false;
-
-    const now = Date.now();
-    const newEndDate = subscription.endDate + (plan.duration * 24 * 60 * 60 * 1000);
-
-    subscription.endDate = newEndDate;
-    subscription.lastPayment = now;
-    subscription.totalPayments++;
-    subscription.nextPayment = newEndDate;
-
-    return true;
+  // Obter funcionalidades do plano
+  private getPlanFeatures(plan: PremiumPlan): string[] {
+    const allFeatures = [
+      ...plan.features.basic,
+      ...plan.features.premium,
+      ...plan.features.exclusive
+    ];
+    
+    // Mapear nomes para IDs de funcionalidades
+    return this.features
+      .filter(f => allFeatures.some(name => 
+        name.toLowerCase().includes(f.name.toLowerCase()) ||
+        f.name.toLowerCase().includes(name.toLowerCase())
+      ))
+      .map(f => f.id);
   }
 
-  // Cancelar assinatura
-  public cancelSubscription(subscriptionId: string, reason?: string): boolean {
-    const subscription = this.subscriptions.find(s => s.id === subscriptionId);
-    if (!subscription) return false;
-
-    subscription.status = 'cancelled';
-    subscription.autoRenew = false;
-    subscription.cancellationReason = reason;
-    subscription.cancelledAt = Date.now();
-
-    return true;
-  }
-
-  // Cancelar trial
-  public cancelTrial(userId: string): boolean {
-    const trial = this.subscriptions.find(s => 
-      s.userId === userId && s.status === 'trial'
+  // Verificar status da assinatura
+  public getSubscriptionStatus(userId: string): 'free' | 'trial' | 'premium' | 'expired' {
+    if (this.isUserInTrial(userId)) return 'trial';
+    
+    const subscription = this.subscriptions.find(s => 
+      s.userId === userId && s.status === 'active'
     );
-
-    if (!trial) return false;
-
-    trial.status = 'expired';
-    return true;
+    
+    if (subscription) return 'premium';
+    
+    return 'free';
   }
 
   // Obter assinatura ativa do usuário
-  public getActiveSubscription(userId: string): UserSubscription | undefined {
-    const now = Date.now();
+  public getUserActiveSubscription(userId: string): Subscription | undefined {
     return this.subscriptions.find(s => 
-      s.userId === userId && 
-      s.status === 'active' && 
-      s.endDate > now
+      s.userId === userId && s.status === 'active'
     );
   }
 
-  // Obter trial do usuário
-  public getUserTrial(userId: string): UserSubscription | undefined {
-    return this.subscriptions.find(s => 
-      s.userId === userId && s.status === 'trial'
-    );
-  }
-
-  // Verificar se usuário está em trial
-  public isUserInTrial(userId: string): boolean {
-    const trial = this.getUserTrial(userId);
-    if (!trial) return false;
-
-    const now = Date.now();
-    return trial.endDate > now;
-  }
-
-  // Verificar se usuário é premium
-  public isUserPremium(userId: string): boolean {
-    const subscription = this.getActiveSubscription(userId);
-    return !!subscription;
-  }
-
-  // Obter status da assinatura do usuário
-  public getUserSubscriptionStatus(userId: string): {
-    isPremium: boolean;
-    isTrial: boolean;
-    planType: string;
-    daysLeft: number;
-    trialDaysLeft: number;
-    canUpgrade: boolean;
-    upgradeOptions: PremiumPlan[];
-  } {
-    const subscription = this.getActiveSubscription(userId);
-    const trial = this.getUserTrial(userId);
-    const now = Date.now();
-
-    const isPremium = !!subscription;
-    const isTrial = trial && trial.endDate > now;
-
-    let planType = 'free';
-    let daysLeft = 0;
-    let trialDaysLeft = 0;
-
-    if (subscription) {
-      planType = subscription.planId;
-      daysLeft = Math.max(0, Math.ceil((subscription.endDate - now) / (24 * 60 * 60 * 1000)));
-    }
-
-    if (trial) {
-      trialDaysLeft = Math.max(0, Math.ceil((trial.endDate - now) / (24 * 60 * 60 * 1000)));
-    }
-
-    const canUpgrade = !isPremium || (subscription && subscription.planId !== 'plan_lifetime');
-    const upgradeOptions = this.plans
-      .filter(plan => plan.type !== 'free' && plan.type !== 'trial')
-      .sort((a, b) => a.priority - b.priority);
-
-    return {
-      isPremium,
-      isTrial,
-      planType,
-      daysLeft,
-      trialDaysLeft,
-      canUpgrade,
-      upgradeOptions
-    };
-  }
-
-  // Obter estatísticas premium
-  public getPremiumAnalytics(): PremiumAnalytics {
-    const now = Date.now();
-    const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
-    const oneYearAgo = now - (365 * 24 * 60 * 60 * 1000);
-
-    const activeSubscriptions = this.subscriptions.filter(s => 
-      s.status === 'active' && s.endDate > now
-    );
-
-    const trialSubscriptions = this.subscriptions.filter(s => 
-      s.status === 'trial' && s.endDate > now
-    );
-
-    const expiredTrials = this.subscriptions.filter(s => 
-      s.status === 'trial' && s.endDate <= now
-    );
-
-    const convertedTrials = this.subscriptions.filter(s => 
-      s.status === 'active' && s.isTrial === false && s.trialDaysUsed > 0
-    );
-
-    const monthlyRevenue = activeSubscriptions
-      .filter(s => s.startDate >= thirtyDaysAgo)
-      .reduce((sum, s) => sum + s.amount, 0);
-
-    const annualRevenue = activeSubscriptions
-      .filter(s => s.startDate >= oneYearAgo)
-      .reduce((sum, s) => sum + s.amount, 0);
-
-    const trialConversions = expiredTrials.length > 0 ? 
-      (convertedTrials.length / expiredTrials.length) * 100 : 0;
-
-    const churnRate = this.calculateChurnRate();
-    const averageLifetime = this.calculateAverageLifetime();
-
-    const planCounts = this.plans
-      .filter(plan => plan.type !== 'free')
-      .map(plan => ({
-        planId: plan.id,
-        count: activeSubscriptions.filter(s => s.planId === plan.id).length
-      }))
-      .sort((a, b) => b.count - a.count);
-
-    const popularPlans = planCounts.slice(0, 3).map(p => p.planId);
-
-    return {
-      totalSubscribers: activeSubscriptions.length,
-      activeSubscriptions: activeSubscriptions.length,
-      trialConversions: Math.round(trialConversions * 100) / 100,
-      monthlyRevenue,
-      annualRevenue,
-      churnRate,
-      averageLifetime,
-      popularPlans,
-      conversionFunnel: {
-        trialStarts: trialSubscriptions.length,
-        trialCompletions: expiredTrials.length,
-        subscriptions: activeSubscriptions.length,
-        renewals: activeSubscriptions.filter(s => s.totalPayments > 1).length
-      }
-    };
-  }
-
-  // Calcular taxa de churn
-  private calculateChurnRate(): number {
-    const now = Date.now();
-    const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
-
-    const activeThirtyDaysAgo = this.subscriptions.filter(s => 
-      s.status === 'active' && s.startDate < thirtyDaysAgo && s.endDate > thirtyDaysAgo
-    );
-
-    const cancelledThisMonth = this.subscriptions.filter(s => 
-      s.status === 'cancelled' && s.cancelledAt && s.cancelledAt >= thirtyDaysAgo
-    );
-
-    if (activeThirtyDaysAgo.length === 0) return 0;
-
-    return (cancelledThisMonth.length / activeThirtyDaysAgo.length) * 100;
-  }
-
-  // Calcular tempo médio de vida
-  private calculateAverageLifetime(): number {
-    const cancelledSubscriptions = this.subscriptions.filter(s => 
-      s.status === 'cancelled' && s.cancelledAt
-    );
-
-    if (cancelledSubscriptions.length === 0) return 0;
-
-    const totalLifetime = cancelledSubscriptions.reduce((sum, s) => {
-      const lifetime = s.cancelledAt! - s.startDate;
-      return sum + lifetime;
-    }, 0);
-
-    return Math.round(totalLifetime / cancelledSubscriptions.length / (24 * 60 * 60 * 1000)); // dias
-  }
-
-  // Obter assinaturas do usuário
-  public getUserSubscriptions(userId: string): UserSubscription[] {
-    return this.subscriptions
-      .filter(s => s.userId === userId)
-      .sort((a, b) => b.startDate - a.startDate);
-  }
-
-  // Obter todas as assinaturas
-  public getAllSubscriptions(): UserSubscription[] {
-    return this.subscriptions.sort((a, b) => b.startDate - a.startDate);
-  }
-
-  // Atualizar assinatura
-  public updateSubscription(
-    subscriptionId: string,
-    updates: Partial<UserSubscription>
-  ): UserSubscription | null {
-    const subscription = this.subscriptions.find(s => s.id === subscriptionId);
-    if (!subscription) return null;
-
-    Object.assign(subscription, updates);
-    return subscription;
-  }
-
-  // Processar pagamento
-  public processPayment(
-    subscriptionId: string,
-    amount: number,
-    currency: string,
-    platform: string
-  ): boolean {
-    const subscription = this.subscriptions.find(s => s.id === subscriptionId);
+  // Cancelar assinatura
+  public cancelSubscription(userId: string): boolean {
+    const subscription = this.getUserActiveSubscription(userId);
     if (!subscription) return false;
-
-    subscription.lastPayment = Date.now();
-    subscription.totalPayments++;
-    subscription.amount = amount;
-    subscription.currency = currency;
-    subscription.platform = platform as any;
-
+    
+    subscription.status = 'cancelled';
+    subscription.autoRenew = false;
+    
+    // Manter acesso até o final do período
     return true;
   }
 
-  // Verificar assinaturas expiradas
-  public checkExpiredSubscriptions(): UserSubscription[] {
+  // Renovar assinatura
+  public renewSubscription(userId: string): boolean {
+    const subscription = this.getUserActiveSubscription(userId);
+    if (!subscription) return false;
+    
+    const plan = this.getPlanById(subscription.planId);
+    if (!plan || plan.type === 'premium_lifetime') return false;
+    
     const now = Date.now();
-    const expired = this.subscriptions.filter(s => 
-      s.status === 'active' && s.endDate <= now
-    );
-
-    expired.forEach(s => {
-      s.status = 'expired';
-    });
-
-    return expired;
+    let newEndDate: number;
+    
+    if (plan.type === 'premium_annual') {
+      newEndDate = now + (365 * 24 * 60 * 60 * 1000);
+    } else {
+      newEndDate = now + (30 * 24 * 60 * 60 * 1000);
+    }
+    
+    subscription.endDate = newEndDate;
+    subscription.nextBillingDate = newEndDate;
+    subscription.status = 'active';
+    
+    return true;
   }
 
-  // Limpar dados antigos
-  public cleanupOldData(daysToKeep: number = 365): number {
-    const cutoffDate = Date.now() - (daysToKeep * 24 * 60 * 60 * 1000);
-    const initialCount = this.subscriptions.length;
+  // Obter estatísticas de assinaturas
+  public getSubscriptionStats(): {
+    totalSubscriptions: number;
+    activeSubscriptions: number;
+    trialUsers: number;
+    freeUsers: number;
+    revenue: {
+      monthly: number;
+      annual: number;
+      lifetime: number;
+      total: number;
+    };
+    conversionRate: number;
+  } {
+    const totalSubscriptions = this.subscriptions.length;
+    const activeSubscriptions = this.subscriptions.filter(s => s.status === 'active').length;
+    const trialUsers = this.trialUsers.size;
+    
+    const revenue = this.subscriptions.reduce((acc, sub) => {
+      const plan = this.getPlanById(sub.planId);
+      if (!plan) return acc;
+      
+      if (plan.type === 'premium_monthly') acc.monthly += plan.price.amount;
+      else if (plan.type === 'premium_annual') acc.annual += plan.price.amount;
+      else if (plan.type === 'premium_lifetime') acc.lifetime += plan.price.amount;
+      
+      return acc;
+    }, { monthly: 0, annual: 0, lifetime: 0, total: 0 });
+    
+    revenue.total = revenue.monthly + revenue.annual + revenue.lifetime;
+    
+    const totalUsers = totalSubscriptions + trialUsers;
+    const conversionRate = totalUsers > 0 ? (activeSubscriptions / totalUsers) * 100 : 0;
+    
+    return {
+      totalSubscriptions,
+      activeSubscriptions,
+      trialUsers,
+      freeUsers: 0, // Placeholder
+      revenue,
+      conversionRate: Math.round(conversionRate * 100) / 100
+    };
+  }
 
-    this.subscriptions = this.subscriptions.filter(s => 
-      s.startDate >= cutoffDate || s.status === 'active'
-    );
-
-    return initialCount - this.subscriptions.length;
+  // Obter comparação de planos
+  public getPlanComparison(): {
+    features: string[];
+    comparison: Array<{
+      feature: string;
+      free: string;
+      premium: string;
+      highlight: boolean;
+    }>;
+  } {
+    const features = this.features.filter(f => f.isEssential || f.isPopular);
+    const freePlan = this.getFreePlan();
+    const premiumPlan = this.getPremiumPlans()[0]; // Usar primeiro plano premium como referência
+    
+    const comparison = features.map(feature => {
+      const freeAccess = feature.access === 'free';
+      const premiumAccess = feature.access === 'premium';
+      
+      return {
+        feature: feature.name,
+        free: freeAccess ? '✅ Incluído' : '❌ Não incluído',
+        premium: premiumAccess ? '✅ Incluído' : '❌ Não incluído',
+        highlight: !freeAccess && premiumAccess
+      };
+    });
+    
+    return {
+      features: features.map(f => f.name),
+      comparison
+    };
   }
 }
 
