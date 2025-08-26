@@ -11,6 +11,7 @@ import StatsScreen from './stats/StatsScreen';
 import WorkoutsScreen from './workouts/WorkoutScreen';
 import WellnessScreen from './WellnessScreen';
 import CommunityScreen from './CommunityScreen';
+import MentorshipScreen from './MentorshipScreen';
 import { useFlags, useGate } from '../hooks/useGate';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -65,6 +66,12 @@ export default function MainTabs() {
                       tabBarLabel: 'Comunidades',
                       tabBarIcon: ({ color, focused }) => (
                         <AnimatedIcon focused={focused}><Users color={color} size={22} /></AnimatedIcon>
+                      ) 
+                    }} />
+                    <Tab.Screen name="Mentorship" component={MentorshipScreen} options={{ 
+                      tabBarLabel: 'Mentoria',
+                      tabBarIcon: ({ color, focused }) => (
+                        <AnimatedIcon focused={focused}><User color={color} size={22} /></AnimatedIcon>
                       ) 
                     }} />
                     <Tab.Screen name="Social" component={SocialScreen} options={{ tabBarIcon: ({ color, focused }) => (

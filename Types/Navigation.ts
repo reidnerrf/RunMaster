@@ -9,6 +9,7 @@ export type MainTabParamList = {
   Workouts: undefined;
   Wellness: undefined;
   Community: undefined;
+  Mentorship: undefined;
   Social: undefined;
   Stats: undefined;
   Profile: undefined;
@@ -25,4 +26,6 @@ export type RootStackParamList = {
   RouteDetail: { id: string };
   SavedRoutes: undefined;
   RunSummary: { runId: string };
+  Registration: undefined;
+  MentorApplication: undefined;
 };
