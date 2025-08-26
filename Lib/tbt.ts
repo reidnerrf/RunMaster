@@ -9,6 +9,7 @@ export type TbtState = {
   currentIndex: number;
   nextInstruction?: string;
   distanceToNextM?: number;
+  offRoute?: boolean;
 };
 
 export function computeBearing(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -39,13 +40,25 @@ export function buildMockRoute(center: { lat: number; lon: number }): TbtStep[] 
   ];
 }
 
+function nearestStepIndex(current: { lat: number; lon: number }, steps: TbtStep[]) {
+  let best = 0; let bestDist = Infinity;
+  for (let i = 0; i < steps.length; i++) {
+    const d = haversineM(current.lat, current.lon, steps[i].lat, steps[i].lon);
+    if (d < bestDist) { bestDist = d; best = i; }
+  }
+  return { idx: best, dist: bestDist };
+}
+
 export function nextTbt(current: { lat: number; lon: number }, steps: TbtStep[], prevIndex: number = 0): TbtState {
   if (steps.length === 0) return { currentIndex: 0 };
-  let idx = prevIndex;
+  // Snap ao ponto mais próximo caso usuário desvie muito
+  const nearest = nearestStepIndex(current, steps);
+  const offRoute = nearest.dist > 80; // 80m fora da rota
+  let idx = offRoute ? nearest.idx : prevIndex;
   let dist = haversineM(current.lat, current.lon, steps[idx].lat, steps[idx].lon);
   while (idx < steps.length - 1 && dist < 30) {
     idx += 1;
     dist = haversineM(current.lat, current.lon, steps[idx].lat, steps[idx].lon);
   }
-  return { currentIndex: idx, nextInstruction: steps[idx].instruction, distanceToNextM: Math.round(dist) };
+  return { currentIndex: idx, nextInstruction: steps[idx].instruction, distanceToNextM: Math.round(dist), offRoute };
 }

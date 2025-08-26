@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 
-export default function TbtOverlay({ instruction, distanceM }: { instruction?: string; distanceM?: number }) {
+export default function TbtOverlay({ instruction, distanceM, offRoute }: { instruction?: string; distanceM?: number; offRoute?: boolean }) {
   const { theme } = useTheme();
   if (!instruction) return null;
   return (
     <View style={[styles.wrap, { backgroundColor: 'rgba(38,38,38,0.9)', borderColor: theme.colors.border }]}> 
       <Text style={[styles.instr, { color: '#fff' }]}>{instruction}</Text>
       {typeof distanceM === 'number' && <Text style={{ color: '#fff' }}>{distanceM} m</Text>}
+      {offRoute && <Text style={{ color: '#FFD166', marginTop: 4 }}>Fora da rota — recalculando…</Text>}
     </View>
   );
 }

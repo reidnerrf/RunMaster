@@ -96,6 +96,10 @@ export default function ProfileScreen() {
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Notificações</Text><Switch value /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Spotify</Text><Switch /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Smartwatch</Text><Switch /></View>
+      <SectionTitle title="Preferências de Rota" />
+      <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Mais segura à noite</Text><Switch value={false} /></View>
+      <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Evitar aclives</Text><Switch value={false} /></View>
+      <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Circuito circular</Text><Switch value={true} /></View>
 
       <ActionButton label="Sair" color="#eee" textColor="#111" onPress={logout} />
     </ScrollView>

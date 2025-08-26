@@ -19,6 +19,7 @@ import POIOverlay from '../components/POIOverlay';
 import { getSettings, setSafetyLayers } from '../Lib/settings';
 import { buildMockRoute, nextTbt, TbtStep } from '../Lib/tbt';
 import TbtOverlay from '../components/TbtOverlay';
+import { cueHaptic, speakInstruction } from '../Lib/tbt_voice';
 
 export default function RunScreen() {
   const nav = useNavigation();
@@ -39,7 +40,8 @@ export default function RunScreen() {
   // TBT mock steps (centrados no primeiro ponto quando disponível)
   const [tbtSteps, setTbtSteps] = useState<TbtStep[] | null>(null);
   const [tbtIdx, setTbtIdx] = useState(0);
-  const [tbtInfo, setTbtInfo] = useState<{ instruction?: string; distanceM?: number } | null>(null);
+  const [tbtInfo, setTbtInfo] = useState<{ instruction?: string; distanceM?: number; offRoute?: boolean } | null>(null);
+  const lastCueRef = useRef<'100'|'20'|null>(null);
 
   useEffect(() => {
     const p = state.path[0];
@@ -52,7 +54,13 @@ export default function RunScreen() {
     const last = state.path[state.path.length - 1];
     const nxt = nextTbt({ lat: last.latitude, lon: last.longitude }, tbtSteps, tbtIdx);
     setTbtIdx(nxt.currentIndex);
-    setTbtInfo({ instruction: nxt.nextInstruction, distanceM: nxt.distanceToNextM });
+    setTbtInfo({ instruction: nxt.nextInstruction, distanceM: nxt.distanceToNextM, offRoute: nxt.offRoute });
+    if (nxt.nextInstruction && typeof nxt.distanceToNextM === 'number') {
+      const d = nxt.distanceToNextM;
+      if (d <= 25 && lastCueRef.current !== '20') { lastCueRef.current = '20'; cueHaptic(20); speakInstruction('Agora ' + nxt.nextInstruction.toLowerCase()); }
+      else if (d <= 120 && lastCueRef.current !== '100') { lastCueRef.current = '100'; cueHaptic(100); speakInstruction('Em 100 metros: ' + nxt.nextInstruction.toLowerCase()); }
+      if (d > 150) lastCueRef.current = null;
+    }
   }, [state.path, tbtSteps]);
 
   useEffect(() => {
@@ -111,7 +119,7 @@ export default function RunScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} overlayMetrics={{ distanceKm: state.distanceKm, paceStr: state.paceStr, calories: state.calories }} />
-        <TbtOverlay instruction={tbtInfo?.instruction} distanceM={tbtInfo?.distanceM} />
+        <TbtOverlay instruction={tbtInfo?.instruction} distanceM={tbtInfo?.distanceM} offRoute={tbtInfo?.offRoute} />
         {state.isAutoPaused && (
           <View style={[styles.autoPauseBadge, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={{ color: theme.colors.muted }}>Pausado automaticamente</Text>
