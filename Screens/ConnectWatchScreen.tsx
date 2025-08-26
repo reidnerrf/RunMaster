@@ -15,6 +15,7 @@ export default function ConnectWatchScreen() {
     const next = !connected;
     setConnected(next);
     try { await setSettings({ healthConnected: next }); } catch {}
+
   };
 
   return (

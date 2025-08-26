@@ -15,6 +15,7 @@ export default function ConnectSpotifyScreen() {
     const next = !connected;
     setConnected(next);
     try { await setSettings({ spotifyConnected: next }); } catch {}
+
   };
 
   return (

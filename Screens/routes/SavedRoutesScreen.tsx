@@ -82,6 +82,7 @@ export default function SavedRoutesScreen() {
         }
       }} style={[styles.sync, { borderColor: theme.colors.border }]}>
         <Text style={{ color: theme.colors.muted }}>Importar GPX (URL)</Text>
+
       </Pressable>
       {routes.length === 0 && (
         <View style={[styles.empty, { borderColor: theme.colors.border }]}> 
