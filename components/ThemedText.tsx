@@ -19,6 +19,8 @@ export function ThemedText({
 
   return (
     <Text
+      allowFontScaling
+      maxFontSizeMultiplier={2.0}
       style={[
         { color },
         type === 'default' ? styles.default : undefined,

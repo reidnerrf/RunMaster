@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Pressable, Text, ViewStyle, TextStyle, StyleSheet, Animated } from 'react-native';
+import { Pressable, Text, ViewStyle, TextStyle, StyleSheet, Animated, AccessibilityInfo } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
 export type ActionButtonProps = {
@@ -12,9 +12,10 @@ export type ActionButtonProps = {
   haptic?: boolean;
   left?: React.ReactNode;
   right?: React.ReactNode;
+  accessibilityLabel?: string;
 };
 
-export default function ActionButton({ label, onPress, color = '#FF6B00', textColor = 'white', style, textStyle, haptic = true, left, right }: ActionButtonProps) {
+export default function ActionButton({ label, onPress, color = '#FF6B00', textColor = 'white', style, textStyle, haptic = true, left, right, accessibilityLabel }: ActionButtonProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -31,9 +32,9 @@ export default function ActionButton({ label, onPress, color = '#FF6B00', textCo
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
-      <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress} style={[styles.btn, { backgroundColor: color }, style]}> 
+      <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel || label} onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress} style={[styles.btn, { backgroundColor: color }, style]}> 
         {left}
-        <Text style={[styles.text, { color: textColor }, textStyle]}>{label}</Text>
+        <Text maxFontSizeMultiplier={2.0} allowFontScaling style={[styles.text, { color: textColor }, textStyle]}>{label}</Text>
         {right}
       </Pressable>
     </Animated.View>

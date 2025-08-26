@@ -22,6 +22,7 @@ import RunSummaryScreen from './Screens/RunSummaryScreen';
 import RouteDetailScreen from './Screens/routes/RouteDetailScreen';
 import SavedRoutesScreen from './Screens/routes/SavedRoutesScreen';
 import { identify, funnelStep } from './Lib/analytics';
+import { initObservability, trackEvent } from './Lib/observability';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -82,6 +83,11 @@ function AuthStackScreens() {
 export default function App() {
   React.useEffect(() => {
     setApiBaseUrl(API_BASE_URL);
+  }, []);
+
+  React.useEffect(() => {
+    initObservability({ SENTRY_DSN: process.env.SENTRY_DSN as any, AMPLITUDE_API_KEY: process.env.AMPLITUDE_API_KEY as any }).catch(() => {});
+    trackEvent('app_open');
   }, []);
 
   return (
