@@ -33,7 +33,7 @@ export type ApiChallenge = {
   participants: string[]; // userIds
 };
 
-const DEFAULT_BASE_URL = 'https://your-express-api.example.com'; // TODO: replace with your deployed URL
+const DEFAULT_BASE_URL = 'http://localhost:3000'; // set via setApiBaseUrl at runtime
 let BASE_URL = DEFAULT_BASE_URL;
 
 export function setApiBaseUrl(url: string) { BASE_URL = url; }
@@ -91,5 +91,10 @@ export const api = {
   },
   async joinChallenge(id: string, userId: string): Promise<{ ok: boolean }> {
     return http<{ ok: boolean }>(`/challenges/${encodeURIComponent(id)}/join`, { method: 'POST', body: JSON.stringify({ userId }) });
+  },
+  // Export PDF
+  async exportRunPdf(id: string): Promise<string> {
+    // returns a shareable URL
+    return `${BASE_URL}/export/run/${encodeURIComponent(id)}.pdf`;
   },
 };

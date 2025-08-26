@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import type { TrackPoint } from '../hooks/useRunTracker';
 import { useTheme } from '../hooks/useTheme';
@@ -12,11 +12,17 @@ export type MapLiveProps = {
   points: TrackPoint[];
   height?: number;
   pois?: { id: string; latitude: number; longitude: number; type: 'water' | 'toilet' | 'park' | 'challenge' | 'collectible'; label?: string }[];
+  showLighting?: boolean;
+  showAirQuality?: boolean;
+  showWeather?: boolean;
 };
 
-export default function MapLive({ points, height = 260, pois = [] }: MapLiveProps) {
+export default function MapLive({ points, height = 260, pois = [], showLighting, showAirQuality, showWeather }: MapLiveProps) {
   const { theme } = useTheme();
   const mapRef = useRef<any>(null);
+  const [aqLayer, setAqLayer] = useState<any[] | null>(null);
+  const [lightPins, setLightPins] = useState<{ lat: number; lon: number }[] | null>(null);
+  const [weatherCells, setWeatherCells] = useState<{ lat: number; lon: number; i: number }[] | null>(null);
 
   const region = useMemo(() => {
     if (!points || points.length === 0) return null as any;
@@ -51,6 +57,31 @@ export default function MapLive({ points, height = 260, pois = [] }: MapLiveProp
 
   const polyCoords = useMemo(() => points.map((p) => ({ latitude: p.latitude, longitude: p.longitude })), [points]);
 
+  // Mock data refresh for safety layers
+  useEffect(() => {
+    const center = polyCoords[polyCoords.length - 1] || { latitude: -23.55, longitude: -46.63 };
+    let t: ReturnType<typeof setInterval> | null = null;
+    const seed = () => Math.random() * 0.004 - 0.002;
+    if (showLighting) {
+      const pins = new Array(8).fill(0).map(() => ({ lat: center.latitude + seed(), lon: center.longitude + seed() }));
+      setLightPins(pins);
+    } else { setLightPins(null); }
+    if (showAirQuality) {
+      const aqs = new Array(10).fill(0).map(() => ({ lat: center.latitude + seed(), lon: center.longitude + seed(), aqi: Math.round(30 + Math.random() * 140) }));
+      setAqLayer(aqs);
+    } else { setAqLayer(null); }
+    if (showWeather) {
+      const wx = new Array(6).fill(0).map(() => ({ lat: center.latitude + seed(), lon: center.longitude + seed(), i: Math.round(Math.random() * 10) }));
+      setWeatherCells(wx);
+    } else { setWeatherCells(null); }
+    // periodic refresh to simulate real-time updates
+    t = setInterval(() => {
+      if (showAirQuality) setAqLayer((prev) => (prev || []).map((c) => ({ ...c, aqi: Math.max(20, Math.min(180, c.aqi + Math.round(Math.random() * 10 - 5))) })));
+      if (showWeather) setWeatherCells((prev) => (prev || []).map((c) => ({ ...c, i: Math.max(0, Math.min(10, c.i + Math.round(Math.random() * 4 - 2))) })));
+    }, 8000);
+    return () => { if (t) clearInterval(t); };
+  }, [showLighting, showAirQuality, showWeather, polyCoords]);
+
   if (!hasMaps) {
     return <MapTrace points={points} height={height} />;
   }
@@ -70,6 +101,16 @@ export default function MapLive({ points, height = 260, pois = [] }: MapLiveProp
         loadingEnabled
         zoomControlEnabled={Platform.OS === 'android'}
       >
+        {/* Safety layers (mock overlays) */}
+        {showLighting && lightPins && lightPins.map((c, idx) => (
+          <Marker key={`lt-${idx}`} coordinate={{ latitude: c.lat, longitude: c.lon }} title="Iluminação" pinColor="#F1C40F" />
+        ))}
+        {showAirQuality && aqLayer && aqLayer.map((c, idx) => (
+          <Marker key={`aq-${idx}`} coordinate={{ latitude: c.lat, longitude: c.lon }} title={`AQI ${c.aqi}`} pinColor={aqColor(c.aqi)} />
+        ))}
+        {showWeather && weatherCells && weatherCells.map((c, idx) => (
+          <Marker key={`wx-${idx}`} coordinate={{ latitude: c.lat, longitude: c.lon }} title={c.i > 6 ? 'Chuva' : 'Nublado'} pinColor={c.i > 6 ? '#3498DB' : '#95A5A6'} />
+        ))}
         {polyCoords.length > 1 && (
           <Polyline
             coordinates={polyCoords}
@@ -102,6 +143,13 @@ function poiColor(type: MapLiveProps['pois'][number]['type']): string {
     case 'collectible': return '#E91E63';
     default: return '#999999';
   }
+}
+
+function aqColor(aqi: number): string {
+  if (aqi < 50) return '#2ECC71';
+  if (aqi < 100) return '#F1C40F';
+  if (aqi < 150) return '#E67E22';
+  return '#E74C3C';
 }
 
 const styles = StyleSheet.create({

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Switch } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AnimatedBadge from '../components/AnimatedBadge';
 import IconButton from '../components/IconButton';
@@ -10,12 +10,13 @@ import { useGate } from '../hooks/useGate';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../hooks/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { addRun } from '../lib/runStore';
+import { addRun } from '../Lib/runStore';
 import AchievementToast from '../components/AchievementToast';
 import { useRunTracker, formatHHMMSS } from '../hooks/useRunTracker';
 import MapLive from '../components/MapLive';
 import CoachAudio from '../components/CoachAudio';
 import POIOverlay from '../components/POIOverlay';
+import { getSettings, setSafetyLayers } from '../Lib/settings';
 
 export default function RunScreen() {
   const nav = useNavigation();
@@ -29,6 +30,13 @@ export default function RunScreen() {
   const [milestone, setMilestone] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const startedRef = useRef(false);
+  const [layers, setLayers] = useState({ lighting: false, airQuality: false, weather: false });
+
+  const [livePois, setLivePois] = useState<{ id: string; latitude: number; longitude: number; type: 'water'|'toilet'|'park'|'challenge'|'collectible'; label?: string }[]>([]);
+
+  useEffect(() => {
+    getSettings().then((s) => setLayers(s.safetyLayers)).catch(() => {});
+  }, []);
 
   // Start automatically with 3-2-1 for guided workouts
   useEffect(() => {
@@ -81,16 +89,17 @@ export default function RunScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      <View style={{ position: 'relative' }}>
-        <MapLive points={state.path} />
+      <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} />
         {state.isAutoPaused && (
           <View style={[styles.autoPauseBadge, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={{ color: theme.colors.muted }}>Pausado automaticamente</Text>
           </View>
         )}
       </View>
-      {isPremium && <CoachAudio active={state.status === 'running'} paceStr={state.paceStr} distanceKm={state.distanceKm} />}
-      {isPremium && <POIOverlay path={state.path} enabled={state.status === 'running'} />}
+      {isPremium && <CoachAudio active={state.status === 'running'} paceStr={state.paceStr} distanceKm={state.distanceKm} heartRate={state.heartRate} elapsedSec={state.elapsedSec} />}
+      {isPremium && <POIOverlay path={state.path} enabled={state.status === 'running'} onPoisChanged={(pois) => {
+        setLivePois(pois.filter(p => !p.collected).map(p => ({ id: p.id, latitude: p.latitude, longitude: p.longitude, type: 'collectible' as const, label: p.type === 'coin' ? 'Moeda' : 'Estrela' })));
+      }} />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 + insets.bottom }}>
         <View style={styles.topRow}>
@@ -115,6 +124,22 @@ export default function RunScreen() {
         ]} />
 
         <AnimatedBadge label={state.distanceKm >= 1 ? '🔥 Acelere!' : 'Vamos!'} />
+
+        <View style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}>
+          <Text style={[styles.coachTitle, { color: theme.colors.text }]}>Camadas de segurança</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+            <Text style={{ color: theme.colors.text }}>Iluminação</Text>
+            <Switch value={layers.lighting} onValueChange={async (v) => { const next = await setSafetyLayers({ lighting: v }); setLayers(next.safetyLayers); }} />
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+            <Text style={{ color: theme.colors.text }}>Qualidade do ar</Text>
+            <Switch value={layers.airQuality} onValueChange={async (v) => { const next = await setSafetyLayers({ airQuality: v }); setLayers(next.safetyLayers); }} />
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+            <Text style={{ color: theme.colors.text }}>Clima</Text>
+            <Switch value={layers.weather} onValueChange={async (v) => { const next = await setSafetyLayers({ weather: v }); setLayers(next.safetyLayers); }} />
+          </View>
+        </View>
 
         {!isPremium && (
           <Pressable onPress={requirePremium(() => {}, 'run_coach')} style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}>
