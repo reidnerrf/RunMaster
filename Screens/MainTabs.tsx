@@ -10,6 +10,7 @@ import SocialScreen from './Social/SocialScreen';
 import StatsScreen from './stats/StatsScreen';
 import WorkoutsScreen from './workouts/WorkoutScreen';
 import WellnessScreen from './WellnessScreen';
+import CommunityScreen from './CommunityScreen';
 import { useFlags, useGate } from '../hooks/useGate';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -54,15 +55,21 @@ export default function MainTabs() {
           ),
         }} />
       )}
-      <Tab.Screen name="Wellness" component={WellnessScreen} options={{ 
-        tabBarLabel: 'Bem-estar',
-        tabBarIcon: ({ color, focused }) => (
-          <AnimatedIcon focused={focused}><Heart color={color} size={22} /></AnimatedIcon>
-        ) 
-      }} />
-      <Tab.Screen name="Social" component={SocialScreen} options={{ tabBarIcon: ({ color, focused }) => (
-        <AnimatedIcon focused={focused}><Users color={color} size={22} /></AnimatedIcon>
-      ) }} />
+                          <Tab.Screen name="Wellness" component={WellnessScreen} options={{ 
+                      tabBarLabel: 'Bem-estar',
+                      tabBarIcon: ({ color, focused }) => (
+                        <AnimatedIcon focused={focused}><Heart color={color} size={22} /></AnimatedIcon>
+                      ) 
+                    }} />
+                    <Tab.Screen name="Community" component={CommunityScreen} options={{ 
+                      tabBarLabel: 'Comunidades',
+                      tabBarIcon: ({ color, focused }) => (
+                        <AnimatedIcon focused={focused}><Users color={color} size={22} /></AnimatedIcon>
+                      ) 
+                    }} />
+                    <Tab.Screen name="Social" component={SocialScreen} options={{ tabBarIcon: ({ color, focused }) => (
+                      <AnimatedIcon focused={focused}><Users color={color} size={22} /></AnimatedIcon>
+                    ) }} />
       <Tab.Screen name="Stats" component={StatsScreen} options={{ tabBarIcon: ({ color, focused }) => (
         <AnimatedIcon focused={focused}><BarChart2 color={color} size={22} /></AnimatedIcon>
       ) }} />

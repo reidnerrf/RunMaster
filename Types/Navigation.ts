@@ -8,6 +8,7 @@ export type MainTabParamList = {
   Home: undefined;
   Workouts: undefined;
   Wellness: undefined;
+  Community: undefined;
   Social: undefined;
   Stats: undefined;
   Profile: undefined;
