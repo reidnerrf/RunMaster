@@ -225,6 +225,19 @@ app.post('/referral/apply', async (req, res) => {
 	} catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/webhooks/revenuecat', async (req, res) => {
+	try {
+		const secret = process.env.REV_CAT_WEBHOOK_SECRET || 'dev';
+		const sig = req.headers['x-signature'] || '';
+		// TODO: verify HMAC using request raw body; here we just compare placeholder
+		if (!sig || sig !== secret) return res.status(401).json({ error: 'unauthorized' });
+		const event = req.body || {};
+		console.log('[revenuecat webhook]', event?.type);
+		// Update user premium status in DB based on event
+		return res.json({ ok: true });
+	} catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/config', async (req, res) => {
 	try {
 		const { userId = '', group = '' } = req.query || {};

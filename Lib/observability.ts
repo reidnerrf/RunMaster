@@ -13,7 +13,11 @@ let amplitudeClient: any = null;
 
 export async function initObservability(cfg: ObservabilityConfig) {
 	if (Sentry && cfg.SENTRY_DSN) {
-		Sentry.init({ dsn: cfg.SENTRY_DSN });
+		Sentry.init({
+			dsn: cfg.SENTRY_DSN,
+			release: process.env.APP_VERSION ? `pulse@${process.env.APP_VERSION}` : undefined,
+			tracesSampleRate: 0.2,
+		});
 	}
 	if (Amplitude && cfg.AMPLITUDE_API_KEY) {
 		amplitudeClient = await Amplitude.init(cfg.AMPLITUDE_API_KEY);
