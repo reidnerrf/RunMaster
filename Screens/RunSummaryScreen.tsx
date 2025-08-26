@@ -1,15 +1,15 @@
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, Share, Linking } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import { getRuns, Run } from '../Lib/runStore';
-import { useTheme } from '../hooks/useTheme';
-import MapTrace from '../components/MapTrace';
-import PaceHrChart from '../components/Charts';
+import { Linking, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import ActionButton from '../components/ActionButton';
-import { addRoute } from '../Lib/routeStore';
+import PaceHrChart from '../components/Charts';
 import GeneratedImage from '../components/GeneratedImage';
+import MapTrace from '../components/MapTrace';
+import { useTheme } from '../hooks/useTheme';
 import { getRecoveryAdvice } from '../Lib/analysis';
 import { api } from '../Lib/api';
+import { addRoute } from '../Lib/routeStore';
+import { getRuns, Run } from '../Lib/runStore';
 
 export default function RunSummaryScreen() {
   const route = useRoute<any>();
@@ -34,7 +34,7 @@ export default function RunSummaryScreen() {
 
   const onShare = async () => {
     try {
-      await Share.share({ message: `Acabei de correr ${run.distanceKm.toFixed(2)} km com pace médio ${run.avgPace}! #RunMaster` });
+      await Share.share({ message: `Acabei de correr ${run.distanceKm.toFixed(2)} km com pace médio ${run.avgPace}! #Pulse` });
     } catch {}
   };
 

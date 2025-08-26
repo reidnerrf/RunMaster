@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import PulsingButton from '../../components/PulsingButton';
-import IconButton from '../../components/IconButton';
-import SectionTitle from '../../components/SectionTitle';
-import GeneratedImage from '../../components/GeneratedImage';
-import FlowHint from '../../components/FlowHint';
+import React, { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import FadeInUp from '../../components/FadeInUp';
+import FlowHint from '../../components/FlowHint';
+import GeneratedImage from '../../components/GeneratedImage';
+import IconButton from '../../components/IconButton';
+import PulsingButton from '../../components/PulsingButton';
+import SectionTitle from '../../components/SectionTitle';
 import { useGate } from '../../hooks/useGate';
 import { useTheme } from '../../hooks/useTheme';
-import { suggestPlan, AISuggestions } from '../../Lib/ai';
+import { AISuggestions, suggestPlan } from '../../Lib/ai';
 import { addRoute, getRoutes, SavedRoute } from '../../Lib/routeStore';
 
 export default function HomeScreen() {
@@ -36,9 +36,9 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={[styles.map, theme.shadows.heavy, { backgroundColor: theme.colors.card, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }]}> 
-        <GeneratedImage text="RunMaster mapa com rotas urbanas brilhantes, estilo esportivo moderno" aspect="16:9" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+        <GeneratedImage text="Pulse mapa com rotas urbanas brilhantes, estilo esportivo moderno" aspect="16:9" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
         <View style={[styles.gradientOverlay]} />
-        <Text style={{ color: '#fff', fontWeight: '800' }}>Mapa Interativo (mock)</Text>
+        <Text style={{ color: theme.colors.text, fontWeight: '800' }}>Mapa Interativo (mock)</Text>
         <View style={styles.fabRow}>
           <IconButton onPress={() => nav.navigate('ConnectSpotify' as never)} style={theme.shadows.heavy}>
             <Text style={{ color: 'white' }}>🎵</Text>

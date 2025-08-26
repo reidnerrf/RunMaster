@@ -1,9 +1,9 @@
 export const Colors = {
   light: {
-    background: '#F5F5F5',
-    card: '#FFFFFF',
+    background: '#FFFFFF', // Updated background color
+    card: '#F5F5F5', // Updated card color
     text: '#333333',
-    primary: '#FF6B00',
+    primary: '#FF6B00', // Updated primary color
     secondary: '#00CFFF',
     gold: '#FFD700',
     muted: '#8E8E93',
@@ -15,7 +15,7 @@ export const Colors = {
     background: '#1E1E1E',
     card: '#2A2A2A',
     text: '#FFFFFF',
-    primary: '#FF6B00',
+    primary: '#FF6B00', // Updated primary color
     secondary: '#00CFFF',
     gold: '#FFD700',
     muted: '#A1A1AA',

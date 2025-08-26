@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "RunMaster",
-    "slug": "runmaster",
-    "scheme": "runmaster",
+    "name": "Pulse",
+    "slug": "pulse",
+    "scheme": "pulse",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

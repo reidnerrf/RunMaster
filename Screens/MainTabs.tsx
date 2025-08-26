@@ -1,14 +1,14 @@
-import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import type { MainTabParamList } from '../types/navigation';
-import HomeScreen from './home/HomeScreen';
-import WorkoutsScreen from './workouts/WorkoutsScreen';
-import SocialScreen from './social/SocialScreen';
-import StatsScreen from './stats/StatsScreen';
-import ProfileScreen from './profile/ProfileScreen';
+import { BarChart2, Dumbbell, Home, User, Users } from 'lucide-react-native';
+import React from 'react';
 import { Animated } from 'react-native';
-import { Home, Dumbbell, Users, BarChart2, User } from 'lucide-react-native';
 import { useTheme } from '../hooks/useTheme';
+import type { MainTabParamList } from '../Types/Navigation';
+import HomeScreen from './home/HomeScreen';
+import ProfileScreen from './profile/ProfileScreen';
+import SocialScreen from './Social/SocialScreen';
+import StatsScreen from './stats/StatsScreen';
+import WorkoutsScreen from './workouts/WorkoutScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
