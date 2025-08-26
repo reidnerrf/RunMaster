@@ -13,6 +13,8 @@ export type AppSettings = {
   spotifyConnected?: boolean;
   appleMusicConnected?: boolean;
   healthConnected?: boolean;
+  autoOutdoor?: boolean;
+  widgetDailyGoalKm?: number;
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -20,6 +22,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   spotifyConnected: false,
   appleMusicConnected: false,
   healthConnected: false,
+  autoOutdoor: false,
+  widgetDailyGoalKm: 5,
 };
 
 export async function getSettings(): Promise<AppSettings> {

@@ -141,6 +141,18 @@ export default function RunScreen() {
           </View>
         </View>
 
+        <View style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}> 
+          <Text style={[styles.coachTitle, { color: theme.colors.text }]}>Visibilidade</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+            <Text style={{ color: theme.colors.text }}>Modo alto contraste</Text>
+            <Switch value={(useTheme() as any).mode === 'high'} onValueChange={(v) => (useTheme() as any).setMode(v ? 'high' : 'light')} />
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+            <Text style={{ color: theme.colors.text }}>Auto outdoor à noite</Text>
+            <Switch value={(useTheme() as any).autoOutdoor} onValueChange={(v) => (useTheme() as any).setAutoOutdoor(v)} />
+          </View>
+        </View>
+
         {!isPremium && (
           <Pressable onPress={requirePremium(() => {}, 'run_coach')} style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}>
             <Text style={[styles.coachTitle, { color: theme.colors.text }]}>Coach Virtual (Premium)</Text>

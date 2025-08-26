@@ -207,6 +207,29 @@ app.post('/challenges/:id/join', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/config', async (req, res) => {
+	try {
+		const { userId = '', group = '' } = req.query || {};
+		// Simple hash to bucket users deterministically (0-99)
+		const hash = (str) => {
+			let h = 0;
+			for (let i = 0; i < String(str).length; i++) h = (h * 31 + String(str).charCodeAt(i)) % 10000;
+			return h % 100;
+		};
+		const bucket = group ? (hash(group)) : hash(userId);
+		// Flags rollout examples
+		const flags = {
+			feature_planner: bucket < 50, // 50% rollout
+			feature_tbt: bucket < 30, // 30% rollout
+		};
+		// AB test variants for paywall copy (A/B)
+		const paywallVariant = bucket < 50 ? 'A' : 'B';
+		res.json({ flags, variants: { paywallCopy: paywallVariant } });
+	} catch (e) {
+		res.status(500).json({ error: e.message });
+	}
+});
+
 const PORT = process.env.PORT || 3000;
 
 async function main() {

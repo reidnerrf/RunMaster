@@ -98,3 +98,12 @@ export const api = {
     return `${BASE_URL}/export/run/${encodeURIComponent(id)}.pdf`;
   },
 };
+
+export async function getRemoteConfig(userId?: string, group?: string): Promise<{ flags: Record<string, boolean>; variants: Record<string, string> }> {
+	const url = new URL(BASE_URL + '/config');
+	if (userId) url.searchParams.set('userId', userId);
+	if (group) url.searchParams.set('group', group);
+	const res = await fetch(url.toString());
+	if (!res.ok) throw new Error('Failed to fetch remote config');
+	return res.json();
+}

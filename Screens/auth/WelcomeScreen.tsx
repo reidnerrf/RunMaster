@@ -2,16 +2,20 @@ import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { funnelStep } from '../../Lib/analytics';
 
 export default function WelcomeScreen() {
   const nav = useNavigation();
   const { theme } = useTheme();
+
+  React.useEffect(() => { funnelStep('onboarding_view'); }, []);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={[styles.card, theme.shadows.heavy, { backgroundColor: theme.colors.card }]}> 
         <Text style={[styles.logo, { color: theme.colors.text }]}>Pulse</Text>
         <Text style={[styles.tag, { color: theme.colors.muted }]}>Corra, evolua, conquiste.</Text>
-        <Pressable onPress={() => nav.navigate('Login' as never)} style={[styles.btn, { backgroundColor: theme.colors.primary }]}>
+        <Pressable onPress={() => { funnelStep('onboarding_cta'); nav.navigate('Login' as never); }} style={[styles.btn, { backgroundColor: theme.colors.primary }]}> 
           <Text style={styles.btnText}>Começar</Text>
         </Pressable>
       </View>

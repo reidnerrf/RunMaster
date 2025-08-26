@@ -21,12 +21,21 @@ import { API_BASE_URL } from './Lib/config';
 import RunSummaryScreen from './Screens/RunSummaryScreen';
 import RouteDetailScreen from './Screens/routes/RouteDetailScreen';
 import SavedRoutesScreen from './Screens/routes/SavedRoutesScreen';
+import { identify, funnelStep } from './Lib/analytics';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function RootStack() {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
+
+  React.useEffect(() => {
+    funnelStep('app_open');
+  }, []);
+
+  React.useEffect(() => {
+    if (user?.id) identify(user.id);
+  }, [user?.id]);
 
   if (loading) {
     return <View style={[styles.container, { backgroundColor: theme.colors.background }]} />;
@@ -105,7 +114,7 @@ function ThemedNavigation() {
   return (
     <NavigationContainer theme={navTheme}>
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <GateProvider>
+        <GateProvider group={'beta-planner'}>
           <RootStack />
         </GateProvider>
       </View>

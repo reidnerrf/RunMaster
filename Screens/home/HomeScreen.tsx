@@ -11,6 +11,9 @@ import { useGate } from '../../hooks/useGate';
 import { useTheme } from '../../hooks/useTheme';
 import { AISuggestions, suggestPlan } from '../../Lib/ai';
 import { addRoute, getRoutes, SavedRoute } from '../../Lib/routeStore';
+import { getSettings, setSettings } from '../../Lib/settings';
+import { updateDailyGoalWidget } from '../../Lib/background';
+import Shimmer from '../../components/ui/Shimmer';
 
 export default function HomeScreen() {
   const nav = useNavigation();
@@ -19,10 +22,12 @@ export default function HomeScreen() {
   const [ai, setAI] = useState<AISuggestions | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
+  const [dailyGoalKm, setDailyGoalKm] = useState<number>(5);
 
   useEffect(() => {
     suggestPlan({ city: 'São Paulo', goal: 'easy', distancePreferenceKm: 5 }).then(setAI).catch(() => {});
     (async () => setSavedRoutes(await getRoutes()))();
+    getSettings().then((s) => setDailyGoalKm(s.widgetDailyGoalKm || 5)).catch(() => {});
   }, []);
 
   const saveCurrentRoute = async () => {
@@ -54,15 +59,21 @@ export default function HomeScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <SectionTitle title="Rotas Inteligentes" subtitle="Sugestões rápidas perto de você" />
+        {!ai ? (
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+            <Shimmer height={18} style={{ marginBottom: 10 }} />
+            <Shimmer height={14} width={'80%'} />
+          </View>
+        ) : (
         <FadeInUp>
           <View style={[styles.routeCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={[styles.routeTitle, { color: theme.colors.text }]}>{ai?.route?.[0]?.name ?? 'Parque Central • 5.2 km'}</Text>
             <Text style={{ color: theme.colors.muted }}>{ai ? `${ai.route[0].distance_km} km • ${ai.route[0].notes.join(' • ')}` : 'Plano, bem iluminado, pontos de água'}</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              <Pressable onPress={() => isPremium ? nav.navigate('Run' as never) : open('smart_routes')} style={[styles.routeBtn, { backgroundColor: theme.colors.primary }]}>
+              <Pressable onPress={() => isPremium ? nav.navigate('Run' as never) : open('smart_routes')} style={[styles.routeBtn, { backgroundColor: theme.colors.primary }]}> 
                 <Text style={{ color: 'white', fontWeight: '800' }}>Ir agora</Text>
               </Pressable>
-              <Pressable onPress={saveCurrentRoute} style={[styles.routeBtn, { backgroundColor: theme.colors.secondary }]}>
+              <Pressable onPress={saveCurrentRoute} style={[styles.routeBtn, { backgroundColor: theme.colors.secondary }]}> 
                 <Text style={{ color: 'white', fontWeight: '800' }}>{savedMsg ?? 'Salvar'}</Text>
               </Pressable>
             </View>
@@ -74,10 +85,28 @@ export default function HomeScreen() {
             )}
           </View>
         </FadeInUp>
+        )}
+
+        <SectionTitle title="Meta diária" subtitle="Widget" />
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Meta de hoje: {dailyGoalKm} km</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {[3,5,8,10].map((g) => (
+              <Pressable key={g} onPress={async () => { setDailyGoalKm(g); await setSettings({ widgetDailyGoalKm: g }); await updateDailyGoalWidget(g); }} style={[styles.playBtn, { borderColor: theme.colors.border }]}> 
+                <Text style={{ color: theme.colors.text }}>{g} km</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
 
         <SectionTitle title="Favoritos" subtitle="Rotas salvas" actionLabel="Ver todas" onAction={() => nav.navigate('SavedRoutes' as never)} />
         {savedRoutes.length === 0 ? (
-          <Text style={{ color: theme.colors.muted, marginBottom: 8 }}>Nenhuma rota salva ainda</Text>
+          <View style={[styles.card, { backgroundColor: theme.colors.card, alignItems: 'center' }]}> 
+            <Text style={{ color: theme.colors.muted, marginBottom: 8 }}>Nenhuma rota salva ainda</Text>
+            <Pressable onPress={saveCurrentRoute} style={[styles.playBtn, { borderColor: theme.colors.border }]}> 
+              <Text style={{ color: theme.colors.text }}>Gerar e salvar uma rota</Text>
+            </Pressable>
+          </View>
         ) : (
           savedRoutes.slice(0, 3).map((r) => (
             <Pressable key={r.id} onPress={() => (nav as any).navigate('RouteDetail', { id: r.id })} style={[styles.savedItem, { backgroundColor: theme.colors.card }]}> 

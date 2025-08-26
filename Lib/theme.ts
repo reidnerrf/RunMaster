@@ -23,6 +23,18 @@ export const Colors = {
     danger: '#FF453A',
     success: '#30D158',
   },
+  high: {
+    background: '#000000',
+    card: '#000000',
+    text: '#FFFFFF',
+    primary: '#FFD400',
+    secondary: '#00FFD1',
+    gold: '#FFD700',
+    muted: '#E5E5EA',
+    border: '#FFFFFF',
+    danger: '#FF453A',
+    success: '#30D158',
+  },
 };
 
 export const Spacing = {
@@ -78,10 +90,10 @@ export const Typography = {
   },
 };
 
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark' | 'high';
 
 export const getTheme = (mode: ThemeMode = 'light') => {
-  const palette = mode === 'dark' ? Colors.dark : Colors.light;
+  const palette = mode === 'dark' ? Colors.dark : mode === 'high' ? Colors.high : Colors.light;
   return {
     mode,
     colors: palette,

@@ -3,6 +3,8 @@ import { Modal, View, Text, Pressable, StyleSheet, Animated, Easing, Dimensions 
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
 import { getTheme } from '../Lib/theme';
+import { useFlags } from '../hooks/useGate';
+import { useAuth } from '../hooks/useAuth';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -14,6 +16,8 @@ export default function PremiumGate({ visible, onClose, source }: { visible: boo
   const navigation = useNavigation();
   const [scale] = useState(new Animated.Value(0.5));
   const [opacity] = useState(new Animated.Value(0));
+  const { variants } = useFlags();
+  const { startTrial } = useAuth();
 
   const confetti = useMemo<ConfettiPiece[]>(() => {
     const colors = ['#FF6B00', '#FFD700', '#00CFFF', '#34C759', '#FF3B30'];
@@ -42,6 +46,10 @@ export default function PremiumGate({ visible, onClose, source }: { visible: boo
     }
   }, [visible, confetti, opacity, scale]);
 
+  const copyA = { title: 'Essa função é Premium', body: 'Desbloqueie coach de corrida, rotas inteligentes, badges animadas e mais.' };
+  const copyB = { title: 'Leve seus treinos ao próximo nível', body: 'Plano inteligente, rotas populares e recuperação diária com insights.' };
+  const copy = variants.paywallCopy === 'B' ? copyB : copyA;
+
   return (
     <Modal transparent visible={visible} animationType="fade">
       <View style={styles.overlay}>
@@ -49,8 +57,8 @@ export default function PremiumGate({ visible, onClose, source }: { visible: boo
           <Animated.View key={idx} style={[styles.confetti, { backgroundColor: c.color, left: c.left, transform: [{ translateY: c.anim.interpolate({ inputRange: [0, 1], outputRange: [-40, SCREEN_H * 0.4] }) }, { rotate: c.anim.interpolate({ inputRange: [0, 1], outputRange: ['-30deg', '40deg'] }) }] }]} />
         ))}
         <Animated.View style={[styles.card, { backgroundColor: theme.colors.card, transform: [{ scale }], opacity }]}> 
-          <Text style={[styles.title, { color: theme.colors.text }]}>Essa função é Premium</Text>
-          <Text style={[styles.body, { color: theme.colors.muted }]}>Desbloqueie coach de corrida, rotas inteligentes, badges animadas e muito mais.</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>{copy.title}</Text>
+          <Text style={[styles.body, { color: theme.colors.muted }]}>{copy.body}</Text>
           <View style={styles.row}>
             <Pressable onPress={onClose} style={[styles.btn, { backgroundColor: theme.colors.background, borderColor: theme.colors.border, borderWidth: 1 }]}> 
               <Text style={[styles.btnText, { color: theme.colors.text }]}>Fechar</Text>
@@ -62,6 +70,9 @@ export default function PremiumGate({ visible, onClose, source }: { visible: boo
               <Text style={[styles.btnText, { color: 'white' }]}>Assinar Agora</Text>
             </Pressable>
           </View>
+          <Pressable onPress={async () => { await startTrial(); onClose(); }} style={{ marginTop: 10, alignSelf: 'flex-end' }}>
+            <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Iniciar teste grátis de 7 dias</Text>
+          </Pressable>
         </Animated.View>
       </View>
     </Modal>
