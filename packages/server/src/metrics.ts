@@ -4,17 +4,12 @@ import { monitorEventLoopDelay } from 'perf_hooks';
 
 const registry = new client.Registry();
 
-// Only collect default metrics if event loop monitoring is available
-if (typeof monitorEventLoopDelay === 'function') {
-	client.collectDefaultMetrics({ register: registry, prefix: 'runx_' });
-} else {
-	// Collect default metrics without event loop lag if not available
-	client.collectDefaultMetrics({ 
-		register: registry, 
-		prefix: 'runx_',
-		eventLoopLag: false // Disable event loop lag monitoring
-	});
-}
+// Collect default metrics with event loop lag monitoring disabled
+client.collectDefaultMetrics({ 
+	register: registry, 
+	prefix: 'runx_',
+	eventLoopLag: false // Disable event loop lag monitoring to prevent TypeError
+});
 
 const httpRequestsTotal = new client.Counter({
 	name: 'http_requests_total',
