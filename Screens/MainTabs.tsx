@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { BarChart2, Dumbbell, Home, Lock, User, Users } from 'lucide-react-native';
+import { BarChart2, Dumbbell, Home, Lock, User, Users, Heart } from 'lucide-react-native';
 import React from 'react';
 import { Animated, Pressable } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
@@ -9,6 +9,7 @@ import ProfileScreen from './profile/ProfileScreen';
 import SocialScreen from './Social/SocialScreen';
 import StatsScreen from './stats/StatsScreen';
 import WorkoutsScreen from './workouts/WorkoutScreen';
+import WellnessScreen from './WellnessScreen';
 import { useFlags, useGate } from '../hooks/useGate';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -53,6 +54,12 @@ export default function MainTabs() {
           ),
         }} />
       )}
+      <Tab.Screen name="Wellness" component={WellnessScreen} options={{ 
+        tabBarLabel: 'Bem-estar',
+        tabBarIcon: ({ color, focused }) => (
+          <AnimatedIcon focused={focused}><Heart color={color} size={22} /></AnimatedIcon>
+        ) 
+      }} />
       <Tab.Screen name="Social" component={SocialScreen} options={{ tabBarIcon: ({ color, focused }) => (
         <AnimatedIcon focused={focused}><Users color={color} size={22} /></AnimatedIcon>
       ) }} />
