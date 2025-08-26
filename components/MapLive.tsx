@@ -57,6 +57,31 @@ export default function MapLive({ points, height = 260, pois = [], showLighting,
 
   const polyCoords = useMemo(() => points.map((p) => ({ latitude: p.latitude, longitude: p.longitude })), [points]);
 
+  // Mock data refresh for safety layers
+  useEffect(() => {
+    const center = polyCoords[polyCoords.length - 1] || { latitude: -23.55, longitude: -46.63 };
+    let t: ReturnType<typeof setInterval> | null = null;
+    const seed = () => Math.random() * 0.004 - 0.002;
+    if (showLighting) {
+      const pins = new Array(8).fill(0).map(() => ({ lat: center.latitude + seed(), lon: center.longitude + seed() }));
+      setLightPins(pins);
+    } else { setLightPins(null); }
+    if (showAirQuality) {
+      const aqs = new Array(10).fill(0).map(() => ({ lat: center.latitude + seed(), lon: center.longitude + seed(), aqi: Math.round(30 + Math.random() * 140) }));
+      setAqLayer(aqs);
+    } else { setAqLayer(null); }
+    if (showWeather) {
+      const wx = new Array(6).fill(0).map(() => ({ lat: center.latitude + seed(), lon: center.longitude + seed(), i: Math.round(Math.random() * 10) }));
+      setWeatherCells(wx);
+    } else { setWeatherCells(null); }
+    // periodic refresh to simulate real-time updates
+    t = setInterval(() => {
+      if (showAirQuality) setAqLayer((prev) => (prev || []).map((c) => ({ ...c, aqi: Math.max(20, Math.min(180, c.aqi + Math.round(Math.random() * 10 - 5))) })));
+      if (showWeather) setWeatherCells((prev) => (prev || []).map((c) => ({ ...c, i: Math.max(0, Math.min(10, c.i + Math.round(Math.random() * 4 - 2))) })));
+    }, 8000);
+    return () => { if (t) clearInterval(t); };
+  }, [showLighting, showAirQuality, showWeather, polyCoords]);
+
   if (!hasMaps) {
     return <MapTrace points={points} height={height} />;
   }
