@@ -1,6 +1,6 @@
 import { api } from './api';
 import { getRuns, setRuns, Run, toApiRun } from './runStore';
-import { getUnsyncedRoutes, markRouteSynced, getRoutes, setRoutes, SavedRoute } from './routesStore';
+import { getUnsyncedRoutes, markRouteSynced, getRoutes, setRoutes, SavedRoute } from './routeStore';
 
 export async function pushUnsyncedRuns(userId: string) {
   const local = await getRuns();

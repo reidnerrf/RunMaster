@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { getSettings, setSettings } from '../Lib/settings';
 
 export default function ConnectSpotifyScreen() {
   const [connected, setConnected] = useState(false);
 
-  const handleConnect = () => {
+
+  React.useEffect(() => { getSettings().then((s) => setConnected(!!s.spotifyConnected)); }, []);
+
+  const handleConnect = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setConnected(true);
+    await setSettings({ spotifyConnected: true });
   };
 
   return (
@@ -19,7 +24,7 @@ export default function ConnectSpotifyScreen() {
         <Text style={{ fontWeight: '700' }}>{connected ? 'Conectado' : 'Desconectado'}</Text>
       </View>
       <Pressable onPress={handleConnect} style={[styles.btn, connected && styles.btnConnected]}> 
-        <Text style={styles.btnText}>{connected ? 'Conectado ✓' : 'Conectar'}</Text>
+        <Text style={styles.btnText}>{connected ? 'Desconectar' : 'Conectar'}</Text>
       </Pressable>
     </View>
   );
