@@ -5,12 +5,13 @@ import PulsingButton from '../../components/PulsingButton';
 import IconButton from '../../components/IconButton';
 import SectionTitle from '../../components/SectionTitle';
 import GeneratedImage from '../../components/GeneratedImage';
-import FlowHint from '../../components/FlowHint';
 import FadeInUp from '../../components/FadeInUp';
 import { useGate } from '../../hooks/useGate';
 import { useTheme } from '../../hooks/useTheme';
 import { suggestPlan, AISuggestions } from '../../Lib/ai';
 import { addRoute, getRoutes, SavedRoute } from '../../Lib/routeStore';
+import { summarize } from '../../Lib/runStore';
+import { getGoals } from '../../Lib/goals';
 
 export default function HomeScreen() {
   const nav = useNavigation();
@@ -19,10 +20,12 @@ export default function HomeScreen() {
   const [ai, setAI] = useState<AISuggestions | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
+  const [stats, setStats] = useState<{ totalDistanceKm: number; weekDistanceKm: number } | null>(null);
+  const [goals, setGoals] = useState<any>(null);
 
   useEffect(() => {
     suggestPlan({ city: 'São Paulo', goal: 'easy', distancePreferenceKm: 5 }).then(setAI).catch(() => {});
-    (async () => setSavedRoutes(await getRoutes()))();
+    (async () => { setSavedRoutes(await getRoutes()); setStats(await summarize()); setGoals(await getGoals()); })();
   }, []);
 
   const saveCurrentRoute = async () => {
@@ -32,6 +35,13 @@ export default function HomeScreen() {
     setSavedMsg('Rota salva!');
     setTimeout(() => setSavedMsg(null), 1500);
   };
+
+  const GoalCard = ({ title, value }: any) => (
+    <View style={[styles.goalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
+      <Text style={{ color: theme.colors.muted }}>{title}</Text>
+      <Text style={{ color: theme.colors.text, fontWeight: '800' }}>{value}</Text>
+    </View>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
@@ -53,6 +63,19 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <SectionTitle title="Metas" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <GoalCard title="Diária: Calorias" value={goals?.daily?.calories ? `${goals.daily.calories} kcal` : '—'} />
+          <GoalCard title="Diária: Distância" value={goals?.daily?.distanceKm ? `${goals.daily.distanceKm} km` : '—'} />
+          <GoalCard title="Diária: Passos" value={goals?.daily?.steps ? `${goals.daily.steps}` : '—'} />
+        </View>
+
+        <SectionTitle title="Estatísticas" subtitle="Resumo rápido" />
+        <View style={[styles.statsRow]}> 
+          <GoalCard title="Total (km)" value={stats?.totalDistanceKm?.toFixed(1) ?? '0'} />
+          <GoalCard title="Semana (km)" value={stats?.weekDistanceKm?.toFixed(1) ?? '0'} />
+        </View>
+
         <SectionTitle title="Rotas Inteligentes" subtitle="Sugestões rápidas perto de você" />
         <FadeInUp>
           <View style={[styles.routeCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
@@ -65,13 +88,10 @@ export default function HomeScreen() {
               <Pressable onPress={saveCurrentRoute} style={[styles.routeBtn, { backgroundColor: theme.colors.secondary }]}>
                 <Text style={{ color: 'white', fontWeight: '800' }}>{savedMsg ?? 'Salvar'}</Text>
               </Pressable>
+              <Pressable onPress={() => (nav as any).navigate('CreateRoute')} style={[styles.routeBtn, { backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border }]}>
+                <Text style={{ color: theme.colors.text, fontWeight: '800' }}>Criar rota</Text>
+              </Pressable>
             </View>
-            {ai && (
-              <View style={{ marginTop: 8, gap: 4 }}>
-                <Text style={{ color: theme.colors.muted }}>Clima: {ai.climate.summary} • {ai.climate.temperature_c}°C • AQ {ai.climate.air_quality}</Text>
-                <Text style={{ color: theme.colors.muted }}>Pacing sugerido: {ai.pacing.target_min_per_km} • Dica: {ai.pacing.tip}</Text>
-              </View>
-            )}
           </View>
         </FadeInUp>
 
@@ -86,23 +106,6 @@ export default function HomeScreen() {
             </Pressable>
           ))
         )}
-
-        <SectionTitle title="Conquistas dos amigos" subtitle={isPremium ? 'Feed completo' : 'Feed limitado na versão grátis'} />
-        {[...Array(isPremium ? 6 : 3)].map((_, i) => (
-          <FadeInUp key={i} delay={i * 60}>
-            <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
-              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>@runner{i + 1}</Text>
-              <Text style={[styles.cardBody, { color: theme.colors.muted }]}>Bateu recorde de 5km! 🏅</Text>
-            </View>
-          </FadeInUp>
-        ))}
-        {!isPremium && (
-          <Pressable onPress={() => open('home_feed')} style={[styles.locked, { borderColor: theme.colors.border }]}> 
-            <Text style={{ color: theme.colors.muted }}>Ver mais (Premium)</Text>
-          </Pressable>
-        )}
-
-        <FlowHint steps={["Mapa/Rotas", "Iniciar Corrida", "Feed Social", "Upgrade Premium"]} />
       </ScrollView>
     </View>
   );
@@ -117,10 +120,10 @@ const styles = StyleSheet.create({
   card: { borderRadius: 16, padding: 14, marginBottom: 12 },
   cardTitle: { fontWeight: '800', marginBottom: 6 },
   cardBody: { },
-  locked: { borderWidth: 1, borderRadius: 12, padding: 12, alignItems: 'center' },
   routeCard: { borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1 },
   routeTitle: { fontSize: 16, fontWeight: '800', marginBottom: 6 },
   routeBtn: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
-  playBtn: { borderWidth: 1, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, marginTop: 8 },
   savedItem: { borderRadius: 12, padding: 12, marginBottom: 8 },
+  goalCard: { flex: 1, padding: 12, borderRadius: 12, borderWidth: 1 },
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
 });

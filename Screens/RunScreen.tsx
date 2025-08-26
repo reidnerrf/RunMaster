@@ -89,7 +89,7 @@ export default function RunScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} />
+      <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} overlayMetrics={{ distanceKm: state.distanceKm, paceStr: state.paceStr, calories: state.calories }} />
         {state.isAutoPaused && (
           <View style={[styles.autoPauseBadge, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={{ color: theme.colors.muted }}>Pausado automaticamente</Text>
@@ -125,7 +125,7 @@ export default function RunScreen() {
 
         <AnimatedBadge label={state.distanceKm >= 1 ? '🔥 Acelere!' : 'Vamos!'} />
 
-        <View style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}>
+        <View style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}> 
           <Text style={[styles.coachTitle, { color: theme.colors.text }]}>Camadas de segurança</Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
             <Text style={{ color: theme.colors.text }}>Iluminação</Text>
@@ -142,14 +142,14 @@ export default function RunScreen() {
         </View>
 
         {!isPremium && (
-          <Pressable onPress={requirePremium(() => {}, 'run_coach')} style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}>
+          <Pressable onPress={requirePremium(() => {}, 'run_coach')} style={[styles.coachBox, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}> 
             <Text style={[styles.coachTitle, { color: theme.colors.text }]}>Coach Virtual (Premium)</Text>
             <Text style={[styles.coachBody, { color: theme.colors.muted }]}>Dicas por áudio adaptadas ao seu ritmo</Text>
           </Pressable>
         )}
       </ScrollView>
 
-      <View style={[styles.bottomBar, theme.shadows.light, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border, paddingBottom: 10 + insets.bottom }]}>
+      <View style={[styles.bottomBar, theme.shadows.light, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border, paddingBottom: 10 + insets.bottom }]}> 
         {state.status === 'running' ? (
           <ActionButton label="Pausar" color="#FFD166" textColor="#1E1E1E" onPress={pause} />
         ) : (

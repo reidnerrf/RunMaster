@@ -11,6 +11,7 @@ import { getRuns } from '../../Lib/runStore';
 import RunList from '../../components/RunList';
 import { pushUnsyncedRuns } from '../../Lib/sync';
 import * as Storage from '../../Lib/storage';
+import { getGoals } from '../../Lib/goals';
 let ImagePicker: any = null; try { ImagePicker = require('expo-image-picker'); } catch {}
 
 const PROFILE_KEY = 'runmaster_profile_v1';
@@ -22,8 +23,9 @@ export default function ProfileScreen() {
   const [runs, setRuns] = useState<any[]>([]);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [goals, setLocalGoals] = useState<any>(null);
 
-  useEffect(() => { (async () => { setRuns(await getRuns()); const raw = await Storage.getItem(PROFILE_KEY); if (raw) try { const p = JSON.parse(raw); setPhotoUri(p.photoUri ?? null); } catch {} })(); }, []);
+  useEffect(() => { (async () => { setRuns(await getRuns()); const raw = await Storage.getItem(PROFILE_KEY); if (raw) try { const p = JSON.parse(raw); setPhotoUri(p.photoUri ?? null); } catch {} setLocalGoals(await getGoals()); })(); }, []);
 
   const pickPhoto = async () => {
     if (!ImagePicker || !ImagePicker.launchImageLibraryAsync) return;
@@ -45,7 +47,7 @@ export default function ProfileScreen() {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: theme.colors.background }}>
       <View style={styles.header}> 
-        <Pressable onPress={pickPhoto} style={[styles.avatar, { backgroundColor: theme.colors.primary, overflow: 'hidden' }]}>
+        <Pressable onPress={pickPhoto} style={[styles.avatar, { backgroundColor: theme.colors.primary, overflow: 'hidden' }]}> 
           {photoUri ? (
             <Image style={{ width: '100%', height: '100%' }} source={{ uri: photoUri }} />
           ) : (
@@ -64,6 +66,18 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      <SectionTitle title="Metas" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View style={[styles.goalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
+          <Text style={{ color: theme.colors.muted }}>Diária: Calorias</Text>
+          <Text style={{ color: theme.colors.text, fontWeight: '800' }}>{goals?.daily?.calories ?? '—'}</Text>
+        </View>
+        <View style={[styles.goalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
+          <Text style={{ color: theme.colors.muted }}>Diária: Distância</Text>
+          <Text style={{ color: theme.colors.text, fontWeight: '800' }}>{goals?.daily?.distanceKm ?? '—'} km</Text>
+        </View>
+      </View>
+
       <SectionTitle title="Badges" />
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <AnimatedBadge label="5k" />
@@ -73,7 +87,7 @@ export default function ProfileScreen() {
 
       <SectionTitle title="Histórico" />
       <RunList runs={runs} onPressItem={(r) => (nav as any).navigate('RunSummary', { runId: r.id })} />
-      <Pressable onPress={syncRuns} style={[styles.syncBtn, { borderColor: theme.colors.border }]}>
+      <Pressable onPress={syncRuns} style={[styles.syncBtn, { borderColor: theme.colors.border }]}> 
         <Text style={{ color: theme.colors.muted }}>{syncMsg ?? 'Sincronizar agora'}</Text>
       </Pressable>
 
@@ -98,4 +112,5 @@ const styles = StyleSheet.create({
   cardBody: { },
   settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 12, marginBottom: 8 },
   syncBtn: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12, marginTop: 8 },
+  goalCard: { flex: 1, padding: 12, borderRadius: 12, borderWidth: 1 },
 });
