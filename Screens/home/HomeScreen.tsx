@@ -16,6 +16,7 @@ import { updateDailyGoalWidget } from '../../Lib/background';
 import Shimmer from '../../components/ui/Shimmer';
 import BlurCard from '../../components/ui/BlurCard';
 import { initNavigationSdk, requestOfflineTiles, startTurnByTurn } from '../../Lib/navigation';
+import { t } from '../../Lib/i18n';
 
 export default function HomeScreen() {
   const nav = useNavigation();
@@ -56,7 +57,7 @@ export default function HomeScreen() {
           </IconButton>
         </View>
         <View style={styles.centerBtn}>
-          <PulsingButton label="INICIAR CORRIDA" onPress={() => nav.navigate('Run' as never)} />
+          <PulsingButton label={t('start_run')} onPress={() => nav.navigate('Run' as never)} />
         </View>
       </View>
 
