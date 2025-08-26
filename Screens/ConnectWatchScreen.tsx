@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { getSettings, setSettings } from '../Lib/settings';
 import { sendWatchCommand } from '../Lib/background';
+import { connectHealth } from '../Lib/health';
 
 export default function ConnectWatchScreen() {
   const [connected, setConnected] = useState(false);
@@ -38,6 +39,10 @@ export default function ConnectWatchScreen() {
           <Pressable onPress={() => sendWatchCommand('resume')} style={[styles.smallBtn]}><Text style={styles.smallText}>Resume</Text></Pressable>
         </View>
       )}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+        <Pressable onPress={() => connectHealth('apple')} style={[styles.smallBtn]}><Text style={styles.smallText}>Apple Health</Text></Pressable>
+        <Pressable onPress={() => connectHealth('google')} style={[styles.smallBtn]}><Text style={styles.smallText}>Google Fit</Text></Pressable>
+      </View>
     </View>
   );
 }

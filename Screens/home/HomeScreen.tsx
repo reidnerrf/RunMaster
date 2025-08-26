@@ -15,6 +15,7 @@ import { getSettings, setSettings } from '../../Lib/settings';
 import { updateDailyGoalWidget } from '../../Lib/background';
 import Shimmer from '../../components/ui/Shimmer';
 import BlurCard from '../../components/ui/BlurCard';
+import { initNavigationSdk, requestOfflineTiles, startTurnByTurn } from '../../Lib/navigation';
 
 export default function HomeScreen() {
   const nav = useNavigation();
@@ -29,6 +30,7 @@ export default function HomeScreen() {
     suggestPlan({ city: 'São Paulo', goal: 'easy', distancePreferenceKm: 5 }).then(setAI).catch(() => {});
     (async () => setSavedRoutes(await getRoutes()))();
     getSettings().then((s) => setDailyGoalKm(s.widgetDailyGoalKm || 5)).catch(() => {});
+    initNavigationSdk('mapbox').catch(() => {});
   }, []);
 
   const saveCurrentRoute = async () => {
@@ -76,6 +78,12 @@ export default function HomeScreen() {
               </Pressable>
               <Pressable onPress={saveCurrentRoute} style={[styles.routeBtn, { backgroundColor: theme.colors.secondary }]}> 
                 <Text style={{ color: 'white', fontWeight: '800' }}>{savedMsg ?? 'Salvar'}</Text>
+              </Pressable>
+              <Pressable onPress={() => requestOfflineTiles({ north: -23.5, south: -23.7, east: -46.5, west: -46.7 })} style={[styles.routeBtn, { backgroundColor: '#6C63FF' }]}> 
+                <Text style={{ color: 'white', fontWeight: '800' }}>Offline</Text>
+              </Pressable>
+              <Pressable onPress={() => ai && startTurnByTurn({ name: ai.route[0].name, points: ai.route[0].points || [] })} style={[styles.routeBtn, { backgroundColor: '#00B894' }]}> 
+                <Text style={{ color: 'white', fontWeight: '800' }}>TBT</Text>
               </Pressable>
             </View>
             {ai && (
