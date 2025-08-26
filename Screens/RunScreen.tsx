@@ -17,6 +17,8 @@ import MapLive from '../components/MapLive';
 import CoachAudio from '../components/CoachAudio';
 import POIOverlay from '../components/POIOverlay';
 import { getSettings, setSafetyLayers } from '../Lib/settings';
+import { buildMockRoute, nextTbt, TbtStep } from '../Lib/tbt';
+import TbtOverlay from '../components/TbtOverlay';
 
 export default function RunScreen() {
   const nav = useNavigation();
@@ -33,6 +35,25 @@ export default function RunScreen() {
   const [layers, setLayers] = useState({ lighting: false, airQuality: false, weather: false });
 
   const [livePois, setLivePois] = useState<{ id: string; latitude: number; longitude: number; type: 'water'|'toilet'|'park'|'challenge'|'collectible'; label?: string }[]>([]);
+
+  // TBT mock steps (centrados no primeiro ponto quando disponível)
+  const [tbtSteps, setTbtSteps] = useState<TbtStep[] | null>(null);
+  const [tbtIdx, setTbtIdx] = useState(0);
+  const [tbtInfo, setTbtInfo] = useState<{ instruction?: string; distanceM?: number } | null>(null);
+
+  useEffect(() => {
+    const p = state.path[0];
+    const center = p ? { lat: p.latitude, lon: p.longitude } : { lat: -23.55, lon: -46.63 };
+    setTbtSteps(buildMockRoute(center));
+  }, []);
+
+  useEffect(() => {
+    if (!tbtSteps || state.path.length === 0) return;
+    const last = state.path[state.path.length - 1];
+    const nxt = nextTbt({ lat: last.latitude, lon: last.longitude }, tbtSteps, tbtIdx);
+    setTbtIdx(nxt.currentIndex);
+    setTbtInfo({ instruction: nxt.nextInstruction, distanceM: nxt.distanceToNextM });
+  }, [state.path, tbtSteps]);
 
   useEffect(() => {
     getSettings().then((s) => setLayers(s.safetyLayers)).catch(() => {});
@@ -90,6 +111,7 @@ export default function RunScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} overlayMetrics={{ distanceKm: state.distanceKm, paceStr: state.paceStr, calories: state.calories }} />
+        <TbtOverlay instruction={tbtInfo?.instruction} distanceM={tbtInfo?.distanceM} />
         {state.isAutoPaused && (
           <View style={[styles.autoPauseBadge, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={{ color: theme.colors.muted }}>Pausado automaticamente</Text>
