@@ -12,7 +12,7 @@ if (typeof monitorEventLoopDelay === 'function') {
 	client.collectDefaultMetrics({ 
 		register: registry, 
 		prefix: 'runx_',
-		eventLoopMonitoringPrecision: 0 // Disable event loop monitoring
+		eventLoopLag: false // Disable event loop lag monitoring
 	});
 }
 
