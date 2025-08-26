@@ -6,7 +6,9 @@
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
     "lint": "pnpm -r lint",
-    "test": "pnpm -r test",
+    "test": "jest",
+    "test:e2e:ios": "detox test -c ios.sim.debug",
+    "test:e2e:android": "detox test -c android.emu.debug",
     "format": "pnpm -r format",
     "android": "expo run:android",
     "ios": "expo run:ios"
