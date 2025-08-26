@@ -50,6 +50,12 @@ export default function POIOverlay({ path, enabled, onPoisChanged }: { path: Tra
     if (onPoisChanged) onPoisChanged(pois);
   }, [enabled, path, pois.length]);
 
+  // notify host about POIs to show markers on the map
+  useEffect(() => {
+    if (!enabled) return;
+    onPoisChanged?.(pois);
+  }, [enabled, pois, onPoisChanged]);
+
   if (!enabled) return null;
 
   return (

@@ -7,7 +7,6 @@ import { useNavigation } from '@react-navigation/native';
 import SectionTitle from '../../components/SectionTitle';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../Lib/api';
-import { importGpxFromUrl } from '../../Lib/gpx';
 
 export default function SavedRoutesScreen() {
   const { theme } = useTheme();
@@ -61,27 +60,8 @@ export default function SavedRoutesScreen() {
       <Pressable onPress={async () => { if (!user) return; setSyncing(true); await syncRoutes(user.id); setRoutes(await getRoutes()); setSyncing(false); }} style={[styles.sync, { borderColor: theme.colors.border }]}>
         <Text style={{ color: theme.colors.muted }}>{syncing ? 'Sincronizando...' : 'Sincronizar com a nuvem'}</Text>
       </Pressable>
-      <Pressable onPress={async () => {
-        const anyAlert: any = Alert as any;
-        const doImport = async (url: string) => {
-          try {
-            const added = await importGpxFromUrl(url);
-            setRoutes(await getRoutes());
-          } catch (e) {}
-        };
-        if (anyAlert.prompt) {
-          anyAlert.prompt(
-            'Importar GPX por URL',
-            'Cole a URL do arquivo .gpx',
-            [
-              { text: 'Cancelar', style: 'cancel' },
-              { text: 'OK', onPress: (value: string) => { if (value && value.trim()) doImport(value.trim()); } },
-            ],
-            'plain-text'
-          );
-        }
-      }} style={[styles.sync, { borderColor: theme.colors.border }]}>
-        <Text style={{ color: theme.colors.muted }}>Importar GPX (URL)</Text>
+      <Pressable onPress={async () => { if (!user) return; setSyncing(true); try { const remote = await api.listRoutes(user.id); for (const rr of remote) { await api.deleteRoute((rr as any)._id); } } catch {} setSyncing(false); }} style={[styles.sync, { borderColor: theme.colors.border }]}>
+        <Text style={{ color: theme.colors.muted }}>Excluir todas remotas (admin)</Text>
       </Pressable>
       {routes.length === 0 && (
         <View style={[styles.empty, { borderColor: theme.colors.border }]}> 

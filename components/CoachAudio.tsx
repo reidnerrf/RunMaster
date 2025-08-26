@@ -5,11 +5,10 @@ import { getSettings } from '../Lib/settings';
 let Speech: any = null;
 try { Speech = require('expo-speech'); } catch {}
 
-export default function CoachAudio({ active, paceStr, distanceKm, heartRate, elapsedSec }: { active: boolean; paceStr: string; distanceKm: number; heartRate?: number; elapsedSec?: number; }) {
-  const kmSpokenRef = useRef<number>(0);
-  const phaseRef = useRef<string | null>(null);
-  const lastTempoRef = useRef<number>(0);
-  const [connected, setConnected] = useState({ spotify: false, health: false });
+
+export default function CoachAudio({ active, paceStr, distanceKm }: { active: boolean; paceStr: string; distanceKm: number; }) {
+  const spokenRef = useRef<number>(0);
+  const lastBpmRef = useRef<number>(0);
 
   useEffect(() => {
     getSettings().then((s) => setConnected({ spotify: !!s.spotifyConnected, health: !!s.healthConnected })).catch(() => {});
@@ -47,39 +46,19 @@ export default function CoachAudio({ active, paceStr, distanceKm, heartRate, ela
     }
   }, [active, distanceKm, paceStr]);
 
-  // Phase and tempo guidance (stub for adaptive music controller)
+  // Music adaptive stub: compute target BPM from pace and emit logs
   useEffect(() => {
-    if (!active || !Speech) return;
-    const prev = phaseRef.current;
-    if (prev !== phase) {
-      phaseRef.current = phase;
-      const msg = connected.spotify
-        ? `Trocando playlist para ${phase}.`
-        : `Modo ${phase}. Ajuste seu ritmo.`;
-      try { Speech.speak(msg, { language: 'pt-BR' }); } catch {}
+    if (!active) return;
+    // simple conversion: pace mm:ss -> bpm ≈ 180 - 20*(min/km - 5)
+    const [mm, ss] = paceStr.split(':').map((x) => parseInt(x || '0', 10));
+    const minPerKm = (mm || 0) + (ss || 0) / 60;
+    const targetBpm = Math.max(110, Math.min(190, Math.round(180 - 20 * (minPerKm - 5))));
+    if (Math.abs(targetBpm - lastBpmRef.current) >= 5) {
+      lastBpmRef.current = targetBpm;
+      // This is where an integration with Spotify/Apple Music would adjust playback BPM/playlist
+      console.log('[music-adaptive] target BPM ->', targetBpm);
     }
-  }, [active, phase, connected.spotify]);
-
-  useEffect(() => {
-    if (!active || !Speech || targetBpm == null) return;
-    const last = lastTempoRef.current || 0;
-    if (Math.abs(targetBpm - last) >= 8) {
-      lastTempoRef.current = targetBpm;
-      const msg = connected.spotify
-        ? `Ajustando a batida para ${targetBpm} BPM.`
-        : `Alvo de cadência musical ${targetBpm} BPM.`;
-      try { Speech.speak(msg, { language: 'pt-BR' }); } catch {}
-    }
-  }, [active, targetBpm, connected.spotify]);
-
-  // Simple HR zone warnings when health is connected (stub)
-  useEffect(() => {
-    if (!active || !Speech || !connected.health || !heartRate) return;
-    const hr = Math.round(heartRate);
-    if (hr >= 180) {
-      try { Speech.speak('Atenção: frequência muito alta. Reduza o ritmo.', { language: 'pt-BR' }); } catch {}
-    }
-  }, [active, connected.health, heartRate]);
+  }, [active, paceStr]);
 
   return null;
 }
