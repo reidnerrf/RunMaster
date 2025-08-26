@@ -22,7 +22,7 @@ import RunSummaryScreen from './Screens/RunSummaryScreen';
 import RouteDetailScreen from './Screens/routes/RouteDetailScreen';
 import SavedRoutesScreen from './Screens/routes/SavedRoutesScreen';
 import { identify, funnelStep } from './Lib/analytics';
-import { initObservability, trackEvent } from './Lib/observability';
+import { initObservability, trackEvent, setUser as setObsUser } from './Lib/observability';
 import { iapSetup } from './Lib/iap';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -37,6 +37,7 @@ function RootStack() {
 
   React.useEffect(() => {
     if (user?.id) identify(user.id);
+    setObsUser(user?.id || null);
   }, [user?.id]);
 
   if (loading) {

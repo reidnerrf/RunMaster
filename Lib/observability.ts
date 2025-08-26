@@ -20,6 +20,13 @@ export async function initObservability(cfg: ObservabilityConfig) {
 	}
 }
 
+export function setUser(userId: string | null) {
+	try {
+		if (Sentry) Sentry.setUser(userId ? { id: userId } : null);
+		if (amplitudeClient && userId) amplitudeClient.setUserId(userId);
+	} catch {}
+}
+
 export function captureException(err: any) {
 	if (Sentry) {
 		Sentry.captureException(err);
