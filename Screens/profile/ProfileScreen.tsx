@@ -12,6 +12,7 @@ import RunList from '../../components/RunList';
 import { pushUnsyncedRuns } from '../../Lib/sync';
 import * as Storage from '../../Lib/storage';
 import { getGoals } from '../../Lib/goals';
+import { connectHealth } from '../../Lib/health';
 let ImagePicker: any = null; try { ImagePicker = require('expo-image-picker'); } catch {}
 
 const PROFILE_KEY = 'runmaster_profile_v1';
@@ -96,6 +97,7 @@ export default function ProfileScreen() {
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Notificações</Text><Switch value /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Spotify</Text><Switch /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Smartwatch</Text><Switch /></View>
+      <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Conectar Apple Health/Google Fit</Text><Pressable onPress={connectHealth}><Text style={{ color: theme.colors.primary, fontWeight: '800' }}>Conectar</Text></Pressable></View>
       <SectionTitle title="Preferências de Rota" />
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Mais segura à noite</Text><Switch value={false} /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Evitar aclives</Text><Switch value={false} /></View>
