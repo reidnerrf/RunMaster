@@ -1,5 +1,8 @@
 // Serviço de IA usando OpenRouter API
-// Chave: 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
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+import * as Crypto from 'expo-crypto';
+import LZString from 'lz-string';
 
 export interface OpenRouterMessage {
   role: 'system' | 'user' | 'assistant';
@@ -46,14 +49,20 @@ export interface AIConversation {
 }
 
 class OpenRouterAIService {
-  private apiKey: string = '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';
+  private apiKey: string | null = null;
   private baseUrl: string = 'https://openrouter.ai/api/v1';
   private conversations: Map<string, AIConversation> = new Map();
   private defaultModel: string = 'z-ai/glm-4.5-air:free';
+  private defaultTTLMs: number = 6 * 60 * 60 * 1000; // 6 horas
+  private inflightRequests: Map<string, Promise<string>> = new Map();
+  private cache: Map<string, { compressed: string; timestamp: number; ttl: number }> = new Map();
+  private readonly storageKey = 'ai_chat_cache_v1';
 
   constructor() {
     // Inicializar o serviço
     console.log('OpenRouter AI Service initialized');
+    // Carrega cache de forma assíncrona (best-effort)
+    this.loadCache();
   }
 
   // Chat básico com a IA
@@ -67,26 +76,131 @@ class OpenRouterAIService {
         stream: false
       };
 
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://runtracker.app',
-          'X-Title': 'RunTracker AI Assistant'
-        },
-        body: JSON.stringify(request)
-      });
+      const apiKey = await this.getApiKey();
+      const cacheKey = await this.buildCacheKey(request);
 
-      if (!response.ok) {
-        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+      // Retorna do cache se válido
+      const cached = this.getFromCache(cacheKey);
+      if (cached) {
+        return cached;
       }
 
-      const data: OpenRouterResponse = await response.json();
-      return data.choices[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
+      // De-duplicação de requisições em voo
+      const existing = this.inflightRequests.get(cacheKey);
+      if (existing) {
+        return existing;
+      }
+
+      const fetchPromise = (async () => {
+        const response = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'Accept-Encoding': 'gzip',
+            'HTTP-Referer': 'https://runtracker.app',
+            'X-Title': 'RunTracker AI Assistant'
+          },
+          body: JSON.stringify(request)
+        });
+
+        if (!response.ok) {
+          throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data: OpenRouterResponse = await response.json();
+        const content = data.choices[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
+
+        // Armazena no cache (com compressão)
+        this.saveToCache(cacheKey, content, this.defaultTTLMs);
+        return content;
+      })();
+
+      this.inflightRequests.set(cacheKey, fetchPromise);
+      try {
+        const result = await fetchPromise;
+        return result;
+      } finally {
+        this.inflightRequests.delete(cacheKey);
+      }
     } catch (error) {
       console.error('Erro na comunicação com OpenRouter:', error);
       throw error;
+    }
+  }
+
+  // Carrega API Key de forma segura via expo extra/env
+  private async getApiKey(): Promise<string> {
+    if (this.apiKey) return this.apiKey;
+    const extraKey = (Constants?.expoConfig as any)?.extra?.openrouterApiKey as string | undefined;
+    const envKey = (typeof process !== 'undefined' ? (process as any).env?.EXPO_PUBLIC_OPENROUTER_API_KEY : undefined) as string | undefined;
+    const key = (extraKey && extraKey.trim()) || (envKey && envKey.trim()) || '';
+    if (!key) {
+      console.warn('OpenRouter API key não configurada. Defina em app.json extra.openrouterApiKey ou EXPO_PUBLIC_OPENROUTER_API_KEY.');
+    }
+    this.apiKey = key;
+    return this.apiKey;
+  }
+
+  // Cache helpers
+  private async loadCache(): Promise<void> {
+    try {
+      const raw = await AsyncStorage.getItem(this.storageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Record<string, { compressed: string; timestamp: number; ttl: number }>;
+      this.cache = new Map(Object.entries(parsed));
+    } catch (e) {
+      console.warn('Falha ao carregar cache de IA:', e);
+      this.cache = new Map();
+    }
+  }
+
+  private async persistCache(): Promise<void> {
+    try {
+      const obj = Object.fromEntries(this.cache);
+      await AsyncStorage.setItem(this.storageKey, JSON.stringify(obj));
+    } catch (e) {
+      console.warn('Falha ao salvar cache de IA:', e);
+    }
+  }
+
+  private getFromCache(key: string): string | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    const isExpired = Date.now() - entry.timestamp > entry.ttl;
+    if (isExpired) {
+      this.cache.delete(key);
+      // Persist best-effort sem aguardar
+      this.persistCache();
+      return null;
+    }
+    try {
+      const decompressed = LZString.decompressFromUTF16(entry.compressed) || '';
+      return decompressed || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async buildCacheKey(request: OpenRouterRequest): Promise<string> {
+    const payload = JSON.stringify({ model: request.model, messages: request.messages });
+    try {
+      // Hash estável para chave curta
+      const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, payload);
+      return `chat:${hash}`;
+    } catch {
+      return `chat:${payload}`;
+    }
+  }
+
+  private saveToCache(key: string, value: string, ttl: number): void {
+    try {
+      const compressed = LZString.compressToUTF16(value);
+      this.cache.set(key, { compressed, timestamp: Date.now(), ttl });
+      // Persistência best-effort
+      this.persistCache();
+    } catch (e) {
+      console.warn('Falha ao comprimir/salvar resposta de IA:', e);
     }
   }
 
