@@ -28,6 +28,9 @@ import { initializeApp } from './utils/appInitializer';
 import { setupPushNotifications } from './utils/pushNotifications';
 import { setupLocationServices } from './utils/locationServices';
 import { setupHealthKit } from './utils/healthKit';
+import { startReminderOrchestrator } from './utils/reminderOrchestrator';
+import { syncToCalendar } from './utils/calendarSync';
+import { addRule, evaluate } from './utils/automationEngine';
 
 // Tipos
 interface AppState {
@@ -82,6 +85,12 @@ const App: React.FC = () => {
 
         // Passo 7: Fazer backup automático
         setAppState(prev => ({ ...prev, initializationStep: 'Fazendo backup...' }));
+        // Passo 7.5: Iniciar orquestrador de lembretes e registrar uma automação demo
+        startReminderOrchestrator(300000);
+        addRule({ id: 'post_run_congrats', name: 'Parabéns pós-corrida', enabled: true, trigger: { type: 'post_run', minDistanceKm: 2 }, action: { type: 'send_notification', templateId: 'daily_reminder', data: { streak: 3, daily_goal: '5km' } } });
+
+        // Exemplo de calendar sync (stub)
+        try { await syncToCalendar('write', 1); } catch {}
         try {
           const backup = await backupStore();
           console.log('Backup automático criado:', backup.timestamp);
