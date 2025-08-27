@@ -61,6 +61,20 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="heart.text.square.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="settings.notifications"
+        options={{
+          title: 'Notif.',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bell.badge.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings.reminders"
+        options={{
+          title: 'Lembretes',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="alarm.fill" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

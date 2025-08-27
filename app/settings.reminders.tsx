@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { ScrollView, View, Text, Switch, StyleSheet, TextInput } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { scheduleNotification } from '@/utils/pushNotifications';
+import * as Notifications from 'expo-notifications';
+import * as Calendar from 'expo-calendar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/utils/analyticsClient';
 
@@ -36,6 +38,13 @@ export default function ReminderSettingsScreen() {
     (async () => {
       const raw = await AsyncStorage.getItem(KEY);
       if (raw) try { setCfg(JSON.parse(raw)); } catch {}
+      // Inline permission prompts
+      const notif = await Notifications.requestPermissionsAsync();
+      const cal = await Calendar.requestCalendarPermissionsAsync();
+      // Store a hint for UI (not persisted for brevity)
+      if (notif.status !== 'granted' || cal.status !== 'granted') {
+        // no-op: UI could show a banner; kept minimal here
+      }
     })();
   }, []);
 
