@@ -7,6 +7,10 @@ import { summarize, getRuns } from '../../Lib/runStore';
 import { useAuth } from '../../hooks/useAuth';
 import { pushUnsyncedRuns } from '../../Lib/sync';
 import PaceHrChart from '../../components/Charts';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import ListItem from '../../components/ui/ListItem';
+import SparkBar from '../../components/ui/SparkBar';
 
 export default function StatsScreen() {
   const { requirePremium } = useGate();
@@ -54,12 +58,10 @@ export default function StatsScreen() {
       <SectionTitle title="Estatísticas" subtitle="Desempenho e progresso" />
 
       <View style={[styles.syncRow]}> 
-        <Pressable onPress={doSync} style={[styles.syncBtn, { borderColor: theme.colors.border }]}>
-          <Text style={{ color: theme.colors.muted }}>{syncMsg ?? 'Sincronizar corridas'}</Text>
-        </Pressable>
+        <Button title={syncMsg ?? 'Sincronizar corridas'} variant="outline" onPress={doSync} />
       </View>
 
-      <View style={[styles.switcher, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
+      <View style={[styles.switcher, { backgroundColor: theme.colors.backgroundCard, borderColor: theme.colors.border }]}> 
         <Pressable onPress={() => setMode('week')} style={[styles.switchBtn, { backgroundColor: mode === 'week' ? theme.colors.primary : 'transparent' }]}> 
           <Text style={{ color: mode === 'week' ? 'white' : theme.colors.text }}>Semanal</Text>
         </Pressable>
@@ -68,18 +70,16 @@ export default function StatsScreen() {
         </Pressable>
       </View>
 
-      <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+      <Card>
         <Text style={[styles.title, { color: theme.colors.text }]}>Distância total</Text>
         <Text style={[styles.value, { color: theme.colors.text }]}>{summary.totalDistanceKm.toFixed(2)} km</Text>
         <Text style={{ color: theme.colors.muted }}>Esta semana: {summary.weekDistanceKm.toFixed(2)} km • Este mês: {summary.monthDistanceKm.toFixed(2)} km</Text>
-      </View>
+      </Card>
 
       <SectionTitle title="Gráfico" subtitle="Ritmo/Distância" />
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 140 }}>
-        {bars.map((h, i) => (
-          <Animated.View key={i} style={{ width: 18, height: h, backgroundColor: theme.colors.primary, borderRadius: 8 }} />
-        ))}
-      </View>
+      <Card>
+        <SparkBar data={bars} />
+      </Card>
 
       {lastRunSplits && lastRunSplits.length > 0 && (
         <>
@@ -88,9 +88,7 @@ export default function StatsScreen() {
         </>
       )}
 
-      <Pressable onPress={requirePremium(() => {}, 'stats_export')} style={[styles.exportBtn, { borderColor: theme.colors.border }]}> 
-        <Text style={{ color: theme.colors.muted }}>Exportar Relatório (PDF - Premium)</Text>
-      </Pressable>
+      <Button title="Exportar Relatório (PDF - Premium)" variant="outline" onPress={requirePremium(() => {}, 'stats_export')} />
     </ScrollView>
   );
 }
