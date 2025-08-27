@@ -24,6 +24,10 @@ import MainTabs from './Screens/MainTabs';
 import LoadingScreen from './Components/LoadingScreen';
 import ErrorBoundary from './Components/ErrorBoundary';
 import OfflineBanner from './components/ui/OfflineBanner';
+import OnboardingScreen from './Screens/auth/OnboardingScreen';
+import LoginScreen from './Screens/auth/LoginScreen';
+import { useAuth } from './hooks/useAuth';
+import { useOnboarding } from './hooks/useOnboarding';
 
 // Utilitários
 import { initializeApp } from './utils/appInitializer';
@@ -43,6 +47,8 @@ interface AppState {
 }
 
 const App: React.FC = () => {
+  const { user } = useAuth();
+  const { onboardingDone, hydrated: onboardingHydrated } = useOnboarding();
   const [appState, setAppState] = useState<AppState>({
     isInitialized: false,
     isLoading: true,
@@ -192,6 +198,24 @@ const App: React.FC = () => {
         }}
       />
     );
+  }
+
+  // Roteamento inicial (onboarding/auth)
+  if (!onboardingHydrated) {
+    return (
+      <LoadingScreen 
+        message={appState.initializationStep}
+        showProgress={true}
+      />
+    );
+  }
+
+  if (!onboardingDone) {
+    return <OnboardingScreen />;
+  }
+
+  if (!user) {
+    return <LoginScreen />;
   }
 
   // Aplicação principal
