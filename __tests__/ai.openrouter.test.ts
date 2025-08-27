@@ -70,7 +70,7 @@ describe('OpenRouter AI Service', () => {
     const p2 = openRouterAI.chat(messages as any);
 
     // Allow microtasks to run so the fetch call is scheduled
-    await new Promise(resolve => setImmediate(resolve));
+    await new Promise<void>(resolve => queueMicrotask(() => resolve()));
     // Only one network call should be made
     expect((global as any).fetch).toHaveBeenCalledTimes(1);
 
