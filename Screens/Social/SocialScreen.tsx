@@ -8,6 +8,9 @@ import ActionButton from '../../components/ActionButton';
 import { useTheme } from '../../hooks/useTheme';
 import * as Storage from '../../Lib/storage';
 import { api, ApiChallenge } from '../../Lib/api';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { followUser, unfollowUser } from '@/store/slices/userSlice';
+import { track } from '@/utils/analyticsClient';
 
 const FEED_KEY = 'runmaster_feed_v1';
 
@@ -18,6 +21,8 @@ type BoardTab = 'city' | 'neighborhood' | 'route';
 export default function SocialScreen() {
   const { isPremium, open } = useGate();
   const { theme } = useTheme();
+  const dispatch = useAppDispatch();
+  const following = useAppSelector((s) => s.user.profile?.socialProfile.following || []);
   const [posts, setPosts] = useState<Post[]>([]);
   const [text, setText] = useState('');
   const [photo, setPhoto] = useState<string | undefined>(undefined);
@@ -64,6 +69,15 @@ export default function SocialScreen() {
     setText(''); setPhoto(undefined);
   };
 
+  const toggleFollow = async (userId: string) => {
+    if (following.includes(userId)) {
+      dispatch(unfollowUser({ targetUserId: userId }));
+    } else {
+      dispatch(followUser({ targetUserId: userId }));
+    }
+    try { await track('action_performed', { action_name: following.includes(userId) ? 'unfollow_clicked' : 'follow_clicked', context: 'social_screen' }); } catch {}
+  };
+
   const createNeighborhoodChallenge = async () => {
     const start = Date.now();
     const end = start + 7 * 24 * 3600 * 1000;
@@ -105,7 +119,12 @@ export default function SocialScreen() {
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={[styles.title, { color: theme.colors.text }]}>{p.user} • {new Date(p.date).toLocaleDateString()}</Text>
-              {isPremium && <BadgeChip label="Premium" />}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {isPremium && <BadgeChip label="Premium" />}
+                <Pressable onPress={() => toggleFollow(p.user)} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: following.includes(p.user) ? theme.colors.border : theme.colors.primary }}>
+                  <Text style={{ color: following.includes(p.user) ? theme.colors.text : 'white', fontWeight: '800' }}>{following.includes(p.user) ? 'Seguindo' : 'Seguir'}</Text>
+                </Pressable>
+              </View>
             </View>
             <Text style={[styles.body, { color: theme.colors.muted }]}>{p.text}</Text>
             {p.photo && <Image source={{ uri: p.photo }} style={{ width: '100%', height: 200, borderRadius: 12, marginTop: 8 }} />}
