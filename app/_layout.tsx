@@ -10,6 +10,7 @@ import { useSegments, usePathname, useRouter } from 'expo-router';
 import { recordScreenView } from '@/utils/navigationInsights';
 import * as ExpoLinking from 'expo-linking';
 import { handleIncomingUrl } from '@/utils/voiceCommands';
+import { startOfflineOrchestrator } from '@/utils/offlineOrchestrator';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -36,6 +37,11 @@ export default function RootLayout() {
     const sub = ExpoLinking.addEventListener('url', ({ url }) => handleIncomingUrl(url, router));
     return () => sub.remove();
   }, [router]);
+
+  useEffect(() => {
+    const stop = startOfflineOrchestrator(undefined);
+    return () => stop();
+  }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

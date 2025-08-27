@@ -3,7 +3,8 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
-import { getSuggestions } from '@/utils/navigationInsights';
+import { getHistory, getSuggestions } from '@/utils/navigationInsights';
+import { rankSuggestions } from '@/utils/mlEngine';
 
 type Props = { userId?: string };
 
@@ -12,7 +13,20 @@ export default function NavSuggestions({ userId }: Props) {
 	const [items, setItems] = useState<string[]>([]);
 
 	useEffect(() => {
-		getSuggestions(userId).then(setItems).catch(() => setItems([]));
+		(async () => {
+			const [candidates, history] = await Promise.all([
+				getSuggestions(userId, 5),
+				getHistory(userId),
+			]);
+			const last = history[0]?.screenName;
+			const now = new Date();
+			const ranked = rankSuggestions(candidates, {
+				hourOfDay: now.getHours(),
+				dayOfWeek: now.getDay(),
+				lastVisited: last,
+			});
+			setItems(ranked.slice(0, 3));
+		})().catch(() => setItems([]));
 	}, [userId]);
 
 	if (items.length === 0) return null;

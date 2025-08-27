@@ -28,8 +28,14 @@ export async function getSuggestions(userId: string | undefined, limit: number =
 	for (const e of list) counts.set(e.screenName, (counts.get(e.screenName) ?? 0) + 1);
 	return Array.from(counts.entries())
 		.sort((a, b) => b[1] - a[1])
-		.slice(0, limit)
+		.slice(0, limit * 2)
 		.map(([name]) => name);
+}
+
+export async function getHistory(userId: string | undefined): Promise<NavigationEvent[]> {
+	const key = `${HISTORY_KEY_PREFIX}${userId ?? 'anon'}`;
+	const raw = await AsyncStorage.getItem(key);
+	return raw ? (JSON.parse(raw) as NavigationEvent[]) : [];
 }
 
 const OFFLINE_QUEUE_KEY_PREFIX = 'offline_queue:';
