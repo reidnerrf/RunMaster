@@ -6,8 +6,10 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useEffect } from 'react';
-import { useSegments, usePathname } from 'expo-router';
+import { useSegments, usePathname, useRouter } from 'expo-router';
 import { recordScreenView } from '@/utils/navigationInsights';
+import * as ExpoLinking from 'expo-linking';
+import { handleIncomingUrl } from '@/utils/voiceCommands';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -16,6 +18,7 @@ export default function RootLayout() {
   });
   const segments = useSegments();
   const pathname = usePathname();
+  const router = useRouter();
 
   if (!loaded) {
     // Async font loading only occurs in development.
@@ -26,6 +29,13 @@ export default function RootLayout() {
     const screenName = '/' + segments.join('/');
     recordScreenView(undefined, { screenName, timestamp: Date.now() }).catch(() => {});
   }, [segments, pathname]);
+
+  useEffect(() => {
+    // Inicial + listener para deep links (Siri/Assistant)
+    ExpoLinking.getInitialURL().then((url) => handleIncomingUrl(url, router));
+    const sub = ExpoLinking.addEventListener('url', ({ url }) => handleIncomingUrl(url, router));
+    return () => sub.remove();
+  }, [router]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
