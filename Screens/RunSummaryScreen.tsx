@@ -13,6 +13,8 @@ import { generateStoryCard } from '../Lib/story';
 import { track } from '@/utils/analyticsClient';
 import { handleEvent as handleGameEvent } from '@/utils/gamificationEngine';
 import { addEventToCalendar } from '@/utils/calendarSync';
+import { inferInjuryRiskOnnx } from '@/utils/injuryOnnx';
+import { getPerformanceStats } from '@/utils/performanceOptimizer';
 
 
 export default function RunSummaryScreen() {
@@ -22,6 +24,8 @@ export default function RunSummaryScreen() {
   const { runId } = route.params || {};
   const [run, setRun] = useState<Run | null>(null);
   const [allRuns, setAllRuns] = useState<Run[]>([]);
+  const [injuryRisk, setInjuryRisk] = useState<number | null>(null);
+  const [perfHint, setPerfHint] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -30,6 +34,23 @@ export default function RunSummaryScreen() {
       setRun(all.find(r => r.id === runId) || null);
     })();
   }, [runId]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const history = (allRuns || []).map((r: any) => ({ startTime: new Date(r.startedAt).toISOString(), distance: r.distanceKm * 1000, speed: r.distanceKm / (r.durationSec / 3600) })) as any;
+        const risk = await inferInjuryRiskOnnx(history);
+        setInjuryRisk(typeof risk === 'number' ? risk : null);
+        if (typeof risk === 'number') { try { await track('ml_suggestion_shown', { type: 'injury_risk', score: risk }); } catch {} }
+      } catch {}
+      try {
+        const perf = getPerformanceStats();
+        const rec = perf.recommendations?.[0]?.description ? `${perf.recommendations[0].description}: ${perf.recommendations[0].implementation}` : null;
+        setPerfHint(rec || null);
+        if (rec) { try { await track('ml_suggestion_shown', { type: 'performance_hint', score: 0.5 }); } catch {} }
+      } catch {}
+    })();
+  }, [allRuns]);
 
   if (!run) return null;
 
@@ -95,6 +116,12 @@ export default function RunSummaryScreen() {
         {advice.messages.map((m, i) => (
           <Text key={i} style={{ color: theme.colors.text, marginTop: 4 }}>• {m}</Text>
         ))}
+        {injuryRisk !== null && (
+          <Text style={{ color: theme.colors.text, marginTop: 8 }}>Probabilidade de lesão (ML): {(injuryRisk * 100).toFixed(0)}%</Text>
+        )}
+        {perfHint && (
+          <Text style={{ color: theme.colors.text, marginTop: 8 }}>Sugestão de performance: {perfHint}</Text>
+        )}
       </View>
 
       <Text style={[styles.section, { color: theme.colors.text }]}>Compartilhar</Text>
