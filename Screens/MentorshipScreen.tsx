@@ -281,6 +281,9 @@ export default function MentorshipScreen({ navigation }: any) {
                 renderItem={renderMentorCard}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
+                windowSize={8}
+                removeClippedSubviews
+                initialNumToRender={8}
                 contentContainerStyle={styles.mentorsList}
               />
             )}

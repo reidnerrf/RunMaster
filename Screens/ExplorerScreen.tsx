@@ -379,6 +379,9 @@ export default function ExplorerScreen({ navigation }: any) {
                 )}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
+                windowSize={8}
+                removeClippedSubviews
+                initialNumToRender={8}
                 contentContainerStyle={styles.routesList}
               />
             )}
