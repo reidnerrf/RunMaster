@@ -9,6 +9,8 @@ import { getPersonalization, updateFeedback, applyPersonalizationOrder } from '@
 import { track } from '@/utils/analyticsClient';
 import { getModelInfo } from '@/utils/mlRuntime';
 import { recordInference } from '@/utils/mlMetrics';
+import { buildNavFeatures } from '@/utils/featureStore';
+import { rankWithOnnx } from '@/utils/navOnnx';
 
 type Props = { userId?: string };
 
@@ -33,7 +35,11 @@ export default function NavSuggestions({ userId }: Props) {
 			});
 			const info = getModelInfo();
 			recordInference(info?.name ?? 'nav_suggester', { latency_ms: Date.now() - t0, success: true }).catch(() => {});
-			const personalized = applyPersonalizationOrder(ranked, prefs.weights);
+			// Try ONNX ranking if available
+			const feats = ranked.map((_) => buildNavFeatures({ hourOfDay: now.getHours(), dayOfWeek: now.getDay(), frequencyScore: 0.5, isWeekend: now.getDay() === 0 || now.getDay() === 6 }));
+			const scores = await rankWithOnnx(ranked, feats);
+			const finalOrder = scores ? [...ranked].sort((a, b) => (scores[ranked.indexOf(b)] ?? 0) - (scores[ranked.indexOf(a)] ?? 0)) : ranked;
+			const personalized = applyPersonalizationOrder(finalOrder, prefs.weights);
 			setItems(personalized.slice(0, 3));
 		})().catch(() => setItems([]));
 	}, [userId]);

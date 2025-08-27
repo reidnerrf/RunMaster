@@ -3,6 +3,7 @@ import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { getModelConfig, setModelConfig, loadLocalModel, getModelInfo } from '@/utils/mlRuntime';
+import { downloadModel } from '@/utils/modelDownloader';
 import { track } from '@/utils/analyticsClient';
 
 export default function InjuryModelSettings() {
@@ -25,7 +26,16 @@ export default function InjuryModelSettings() {
 		await setModelConfig({ uri, name, version });
 		setStatus('Carregando modelo de risco...');
 		const t0 = Date.now();
-		const loaded = await loadLocalModel(uri);
+		let localUri = uri;
+		if (/^https?:\/\//.test(uri)) {
+			try {
+				localUri = await downloadModel(uri);
+			} catch (e) {
+				setStatus('Falha no download do modelo');
+				return;
+			}
+		}
+		const loaded = await loadLocalModel(localUri);
 		const info = getModelInfo();
 		track('ml_model_loaded', { model_name: info?.name ?? name, model_version: info?.version ?? version, size_kb: 0 }).catch(() => {});
 		track('ml_inference', { model_name: info?.name ?? name, latency_ms: Date.now() - t0, success: loaded }).catch(() => {});

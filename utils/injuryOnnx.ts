@@ -1,5 +1,6 @@
 import { WorkoutSession } from '@/store/slices/workoutSlice';
 import { getModelConfig, loadLocalModel, getModelInfo, scoreWithLocalModel } from './mlRuntime';
+import { getHealthSignals } from './healthFeatures';
 import { track } from './analyticsClient';
 
 function buildFeatures(history: WorkoutSession[]): number[][] {
@@ -12,7 +13,10 @@ function buildFeatures(history: WorkoutSession[]): number[][] {
 	const chronic = last28.reduce((a, w) => a + (w.distance ?? 0) / 1000, 0);
 	const speeds = last7.map((w) => w.speed ?? 0).filter((s) => s > 0);
 	const recentAvgSpeed = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
-	return [[acute, chronic / 4, recentAvgSpeed, last7.length]];
+	const health = getHealthSignals();
+	const sleepLast = (health.lastNightSleepMin ?? 0) / 480; // normalize to ~8h
+	const sleepAvg = (health.weeklySleepAvgMin ?? 0) / 480;
+	return [[acute, chronic / 4, recentAvgSpeed, last7.length, sleepLast, sleepAvg]];
 }
 
 export async function inferInjuryRiskOnnx(history: WorkoutSession[]): Promise<number | null> {
