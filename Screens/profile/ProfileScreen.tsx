@@ -9,6 +9,9 @@ import BadgeChip from '../../components/BadgeChip';
 import ActionButton from '../../components/ActionButton';
 import { getRuns } from '../../Lib/runStore';
 import RunList from '../../components/RunList';
+import EmptyState from '../../components/ui/EmptyState';
+import Banner from '../../components/ui/Banner';
+import Skeleton from '../../components/ui/Skeleton';
 import { pushUnsyncedRuns } from '../../Lib/sync';
 import * as Storage from '../../Lib/storage';
 import { getGoals } from '../../Lib/goals';
@@ -25,8 +28,10 @@ export default function ProfileScreen() {
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [goals, setLocalGoals] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { (async () => { setRuns(await getRuns()); const raw = await Storage.getItem(PROFILE_KEY); if (raw) try { const p = JSON.parse(raw); setPhotoUri(p.photoUri ?? null); } catch {} setLocalGoals(await getGoals()); })(); }, []);
+  useEffect(() => { (async () => { try { setRuns(await getRuns()); const raw = await Storage.getItem(PROFILE_KEY); if (raw) try { const p = JSON.parse(raw); setPhotoUri(p.photoUri ?? null); } catch {} setLocalGoals(await getGoals()); } catch { setError('Falha ao carregar perfil'); } finally { setLoading(false); } })(); }, []);
 
   const pickPhoto = async () => {
     if (!ImagePicker || !ImagePicker.launchImageLibraryAsync) return;
@@ -87,7 +92,17 @@ export default function ProfileScreen() {
       </View>
 
       <SectionTitle title="Histórico" />
-      <RunList runs={runs} onPressItem={(r) => (nav as any).navigate('RunSummary', { runId: r.id })} />
+      {error ? <Banner type="error" title={error} /> : null}
+      {loading ? (
+        <View style={{ gap: 8 }}>
+          <Skeleton height={18} />
+          <Skeleton height={18} />
+        </View>
+      ) : runs.length === 0 ? (
+        <EmptyState title="Sem corridas ainda" description="Inicie uma corrida para ver seu histórico aqui." ctaLabel="Iniciar corrida" onCtaPress={() => (nav as any).navigate('Run')} />
+      ) : (
+        <RunList runs={runs} onPressItem={(r) => (nav as any).navigate('RunSummary', { runId: r.id })} />
+      )}
       <Pressable onPress={syncRuns} style={[styles.syncBtn, { borderColor: theme.colors.border }]}> 
         <Text style={{ color: theme.colors.muted }}>{syncMsg ?? 'Sincronizar agora'}</Text>
       </Pressable>
