@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { track } from '@/utils/analyticsClient';
 
 // Interfaces
 export interface UserProfile {
@@ -452,6 +453,23 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
+    followUser: (state, action: PayloadAction<{ targetUserId: string }>) => {
+      if (!state.profile) return;
+      const id = action.payload.targetUserId;
+      if (!state.profile.socialProfile.following.includes(id)) {
+        state.profile.socialProfile.following.push(id);
+        try { track('follow', { target_user_id: id }).catch(() => {}); } catch {}
+      }
+    },
+
+    unfollowUser: (state, action: PayloadAction<{ targetUserId: string }>) => {
+      if (!state.profile) return;
+      const id = action.payload.targetUserId;
+      if (state.profile.socialProfile.following.includes(id)) {
+        state.profile.socialProfile.following = state.profile.socialProfile.following.filter(u => u !== id);
+        try { track('unfollow', { target_user_id: id }).catch(() => {}); } catch {}
+      }
+    },
     // Ações síncronas
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;

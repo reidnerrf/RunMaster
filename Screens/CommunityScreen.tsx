@@ -10,6 +10,7 @@ import {
   TextInput,
   Dimensions
 } from 'react-native';
+import { track } from '@/utils/analyticsClient';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
 import { createCommunityManager, Community, CommunityMember } from '../Lib/community';
@@ -35,6 +36,7 @@ import {
   Target,
   Zap
 } from 'lucide-react-native';
+import { addEventToCalendar } from '@/utils/calendarSync';
 
 const { width } = Dimensions.get('window');
 
@@ -54,6 +56,12 @@ export default function CommunityScreen() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showChallengesModal, setShowChallengesModal] = useState(false);
   const [showSocialActionsModal, setShowSocialActionsModal] = useState(false);
+  const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+  const [localEvents, setLocalEvents] = useState<Array<{ id: string; name: string; date: string; city: string; address?: string; participants: number }>>([]);
+  const [eventName, setEventName] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [eventCity, setEventCity] = useState('');
+  const [eventAddress, setEventAddress] = useState('');
   
   // Estados para formulários
   const [communityName, setCommunityName] = useState('');
@@ -120,6 +128,7 @@ export default function CommunityScreen() {
       setCommunityDescription('');
       
       Alert.alert('Sucesso', 'Comunidade criada com sucesso!');
+      try { track('group_created', { group_id: newCommunity.id }).catch(() => {}); } catch {}
     } catch (error) {
       Alert.alert('Erro', 'Erro ao criar comunidade');
     }
@@ -196,6 +205,7 @@ export default function CommunityScreen() {
       setInviteEmail('');
       setInviteMessage('');
       Alert.alert('Sucesso', 'Convite enviado com sucesso!');
+      try { track('action_performed', { action_name: 'community_invite_sent', context: selectedCommunity.id }).catch(() => {}); } catch {}
     } catch (error) {
       Alert.alert('Erro', 'Erro ao enviar convite');
     }
@@ -215,6 +225,7 @@ export default function CommunityScreen() {
       if (member) {
         setUserCommunities([...userCommunities, community]);
         Alert.alert('Sucesso', 'Você entrou na comunidade!');
+        try { track('action_performed', { action_name: 'community_join', context: community.id }).catch(() => {}); } catch {}
       }
     } catch (error) {
       Alert.alert('Erro', 'Erro ao entrar na comunidade');
@@ -398,11 +409,60 @@ export default function CommunityScreen() {
 
         <Pressable
           style={[styles.quickAction, { backgroundColor: theme.colors.card }]}
-          onPress={() => Alert.alert('Rankings', 'Ver rankings globais')}
+          onPress={() => setShowCreateEventModal(true)}
         >
           <Trophy color={theme.colors.primary} size={24} />
-          <ThemedText style={styles.quickActionLabel}>Rankings</ThemedText>
+          <ThemedText style={styles.quickActionLabel}>Evento Local</ThemedText>
         </Pressable>
+      </View>
+
+      {/* Benchmarking (exemplo com primeira comunidade do usuário) */}
+      {userCommunities[0] && (
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Comparação (Top 3)</ThemedText>
+          <BlurCard style={styles.communityCard}>
+            {getCommunityRanking(userCommunities[0].id).slice(0,3).map((row) => (
+              <View key={row.memberId} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText>{row.rank}. {row.username}</ThemedText>
+                <ThemedText>{row.totalDistance.toFixed(1)} km</ThemedText>
+              </View>
+            ))}
+          </BlurCard>
+        </View>
+      )}
+
+      {/* Eventos Locais */}
+      <View style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>Eventos Locais</ThemedText>
+        {localEvents.length === 0 ? (
+          <BlurCard style={styles.emptyCard}>
+            <ThemedText style={styles.emptyDescription}>Crie um evento na sua cidade</ThemedText>
+            <ActionButton label="Criar Evento" onPress={() => setShowCreateEventModal(true)} style={styles.createButton} />
+          </BlurCard>
+        ) : (
+          localEvents.map((ev) => (
+            <BlurCard key={ev.id} style={styles.communityCard}>
+              <View style={styles.communityHeader}>
+                <View style={styles.communityInfo}>
+                  <ThemedText style={styles.communityName}>{ev.name}</ThemedText>
+                  <ThemedText style={styles.communityDescription}>{ev.city} • {new Date(ev.date).toLocaleDateString()} {ev.address ? `• ${ev.address}` : ''}</ThemedText>
+                  <ThemedText style={styles.communityStats}>{ev.participants} participantes</ThemedText>
+                </View>
+                <ActionButton label="Participar" onPress={() => {
+                  setLocalEvents((list) => list.map((e) => e.id === ev.id ? { ...e, participants: e.participants + 1 } : e));
+                  try { track('event_joined', { event_id: ev.id }).catch(() => {}); } catch {}
+                }} />
+                <View style={{ width: 8 }} />
+                <ActionButton label="Adicionar ao Calendário" onPress={async () => {
+                  const start = new Date();
+                  const end = new Date(start.getTime() + 60 * 60 * 1000);
+                  const id = await addEventToCalendar({ title: ev.name, notes: ev.city, startDate: start, endDate: end, location: ev.address });
+                  if (id) { try { await track('action_performed', { action_name: 'calendar_add_event', context: id }); } catch {} }
+                }} />
+              </View>
+            </BlurCard>
+          ))
+        )}
       </View>
 
       {/* Modal Criar Comunidade */}
@@ -625,6 +685,59 @@ export default function CommunityScreen() {
               onPress={() => setShowSocialActionsModal(false)}
               style={styles.createButton}
             />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Criar Evento Local */}
+      <Modal
+        visible={showCreateEventModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCreateEventModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
+            <ThemedText style={styles.modalTitle}>Criar Evento Local</ThemedText>
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.colors.card, color: theme.colors.text, borderColor: theme.colors.border }]}
+              placeholder="Nome do evento"
+              placeholderTextColor={theme.colors.muted}
+              value={eventName}
+              onChangeText={setEventName}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.colors.card, color: theme.colors.text, borderColor: theme.colors.border }]}
+              placeholder="Data (YYYY-MM-DD)"
+              placeholderTextColor={theme.colors.muted}
+              value={eventDate}
+              onChangeText={setEventDate}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.colors.card, color: theme.colors.text, borderColor: theme.colors.border }]}
+              placeholder="Cidade"
+              placeholderTextColor={theme.colors.muted}
+              value={eventCity}
+              onChangeText={setEventCity}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.colors.card, color: theme.colors.text, borderColor: theme.colors.border }]}
+              placeholder="Endereço (opcional)"
+              placeholderTextColor={theme.colors.muted}
+              value={eventAddress}
+              onChangeText={setEventAddress}
+            />
+            <View style={styles.modalButtons}>
+              <ActionButton label="Cancelar" onPress={() => setShowCreateEventModal(false)} style={[styles.cancelButton, { borderColor: theme.colors.border }]} />
+              <ActionButton label="Criar" onPress={() => {
+                if (!eventName.trim() || !eventDate.trim() || !eventCity.trim()) { Alert.alert('Erro', 'Preencha nome, data e cidade'); return; }
+                const id = `evt_${Date.now()}`;
+                setLocalEvents([{ id, name: eventName.trim(), date: eventDate.trim(), city: eventCity.trim(), address: eventAddress.trim() || undefined, participants: 1 }, ...localEvents]);
+                setShowCreateEventModal(false);
+                setEventName(''); setEventDate(''); setEventCity(''); setEventAddress('');
+                try { track('action_performed', { action_name: 'local_event_created', context: id }).catch(() => {}); } catch {}
+              }} style={styles.createButton} />
+            </View>
           </View>
         </View>
       </Modal>

@@ -5,6 +5,7 @@ import { getRemoteConfig } from '../Lib/api';
 
 export type GateContextValue = {
 	isPremium: boolean;
+	isAdmin: boolean;
 	open: (source?: string) => void;
 	close: () => void;
 	requirePremium: (action: () => void, source?: string) => () => void;
@@ -41,7 +42,7 @@ export const GateProvider: React.FC<{ children: React.ReactNode; group?: string 
 		};
 	}, [open, user?.isPremium]);
 
-	const value = useMemo<GateContextValue>(() => ({ isPremium: !!user?.isPremium, open, close, requirePremium }), [user?.isPremium, open, close, requirePremium]);
+	const value = useMemo<GateContextValue>(() => ({ isPremium: !!user?.isPremium, isAdmin: !!(user as any)?.roles?.includes?.('admin'), open, close, requirePremium }), [user?.isPremium, (user as any)?.roles, open, close, requirePremium]);
 
 	const refresh = useCallback(async () => {
 		try {
