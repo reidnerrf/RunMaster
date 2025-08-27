@@ -5,6 +5,8 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { getHistory, getSuggestions } from '@/utils/navigationInsights';
 import { rankSuggestions } from '@/utils/mlEngine';
+import { getPersonalization, updateFeedback, applyPersonalizationOrder } from '@/utils/personalization';
+import { track } from '@/utils/analyticsClient';
 
 type Props = { userId?: string };
 
@@ -14,9 +16,10 @@ export default function NavSuggestions({ userId }: Props) {
 
 	useEffect(() => {
 		(async () => {
-			const [candidates, history] = await Promise.all([
+			const [candidates, history, prefs] = await Promise.all([
 				getSuggestions(userId, 5),
 				getHistory(userId),
+				getPersonalization(userId),
 			]);
 			const last = history[0]?.screenName;
 			const now = new Date();
@@ -25,7 +28,8 @@ export default function NavSuggestions({ userId }: Props) {
 				dayOfWeek: now.getDay(),
 				lastVisited: last,
 			});
-			setItems(ranked.slice(0, 3));
+			const personalized = applyPersonalizationOrder(ranked, prefs.weights);
+			setItems(personalized.slice(0, 3));
 		})().catch(() => setItems([]));
 	}, [userId]);
 
@@ -36,7 +40,15 @@ export default function NavSuggestions({ userId }: Props) {
 			<ThemedText type="subtitle">Sugestões rápidas</ThemedText>
 			<View style={styles.row}>
 				{items.map((name) => (
-					<TouchableOpacity key={name} style={styles.chip} onPress={() => router.push(name as any)}>
+					<TouchableOpacity
+						key={name}
+						style={styles.chip}
+						onPress={async () => {
+							track('nav_suggestion_click', { surface: 'home', key: name }).catch(() => {});
+							await updateFeedback(userId, name, 0.05);
+							router.push(name as any);
+						}}
+					>
 						<ThemedText>{name}</ThemedText>
 					</TouchableOpacity>
 				))}
