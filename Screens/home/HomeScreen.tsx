@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Bell, Settings, Play, Target as TargetIcon } from 'lucide-react-native';
 import FadeInUp from '../../components/FadeInUp';
 import FlowHint from '../../components/FlowHint';
 import GeneratedImage from '../../components/GeneratedImage';
@@ -86,7 +87,32 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <SectionTitle title="Metas" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <View>
+            <Text style={{ color: theme.colors.muted, fontSize: 12 }}>Bem-vindo de volta,</Text>
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 18 }}>Corredor</Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <IconButton onPress={() => {}} style={theme.shadows.heavy}>
+              <Bell size={18} color={'#fff'} />
+            </IconButton>
+            <IconButton onPress={() => (nav as any).navigate('Settings')} style={theme.shadows.heavy}>
+              <Settings size={18} color={'#fff'} />
+            </IconButton>
+          </View>
+        </View>
+
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>Pronto para correr?</Text>
+            <Pressable onPress={handleStartRun} style={[styles.startBtn, { backgroundColor: theme.colors.primary }]}> 
+              <Play size={20} color={'#fff'} />
+              <Text style={styles.startBtnText}>Iniciar Corrida</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <SectionTitle title="Metas" subtitle="Seu progresso" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <GoalCard title="Diária: Calorias" value={goals?.daily?.calories ? `${goals.daily.calories} kcal` : '—'} />
           <GoalCard title="Diária: Distância" value={goals?.daily?.distanceKm ? `${goals.daily.distanceKm} km` : '—'} />

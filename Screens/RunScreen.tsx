@@ -2,6 +2,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Cloud, Thermometer, Wind, MapPin, Timer, Activity as ActivityIcon } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AchievementToast from '../components/AchievementToast';
 import ActionButton from '../components/ActionButton';
@@ -191,14 +192,44 @@ export default function RunScreen() {
       }} />}
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 + insets.bottom }}>
+        <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#3b82f611', alignItems: 'center', justifyContent: 'center' }}>
+                <Cloud size={20} color={'#3b82f6'} />
+              </View>
+              <View>
+                <Text style={{ color: theme.colors.text, fontWeight: '800' }}>São Paulo</Text>
+                <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{weather?.desc || 'Parcialmente nublado'}</Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Thermometer size={14} color={'#ef4444'} />
+                <Text style={{ color: theme.colors.text }}>{Math.round(weather?.temp || 22)}°C</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Wind size={14} color={'#3b82f6'} />
+                <Text style={{ color: theme.colors.text }}>15 km/h</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
         <View style={styles.topRow}>
           <View style={styles.topBlock}>
-            <Text style={[styles.topLabel, { color: theme.colors.muted }]}>Tempo {state.isAutoPaused ? '(auto-pause)' : ''}</Text>
+            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: theme.colors.primary + '11', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+              <Timer size={18} color={theme.colors.primary} />
+            </View>
             <Text style={[styles.topValue, { color: theme.colors.text }]}>{formatHHMMSS(state.elapsedSec)}</Text>
+            <Text style={[styles.topLabel, { color: theme.colors.muted }]}>Tempo</Text>
           </View>
           <View style={styles.topBlock}>
-            <Text style={[styles.topLabel, { color: theme.colors.muted }]}>BPM</Text>
-            <Text style={[styles.topValue, { color: theme.colors.text }]}>{Math.round(state.heartRate)}</Text>
+            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#ef444411', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+              <ActivityIcon size={18} color={'#ef4444'} />
+            </View>
+            <Text style={[styles.topValue, { color: theme.colors.text }]}>{state.paceStr}</Text>
+            <Text style={[styles.topLabel, { color: theme.colors.muted }]}>Pace /km</Text>
           </View>
         </View>
 
@@ -208,8 +239,8 @@ export default function RunScreen() {
         </View>
 
         <MetricGrid items={[
-          { label: 'Distância', value: `${state.distanceKm.toFixed(2)} km` },
-          { label: 'Calorias', value: `${state.calories}` },
+          { label: 'Distância', value: `${state.distanceKm.toFixed(2)} km`, icon: <MapPin size={14} color={theme.colors.text} /> },
+          { label: 'Calorias', value: `${state.calories}`, icon: <ActivityIcon size={14} color={theme.colors.text} /> },
         ]} />
 
         <AnimatedBadge label={state.distanceKm >= 1 ? '🔥 Acelere!' : 'Vamos!'} />

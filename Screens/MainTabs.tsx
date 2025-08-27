@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { BarChart2, Dumbbell, Home, Lock, User, Users, Heart } from 'lucide-react-native';
+import { BarChart2, Dumbbell, Home as HomeIcon, Lock, User, Users, Heart, MapPin } from 'lucide-react-native';
 import React from 'react';
-import { Animated, Pressable } from 'react-native';
+import { Animated, View } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import type { MainTabParamList } from '../Types/Navigation';
 import HomeScreen from './home/HomeScreen';
@@ -14,6 +14,7 @@ import CommunityScreen from './CommunityScreen';
 import MentorshipScreen from './MentorshipScreen';
 import ExplorerScreen from './ExplorerScreen';
 import { useFlags, useGate } from '../hooks/useGate';
+import TabBarBackground from '../components/ui/TabBarBackground';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -35,13 +36,35 @@ export default function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border },
+        tabBarStyle: {
+          position: 'absolute',
+          left: 16,
+          right: 16,
+          bottom: 16,
+          backgroundColor: theme.colors.card,
+          borderTopColor: 'transparent',
+          borderRadius: 20,
+          height: 64,
+          paddingBottom: 8,
+          paddingTop: 8,
+          shadowColor: '#000',
+          shadowOpacity: 0.1,
+          shadowRadius: 10,
+          elevation: 8,
+        },
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.muted,
+        tabBarBackground: () => (
+          <View style={{ flex: 1 }}>
+            <TabBarBackground />
+          </View>
+        ),
+        tabBarItemStyle: { borderRadius: 14, marginHorizontal: 6 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
       }}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarIcon: ({ color, focused }) => (
-        <AnimatedIcon focused={focused}><Home color={color} size={22} /></AnimatedIcon>
+        <AnimatedIcon focused={focused}><HomeIcon color={color} size={22} /></AnimatedIcon>
       ) }} />
       {plannerEnabled ? (
         <Tab.Screen name="Workouts" component={WorkoutsScreen} options={{ tabBarIcon: ({ color, focused }) => (

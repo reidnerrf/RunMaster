@@ -30,8 +30,8 @@ export default function SignupScreen() {
           <Text style={{ flex: 1, color: theme.colors.text }}>Aceito termos e política</Text>
         </Pressable>
 
-        <Pressable disabled={!canSubmit} onPress={() => signup(name, email, password)} style={[styles.btn, { backgroundColor: canSubmit ? theme.colors.primary : '#ccc' }]}>
-          <Text style={styles.btnText}>Cadastrar-se</Text>
+        <Pressable disabled={!canSubmit} onPress={() => signup(name, email, password)} style={[styles.primaryBtn, { backgroundColor: canSubmit ? theme.colors.primary : '#ccc' }]}>
+          <Text style={styles.primaryText}>Cadastrar-se</Text>
         </Pressable>
 
         <View style={styles.row}> 
@@ -51,8 +51,8 @@ const styles = StyleSheet.create({
   card: { borderRadius: 20, padding: 20 },
   title: { fontSize: 28, fontWeight: '800', marginBottom: 16, textAlign: 'center' },
   input: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, borderWidth: 1 },
-  btn: { borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
-  btnText: { color: 'white', fontWeight: '800', fontSize: 16 },
+  primaryBtn: { borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginTop: 6 },
+  primaryText: { color: 'white', fontWeight: '800', fontSize: 16 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },
   socialBtn: { flex: 1, marginHorizontal: 4, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
   socialText: { color: 'white', fontWeight: '700' },
