@@ -41,6 +41,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="challenges"
+        options={{
+          title: 'Desafios',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="flag.checkered.2.crossed" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings.model"
         options={{
           title: 'Modelo',

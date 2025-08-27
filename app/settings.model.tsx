@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
+import ActiveModelIndicator from '@/components/ActiveModelIndicator';
 import { getModelConfig, setModelConfig, loadLocalModel, getModelInfo } from '@/utils/mlRuntime';
 import { downloadModel } from '@/utils/modelDownloader';
 import { track } from '@/utils/analyticsClient';
