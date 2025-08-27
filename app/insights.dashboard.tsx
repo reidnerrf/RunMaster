@@ -4,6 +4,7 @@ import { useAppSelector } from '@/store/hooks';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { track } from '@/utils/analyticsClient';
+import { useGate } from '@/hooks/useGate';
 
 type Period = 'week' | 'month' | 'year';
 
@@ -12,26 +13,28 @@ export default function InsightsDashboardScreen() {
   const runs = useAppSelector((s) => (s as any).workout?.sessions ?? []);
   const [period, setPeriod] = React.useState<Period>('week');
   const community = useAppSelector((s) => (s as any).community?.rankings ?? []);
+  const { isPremium, open } = useGate();
+  const [normalize, setNormalize] = React.useState<'absolute' | 'per_session'>('absolute');
 
   const trend = React.useMemo(() => {
     if (!stats) return null;
     if (period === 'week') {
       const weeks = stats.weeklyProgress.slice(-6);
-      const distances = weeks.map((w: any) => w.distance);
+      const distances = weeks.map((w: any) => normalize === 'per_session' && (w as any).totalRuns ? w.distance / (w as any).totalRuns : w.distance);
       const delta = distances.length >= 2 ? distances[distances.length - 1] - distances[0] : 0;
       return { labels: weeks.map((w: any) => w.week.slice(-2)), values: distances, delta };
     }
     if (period === 'month') {
       const months = stats.monthlyProgress.slice(-6);
-      const distances = months.map((m: any) => m.distance);
+      const distances = months.map((m: any) => normalize === 'per_session' && (m as any).totalRuns ? m.distance / (m as any).totalRuns : m.distance);
       const delta = distances.length >= 2 ? distances[distances.length - 1] - distances[0] : 0;
       return { labels: months.map((m: any) => m.month.slice(-2)), values: distances, delta };
     }
     const years = stats.yearlyProgress.slice(-5);
-    const distances = years.map((y: any) => y.distance);
+    const distances = years.map((y: any) => normalize === 'per_session' && (y as any).totalRuns ? y.distance / (y as any).totalRuns : y.distance);
     const delta = distances.length >= 2 ? distances[distances.length - 1] - distances[0] : 0;
     return { labels: years.map((y: any) => y.year), values: distances, delta };
-  }, [stats, period]);
+  }, [stats, period, normalize]);
 
   const exportJson = async () => {
     try {
@@ -49,6 +52,16 @@ export default function InsightsDashboardScreen() {
       await track('action_performed', { action_name: 'export_csv', context: 'insights' });
       console.log(csv.length);
     } catch {}
+  };
+
+  const exportImage = async () => {
+    if (!isPremium) { open('insights_export'); return; }
+    try { await track('action_performed', { action_name: 'export_chart_image', context: 'insights' }); console.log('Export image (placeholder)'); } catch {}
+  };
+
+  const exportPdf = async () => {
+    if (!isPremium) { open('insights_export'); return; }
+    try { await track('action_performed', { action_name: 'export_chart_pdf', context: 'insights' }); console.log('Export PDF (placeholder)'); } catch {}
   };
 
   const smartGoal = React.useMemo(() => {
@@ -82,7 +95,6 @@ export default function InsightsDashboardScreen() {
   }, [stats, period]);
 
   const communityAvg = React.useMemo(() => {
-    // Mock: average distance from top 10 ranking if exists
     const top = (community?.[0]?.rankings || []).slice(0, 10);
     if (!top.length) return null;
     const avg = top.reduce((a: number, r: any) => a + (r.value || 0), 0) / top.length;
@@ -107,6 +119,16 @@ export default function InsightsDashboardScreen() {
             {(['week','month','year'] as Period[]).map((p) => (
               <Pressable key={p} onPress={() => setPeriod(p)} style={[styles.pill, { backgroundColor: period === p ? '#111827' : 'transparent', borderColor: '#E5E7EB' }]}> 
                 <Text style={{ color: period === p ? 'white' : '#111827', fontWeight: '800', textTransform: 'capitalize' }}>{p}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+          <ThemedText>Normalização</ThemedText>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {(['absolute','per_session'] as Array<'absolute'|'per_session'>).map((m) => (
+              <Pressable key={m} onPress={() => setNormalize(m)} style={[styles.pill, { backgroundColor: normalize === m ? '#111827' : 'transparent', borderColor: '#E5E7EB' }]}> 
+                <Text style={{ color: normalize === m ? 'white' : '#111827', fontWeight: '800' }}>{m === 'absolute' ? 'Absoluto' : '/sessão'}</Text>
               </Pressable>
             ))}
           </View>
@@ -174,6 +196,8 @@ export default function InsightsDashboardScreen() {
         <View style={styles.row}> 
           <Pressable onPress={exportCsv} style={styles.btn}><Text style={styles.btnText}>CSV</Text></Pressable>
           <Pressable onPress={exportJson} style={styles.btn}><Text style={styles.btnText}>JSON</Text></Pressable>
+          <Pressable onPress={exportImage} style={[styles.btn, { backgroundColor: '#6C63FF' }]}><Text style={styles.btnText}>Imagem</Text></Pressable>
+          <Pressable onPress={exportPdf} style={[styles.btn, { backgroundColor: '#6C63FF' }]}><Text style={styles.btnText}>PDF</Text></Pressable>
         </View>
       </ThemedView>
 
@@ -193,5 +217,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8, marginTop: 8 },
   btn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#111827' },
   btnText: { color: 'white', fontWeight: '800' },
+  pill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
 });
 

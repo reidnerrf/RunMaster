@@ -12,8 +12,10 @@ import { View, Switch, Pressable } from 'react-native';
 import { getCurrentWeather } from '@/utils/weatherService';
 import { scoreRoutesOnnx } from '@/utils/routeOnnx';
 import { track } from '@/utils/analyticsClient';
+import { useGate } from '@/hooks/useGate';
 
 export default function TabTwoScreen() {
+  const { isPremium, open } = useGate();
   const [weather, setWeather] = React.useState<{ temp?: number; desc?: string } | null>(null);
   const [bestRouteLabel, setBestRouteLabel] = React.useState<string | null>(null);
   const [preferCool, setPreferCool] = React.useState<boolean>(false);
@@ -84,8 +86,8 @@ export default function TabTwoScreen() {
           {bestRouteLabel && (
             <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <ThemedText>Melhor rota agora: {bestRouteLabel}</ThemedText>
-              <Pressable onPress={async () => { await track('ml_suggestion_accepted', { type: 'best_route_now' }); }} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#6C63FF' }}> 
-                <ThemedText style={{ color: 'white' }}>Aceitar</ThemedText>
+              <Pressable onPress={async () => { if (!isPremium) { open('explore_best_route'); return; } await track('ml_suggestion_accepted', { type: 'best_route_now' }); }} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: isPremium ? '#6C63FF' : '#9CA3AF' }}> 
+                <ThemedText style={{ color: 'white' }}>{isPremium ? 'Aceitar' : 'Premium'}</ThemedText>
               </Pressable>
             </View>
           )}
