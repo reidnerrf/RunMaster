@@ -3,6 +3,7 @@ import * as Haptics from 'expo-haptics';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import AppBar from '../components/ui/AppBar';
+import { t as tt } from '../../utils/i18n';
 import { Cloud, Thermometer, Wind, MapPin, Timer, Activity as ActivityIcon } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AchievementToast from '../components/AchievementToast';
@@ -172,7 +173,7 @@ export default function RunScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      <AppBar title="Corrida" />
+      <AppBar title={tt('run_title')} />
       <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} overlayMetrics={{ distanceKm: state.distanceKm, paceStr: state.paceStr, calories: state.calories }} />
         <TbtOverlay instruction={tbtInfo?.instruction} distanceM={tbtInfo?.distanceM} offRoute={tbtInfo?.offRoute} />
         <BackToStartBadge start={startPointRef.current || undefined} current={state.path[state.path.length-1] ? { lat: state.path[state.path.length-1].latitude, lon: state.path[state.path.length-1].longitude } : undefined} />

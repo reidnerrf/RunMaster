@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
+import { t as tt } from '../../utils/i18n';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { MapPin, ArrowLeft, ArrowRight, Check, Heart, Target, Zap, Bell, Trophy } from 'lucide-react-native';
 
@@ -47,7 +48,7 @@ export default function OnboardingScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={styles.header}> 
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Configuração Inicial</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{tt('onboarding_title')}</Text>
         <View style={styles.headerRight}>
           <Text style={[styles.badge, { color: theme.colors.muted }]}>{currentStep + 1} de {stepsCount}</Text>
         </View>
@@ -59,13 +60,13 @@ export default function OnboardingScreen() {
       <View style={styles.content}> 
         {currentStep === 0 && (
           <View>
-            <Text style={[styles.stepTitle, { color: theme.colors.text }]}>Qual é seu objetivo?</Text>
+            <Text style={[styles.stepTitle, { color: theme.colors.text }]}>{tt('onboarding_step_1')}</Text>
             <Text style={[styles.stepSubtitle, { color: theme.colors.muted }]}>Vamos personalizar sua experiência</Text>
             <View style={styles.cards}>
               <SelectableCard
                 active={goal === 'weight-loss'}
                 onPress={() => setGoal('weight-loss')}
-                title="Perder Peso"
+                title={tt('onboarding_goal_weight_loss')}
                 subtitle="Queimar calorias e manter forma"
                 icon={<Heart size={20} color={'#fff'} />}
                 chipColor="#ef4444"
@@ -74,7 +75,7 @@ export default function OnboardingScreen() {
               <SelectableCard
                 active={goal === '10k'}
                 onPress={() => setGoal('10k')}
-                title="Correr 10K"
+                title={tt('onboarding_goal_competition')}
                 subtitle="Completar uma corrida de 10 quilômetros"
                 icon={<Target size={20} color={'#fff'} />} 
                 chipColor="#3b82f6"
@@ -83,7 +84,7 @@ export default function OnboardingScreen() {
               <SelectableCard
                 active={goal === 'performance'}
                 onPress={() => setGoal('performance')}
-                title="Melhorar Performance"
+                title={tt('onboarding_goal_fitness')}
                 subtitle="Aumentar velocidade e resistência"
                 icon={<Zap size={20} color={'#fff'} />} 
                 chipColor="#a855f7"
@@ -95,13 +96,13 @@ export default function OnboardingScreen() {
 
         {currentStep === 1 && (
           <View>
-            <Text style={[styles.stepTitle, { color: theme.colors.text }]}>Quando prefere correr?</Text>
+            <Text style={[styles.stepTitle, { color: theme.colors.text }]}>{tt('onboarding_step_2')}</Text>
             <Text style={[styles.stepSubtitle, { color: theme.colors.muted }]}>Configuraremos lembretes personalizados</Text>
             <View style={styles.cards}>
               <SelectableCard
                 active={preferredTime === 'morning'}
                 onPress={() => setPreferredTime('morning')}
-                title="Manhã"
+                title={tt('onboarding_time_morning')}
                 subtitle="06:00 - 10:00"
                 emoji="🌅"
                 themeColors={{ card: theme.colors.card, ring: theme.colors.primary, text: theme.colors.text, muted: theme.colors.muted }}
@@ -109,7 +110,7 @@ export default function OnboardingScreen() {
               <SelectableCard
                 active={preferredTime === 'afternoon'}
                 onPress={() => setPreferredTime('afternoon')}
-                title="Tarde"
+                title={tt('onboarding_time_afternoon')}
                 subtitle="12:00 - 17:00"
                 emoji="☀️"
                 themeColors={{ card: theme.colors.card, ring: theme.colors.primary, text: theme.colors.text, muted: theme.colors.muted }}
@@ -117,7 +118,7 @@ export default function OnboardingScreen() {
               <SelectableCard
                 active={preferredTime === 'evening'}
                 onPress={() => setPreferredTime('evening')}
-                title="Noite"
+                title={tt('onboarding_time_evening')}
                 subtitle="18:00 - 21:00"
                 emoji="🌙"
                 themeColors={{ card: theme.colors.card, ring: theme.colors.primary, text: theme.colors.text, muted: theme.colors.muted }}
@@ -128,13 +129,13 @@ export default function OnboardingScreen() {
 
         {currentStep === 2 && (
           <View>
-            <Text style={[styles.stepTitle, { color: theme.colors.text }]}>Onde gosta de correr?</Text>
+            <Text style={[styles.stepTitle, { color: theme.colors.text }]}>{tt('onboarding_step_3')}</Text>
             <Text style={[styles.stepSubtitle, { color: theme.colors.muted }]}>Recomendaremos rotas adequadas</Text>
             <View style={styles.cards}>
               <SelectableCard
                 active={terrain === 'road'}
                 onPress={() => setTerrain('road')}
-                title="Asfalto"
+                title={tt('onboarding_terrain_road')}
                 subtitle="Ruas e avenidas urbanas"
                 chipColor="#6b7280"
                 icon={<MapPin size={20} color={'#fff'} />}
@@ -143,7 +144,7 @@ export default function OnboardingScreen() {
               <SelectableCard
                 active={terrain === 'trail'}
                 onPress={() => setTerrain('trail')}
-                title="Trilha"
+                title={tt('onboarding_terrain_trail')}
                 subtitle="Parques e áreas naturais"
                 chipColor="#22c55e"
                 icon={<MapPin size={20} color={'#fff'} />}
@@ -152,7 +153,7 @@ export default function OnboardingScreen() {
               <SelectableCard
                 active={terrain === 'track'}
                 onPress={() => setTerrain('track')}
-                title="Pista"
+                title={tt('onboarding_terrain_mixed')}
                 subtitle="Pistas de atletismo"
                 chipColor="#f59e0b"
                 icon={<MapPin size={20} color={'#fff'} />}
@@ -164,11 +165,11 @@ export default function OnboardingScreen() {
 
         {currentStep === 3 && (
           <View>
-            <Text style={[styles.stepTitle, { color: theme.colors.text }]}>Permissões necessárias</Text>
+            <Text style={[styles.stepTitle, { color: theme.colors.text }]}>{tt('onboarding_step_4')}</Text>
             <Text style={[styles.stepSubtitle, { color: theme.colors.muted }]}>Para melhor experiência do app</Text>
             <View style={{ height: 12 }} />
             <PermissionRow
-              title="Localização (GPS)"
+              title={tt('onboarding_permissions_gps')}
               subtitle="Para rastrear suas corridas"
               icon={<MapPin size={18} color={theme.colors.primary} />}
               actionLabel={gpsPermission ? '' : 'Permitir'}
@@ -177,7 +178,7 @@ export default function OnboardingScreen() {
               themeColors={theme.colors}
             />
             <PermissionRow
-              title="Notificações"
+              title={tt('onboarding_permissions_notifications')}
               subtitle="Lembretes e atualizações"
               icon={<Bell size={18} color={theme.colors.secondary || theme.colors.text} />}
               actionLabel={notifications ? '' : 'Permitir'}
@@ -186,7 +187,7 @@ export default function OnboardingScreen() {
               themeColors={theme.colors}
             />
             <PermissionRow
-              title="HealthKit"
+              title={tt('onboarding_permissions_health')}
               subtitle="Sincronizar dados de saúde"
               icon={<Heart size={18} color={theme.colors.accent || theme.colors.text} />}
               actionLabel={healthPermission ? '' : 'Permitir'}

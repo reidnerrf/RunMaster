@@ -21,6 +21,7 @@ import Skeleton from '../components/ui/Skeleton';
 import Banner from '../components/ui/Banner';
 import AppBar from '../components/ui/AppBar';
 import Chip from '../components/ui/Chip';
+import { t as tt } from '../../utils/i18n';
 import { createExplorerManager, ExplorerRoute, ExplorerWaypoint, SecretPoint } from '../Lib/explorer';
 import * as Location from 'expo-location';
 
@@ -276,9 +277,9 @@ export default function ExplorerScreen({ navigation }: any) {
       case 'routes':
         return (
           <View style={styles.tabContent}>
-            <AppBar title="Explorar" />
+            <AppBar title={tt('explorer_title')} subtitle={tt('explorer_subtitle')} />
             <View style={styles.searchContainer}>
-              <Input value={searchQuery} onChangeText={setSearchQuery} placeholder="Buscar rotas..." />
+                              <Input value={searchQuery} onChangeText={setSearchQuery} placeholder={tt('explorer_search_placeholder')} />
               
               <View style={styles.filtersContainer}>
                 <ScrollView
@@ -341,7 +342,7 @@ export default function ExplorerScreen({ navigation }: any) {
                 <Skeleton height={18} />
               </View>
             ) : filteredRoutes.length === 0 ? (
-              <EmptyState title="Nenhuma rota encontrada" description="Tente ajustar os filtros ou busque por outro termo." />
+              <EmptyState title={tt('explorer_no_routes')} description="Tente ajustar os filtros ou busque por outro termo." />
             ) : (
               <FlatList
                 data={filteredRoutes}

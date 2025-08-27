@@ -212,9 +212,9 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <SectionTitle title="Favoritos" subtitle="Rotas salvas" actionLabel="Ver todas" onAction={() => nav.navigate('SavedRoutes' as never)} />
+        <SectionTitle title={tt('home_favorites')} subtitle={tt('home_saved_routes')} actionLabel={tt('common_view_all')} onAction={() => nav.navigate('SavedRoutes' as never)} />
         {savedRoutes.length === 0 ? (
-          <EmptyState title="Nenhuma rota salva" description="Gere e salve uma rota para acessar depois." ctaLabel="Gerar rota" onCtaPress={saveCurrentRoute} />
+          <EmptyState title={tt('home_no_saved_routes')} description="Gere e salve uma rota para acessar depois." ctaLabel={tt('home_create_route')} onCtaPress={saveCurrentRoute} />
         ) : (
           savedRoutes.slice(0, 3).map((r) => (
             <Pressable key={r.id} onPress={() => (nav as any).navigate('RouteDetail', { id: r.id })} style={[styles.savedItem, { backgroundColor: theme.colors.card }]}> 

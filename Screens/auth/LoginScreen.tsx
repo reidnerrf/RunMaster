@@ -5,6 +5,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
+import { t as tt } from '../../utils/i18n';
 import { useAuth } from '../../hooks/useAuth';
 import { funnelStep, track } from '../../Lib/analytics';
 
@@ -32,12 +33,12 @@ export default function LoginScreen() {
         <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Boas-vindas</Text>
         <Text style={{ color: theme.colors.muted, marginBottom: 12 }}>Acesse sua conta para continuar</Text>
 
-        <Input placeholder="E-mail" value={email} onChangeText={setEmail} />
+        <Input placeholder={tt('auth_email')} value={email} onChangeText={setEmail} />
         <View style={{ height: 8 }} />
-        <Input placeholder="Senha" secureTextEntry value={password} onChangeText={setPassword} />
+        <Input placeholder={tt('auth_password')} secureTextEntry value={password} onChangeText={setPassword} />
 
         <View style={{ height: 10 }} />
-        <Button title="Entrar" onPress={doLogin} />
+        <Button title={tt('auth_login')} onPress={doLogin} />
 
         <Text style={{ textAlign: 'center', color: theme.colors.muted, marginVertical: 12 }}>ou continue com</Text>
 

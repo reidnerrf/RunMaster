@@ -42,6 +42,7 @@ import {
   Zap
 } from 'lucide-react-native';
 import AppBar from '../components/ui/AppBar';
+import { t as tt } from '../../utils/i18n';
 import { addEventToCalendar } from '@/utils/calendarSync';
 
 const { width } = Dimensions.get('window');
@@ -264,7 +265,7 @@ export default function CommunityScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <AppBar title="Comunidades" />
+              <AppBar title={tt('community_title')} subtitle={tt('community_subtitle')} />
       {/* Header */}
       <View style={styles.header}>
         <ThemedText style={styles.title}>Comunidades</ThemedText>

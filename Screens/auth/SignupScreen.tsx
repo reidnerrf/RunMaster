@@ -5,6 +5,7 @@ import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
+import { t as tt } from '../../utils/i18n';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function SignupScreen() {
@@ -36,7 +37,7 @@ export default function SignupScreen() {
           <Text style={{ flex: 1, color: theme.colors.text }}>Aceito termos e política</Text>
         </Pressable>
 
-        <Button title="Cadastrar-se" onPress={() => signup(name, email, password)} disabled={!canSubmit} />
+        <Button title={tt('auth_signup')} onPress={() => signup(name, email, password)} disabled={!canSubmit} />
 
         <View style={styles.row}> 
           <Pressable onPress={() => socialLogin('google')} style={[styles.socialBtn, { backgroundColor: '#DB4437' }]}><Text style={styles.socialText}>Google</Text></Pressable>

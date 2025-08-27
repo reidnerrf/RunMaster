@@ -17,6 +17,8 @@ import * as Storage from '../../Lib/storage';
 import { getGoals } from '../../Lib/goals';
 import { connectHealth } from '../../Lib/health';
 import PermissionSheet from '../../components/ui/PermissionSheet';
+import { t as tt } from '../../utils/i18n';
+import LanguageSwitcher from '../../components/ui/LanguageSwitcher';
 let ImagePicker: any = null; try { ImagePicker = require('expo-image-picker'); } catch {}
 
 const PROFILE_KEY = 'runmaster_profile_v1';
@@ -74,7 +76,7 @@ export default function ProfileScreen() {
         )}
       </View>
 
-      <SectionTitle title="Metas" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
+      <SectionTitle title={tt('profile_goals')} actionLabel={tt('common_edit')} onAction={() => (nav as any).navigate('Goals')} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={[styles.goalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
           <Text style={{ color: theme.colors.muted }}>Diária: Calorias</Text>
@@ -86,22 +88,24 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <SectionTitle title="Badges" />
+      <SectionTitle title={tt('profile_badges')} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <AnimatedBadge label="5k" />
         <AnimatedBadge label="10k" />
         <AnimatedBadge label="21k" />
       </View>
 
-      <SectionTitle title="Histórico" />
+      <SectionTitle title={tt('profile_history')} />
       {error ? <Banner type="error" title={error} /> : null}
+      
+      <LanguageSwitcher />
       {loading ? (
         <View style={{ gap: 8 }}>
           <Skeleton height={18} />
           <Skeleton height={18} />
         </View>
       ) : runs.length === 0 ? (
-        <EmptyState title="Sem corridas ainda" description="Inicie uma corrida para ver seu histórico aqui." ctaLabel="Iniciar corrida" onCtaPress={() => (nav as any).navigate('Run')} />
+        <EmptyState title={tt('profile_no_runs')} description="Inicie uma corrida para ver seu histórico aqui." ctaLabel={tt('profile_start_running')} onCtaPress={() => (nav as any).navigate('Run')} />
       ) : (
         <RunList runs={runs} onPressItem={(r) => (nav as any).navigate('RunSummary', { runId: r.id })} />
       )}

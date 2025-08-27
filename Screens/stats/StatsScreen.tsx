@@ -12,6 +12,7 @@ import Button from '../../components/ui/Button';
 import ListItem from '../../components/ui/ListItem';
 import SparkBar from '../../components/ui/SparkBar';
 import AppBar from '../../components/ui/AppBar';
+import { t as tt } from '../../utils/i18n';
 
 export default function StatsScreen() {
   const { requirePremium } = useGate();
@@ -56,8 +57,8 @@ export default function StatsScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} contentContainerStyle={{ padding: 16 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}>
-      <AppBar title="Estatísticas" />
-      <SectionTitle title="Estatísticas" subtitle="Desempenho e progresso" />
+      <AppBar title={tt('stats_title')} subtitle={tt('stats_subtitle')} />
+      <SectionTitle title={tt('stats_title')} subtitle="Desempenho e progresso" />
 
       <View style={[styles.syncRow]}> 
         <Button title={syncMsg ?? 'Sincronizar corridas'} variant="outline" onPress={doSync} />

@@ -38,7 +38,7 @@ export default function WorkoutsScreen() {
           <Skeleton height={18} />
         </View>
       ) : !plan || plan.days.length === 0 ? (
-        <EmptyState title="Sem plano semanal" description="Gere um novo plano para começar seus treinos." ctaLabel="Gerar plano" onCtaPress={async () => { setLoading(true); try { setPlan(await generatePlan()); } finally { setLoading(false); } }} />
+        <EmptyState title={tt('workouts_no_plan')} description="Gere um novo plano para começar seus treinos." ctaLabel={tt('workouts_generate_plan')} onCtaPress={async () => { setLoading(true); try { setPlan(await generatePlan()); } finally { setLoading(false); } }} />
       ) : (
         <View style={[styles.calendar, { backgroundColor: theme.colors.card }]}>
           {plan?.days.map((d) => (
