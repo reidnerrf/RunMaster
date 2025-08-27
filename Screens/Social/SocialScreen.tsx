@@ -8,6 +8,10 @@ import ActionButton from '../../components/ActionButton';
 import { useTheme } from '../../hooks/useTheme';
 import * as Storage from '../../Lib/storage';
 import { api, ApiChallenge } from '../../Lib/api';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { followUser, unfollowUser } from '@/store/slices/userSlice';
+import { track } from '@/utils/analyticsClient';
+import { getSuggestions } from '@/utils/navigationInsights';
 
 const FEED_KEY = 'runmaster_feed_v1';
 
@@ -18,6 +22,8 @@ type BoardTab = 'city' | 'neighborhood' | 'route';
 export default function SocialScreen() {
   const { isPremium, open } = useGate();
   const { theme } = useTheme();
+  const dispatch = useAppDispatch();
+  const following = useAppSelector((s) => s.user.profile?.socialProfile.following || []);
   const [posts, setPosts] = useState<Post[]>([]);
   const [text, setText] = useState('');
   const [photo, setPhoto] = useState<string | undefined>(undefined);
@@ -29,6 +35,7 @@ export default function SocialScreen() {
   const [routeId, setRouteId] = useState<string>('demo-route');
   const [challenges, setChallenges] = useState<ApiChallenge[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -53,6 +60,7 @@ export default function SocialScreen() {
       const raw = await Storage.getItem(FEED_KEY);
       if (raw) try { setPosts(JSON.parse(raw)); } catch {}
       try { setChallenges(await api.listChallenges()); } catch {}
+      try { setSuggestions(await getSuggestions(undefined, 3)); } catch {}
     })();
   }, []);
 
@@ -62,6 +70,15 @@ export default function SocialScreen() {
     setPosts(next);
     await Storage.setItem(FEED_KEY, JSON.stringify(next));
     setText(''); setPhoto(undefined);
+  };
+
+  const toggleFollow = async (userId: string) => {
+    if (following.includes(userId)) {
+      dispatch(unfollowUser({ targetUserId: userId }));
+    } else {
+      dispatch(followUser({ targetUserId: userId }));
+    }
+    try { await track('action_performed', { action_name: following.includes(userId) ? 'unfollow_clicked' : 'follow_clicked', context: 'social_screen' }); } catch {}
   };
 
   const createNeighborhoodChallenge = async () => {
@@ -89,6 +106,15 @@ export default function SocialScreen() {
     <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: theme.colors.background }}>
       <SectionTitle title="Comunidade" subtitle="Poste fotos, rotas e conquistas" />
 
+      {suggestions.length > 0 && (
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+          <Text style={[styles.title, { color: theme.colors.text }]}>Sugestões para você</Text>
+          {suggestions.map((s) => (
+            <Text key={s} style={{ color: theme.colors.muted }}>• {s}</Text>
+          ))}
+        </View>
+      )}
+
       {/* Composer */}
       <View style={[styles.composer, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
         <TextInput value={text} onChangeText={setText} placeholder="Compartilhe sua conquista..." placeholderTextColor={theme.colors.muted} style={{ color: theme.colors.text, paddingVertical: 8 }} />
@@ -100,12 +126,21 @@ export default function SocialScreen() {
       </View>
 
       <SectionTitle title="Feed" subtitle={isPremium ? 'Completo' : 'Limitado na versão grátis'} />
-      {(isPremium ? posts : posts.slice(0, 3)).map((p, i) => (
+      {(isPremium ? [...posts].sort((a, b) => {
+        const aFollow = following.includes(a.user);
+        const bFollow = following.includes(b.user);
+        if (aFollow && !bFollow) return -1; if (!aFollow && bFollow) return 1; return b.date - a.date;
+      }) : posts.slice(0, 3)).map((p, i) => (
         <FadeInUp key={p.id} delay={i * 40}>
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={[styles.title, { color: theme.colors.text }]}>{p.user} • {new Date(p.date).toLocaleDateString()}</Text>
-              {isPremium && <BadgeChip label="Premium" />}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {isPremium && <BadgeChip label="Premium" />}
+                <Pressable onPress={() => toggleFollow(p.user)} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: following.includes(p.user) ? theme.colors.border : theme.colors.primary }}>
+                  <Text style={{ color: following.includes(p.user) ? theme.colors.text : 'white', fontWeight: '800' }}>{following.includes(p.user) ? 'Seguindo' : 'Seguir'}</Text>
+                </Pressable>
+              </View>
             </View>
             <Text style={[styles.body, { color: theme.colors.muted }]}>{p.text}</Text>
             {p.photo && <Image source={{ uri: p.photo }} style={{ width: '100%', height: 200, borderRadius: 12, marginTop: 8 }} />}

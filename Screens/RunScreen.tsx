@@ -24,6 +24,9 @@ import BackToStartBadge from '../components/BackToStartBadge';
 import { buildShareUrl, getLive, pingLive, startLive, stopLive } from '../Lib/live';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
+import { getCurrentWeather } from '@/utils/weatherService';
+import { track } from '@/utils/analyticsClient';
+import { handleEvent as handleGameEvent } from '@/utils/gamificationEngine';
 
 export default function RunScreen() {
   const nav = useNavigation();
@@ -49,6 +52,7 @@ export default function RunScreen() {
 
   const [liveLink, setLiveLink] = useState<string | null>(null);
   const startPointRef = useRef<{ lat: number; lon: number } | null>(null);
+  const [weather, setWeather] = useState<{ temp?: number; desc?: string } | null>(null);
 
   useEffect(() => {
     const p = state.path[0];
@@ -69,6 +73,15 @@ export default function RunScreen() {
       if (d > 150) lastCueRef.current = null;
     }
   }, [state.path, tbtSteps]);
+
+  useEffect(() => {
+    (async () => {
+      const last = state.path[state.path.length - 1] || state.path[0];
+      if (!last) return;
+      const w = await getCurrentWeather(last.latitude, last.longitude);
+      if (w?.current) setWeather({ temp: w.current.temperature, desc: w.current.description });
+    })().catch(() => {});
+  }, [state.path]);
 
   useEffect(() => {
     getSettings().then((s) => setLayers(s.safetyLayers)).catch(() => {});
@@ -140,6 +153,16 @@ export default function RunScreen() {
       splits: getSplits(),
       synced: false,
     });
+    try {
+      await track('run_completed', {
+        distance_km: Number(state.distanceKm.toFixed(3)),
+        duration_s: state.elapsedSec,
+        calories: state.calories,
+      });
+    } catch {}
+    try {
+      handleGameEvent({ type: 'run_completed', distanceKm: Number(state.distanceKm.toFixed(3)), durationMin: Math.round(state.elapsedSec / 60) });
+    } catch {}
     // Navigate to summary/share screen
     // @ts-ignore
     (nav as any).navigate('RunSummary', { runId: newId });
@@ -150,6 +173,12 @@ export default function RunScreen() {
       <View style={{ position: 'relative' }}>        <MapLive points={state.path} showLighting={layers.lighting} showAirQuality={layers.airQuality} showWeather={layers.weather} pois={livePois} overlayMetrics={{ distanceKm: state.distanceKm, paceStr: state.paceStr, calories: state.calories }} />
         <TbtOverlay instruction={tbtInfo?.instruction} distanceM={tbtInfo?.distanceM} offRoute={tbtInfo?.offRoute} />
         <BackToStartBadge start={startPointRef.current || undefined} current={state.path[state.path.length-1] ? { lat: state.path[state.path.length-1].latitude, lon: state.path[state.path.length-1].longitude } : undefined} />
+        {weather && (
+          <View style={{ position: 'absolute', right: 12, top: 12, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border }}> 
+            <Text style={{ color: theme.colors.text, fontWeight: '800' }}>{Math.round(weather.temp!)}°C</Text>
+            <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{weather.desc}</Text>
+          </View>
+        )}
         {state.isAutoPaused && (
           <View style={[styles.autoPauseBadge, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
             <Text style={{ color: theme.colors.muted }}>Pausado automaticamente</Text>
