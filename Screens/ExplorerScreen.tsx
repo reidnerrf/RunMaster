@@ -14,6 +14,11 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import Input from '../components/ui/Input';
+import Card from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import Skeleton from '../components/ui/Skeleton';
+import Banner from '../components/ui/Banner';
 import { createExplorerManager, ExplorerRoute, ExplorerWaypoint, SecretPoint } from '../Lib/explorer';
 import * as Location from 'expo-location';
 
@@ -37,6 +42,8 @@ export default function ExplorerScreen({ navigation }: any) {
     routesCompleted: 0,
     treasureChests: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const difficulties = ['easy', 'medium', 'hard', 'expert'];
   const routeTypes = ['random', 'curated', 'challenge', 'discovery'];
@@ -54,7 +61,7 @@ export default function ExplorerScreen({ navigation }: any) {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'Precisamos da sua localização para criar rotas personalizadas');
+        setError('Precisamos da sua localização para criar rotas personalizadas');
         return;
       }
 
@@ -66,6 +73,7 @@ export default function ExplorerScreen({ navigation }: any) {
       generateLocalRoutes(latitude, longitude);
     } catch (error) {
       console.error('Erro ao obter localização:', error);
+      setError('Erro ao obter localização');
       // Usar localização padrão (São Paulo)
       setUserLocation({ latitude: -23.5505, longitude: -46.6333 });
       generateLocalRoutes(-23.5505, -46.6333);
@@ -89,6 +97,7 @@ export default function ExplorerScreen({ navigation }: any) {
   const loadExplorerData = () => {
     const availableRoutes = explorerManager.getAvailableRoutes(1);
     setRoutes(availableRoutes);
+    setLoading(false);
     
     // Simular dados do usuário
     setUserProgress({
@@ -266,15 +275,7 @@ export default function ExplorerScreen({ navigation }: any) {
         return (
           <View style={styles.tabContent}>
             <View style={styles.searchContainer}>
-              <View style={styles.searchInputContainer}>
-                <Ionicons name="search" size={20} color="#666" />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Buscar rotas..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </View>
+              <Input value={searchQuery} onChangeText={setSearchQuery} placeholder="Buscar rotas..." />
               
               <View style={styles.filtersContainer}>
                 <ScrollView
@@ -357,13 +358,28 @@ export default function ExplorerScreen({ navigation }: any) {
               </View>
             </View>
 
-            <FlatList
-              data={filteredRoutes}
-              renderItem={renderRouteCard}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.routesList}
-            />
+            {error ? <Banner type="error" title={error} /> : null}
+            {loading ? (
+              <View style={{ gap: 10 }}>
+                <Skeleton height={18} />
+                <Skeleton height={14} />
+                <Skeleton height={18} />
+              </View>
+            ) : filteredRoutes.length === 0 ? (
+              <EmptyState title="Nenhuma rota encontrada" description="Tente ajustar os filtros ou busque por outro termo." />
+            ) : (
+              <FlatList
+                data={filteredRoutes}
+                renderItem={({ item }) => (
+                  <View style={{ marginBottom: 12 }}>
+                    {renderRouteCard({ item })}
+                  </View>
+                )}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.routesList}
+              />
+            )}
           </View>
         );
 
