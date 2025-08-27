@@ -10,6 +10,8 @@ import { getRecoveryAdvice } from '../Lib/analysis';
 import { api } from '../Lib/api';
 import { toGPX, toTCX, shareText } from '../Lib/exports';
 import { generateStoryCard } from '../Lib/story';
+import { track } from '@/utils/analyticsClient';
+import { handleEvent as handleGameEvent } from '@/utils/gamificationEngine';
 
 
 export default function RunSummaryScreen() {
@@ -36,6 +38,8 @@ export default function RunSummaryScreen() {
   const onShare = async () => {
     try {
       await Share.share({ message: `Acabei de correr ${run.distanceKm.toFixed(2)} km com pace médio ${run.avgPace}! #Pulse` });
+      try { await track('feed_item_engage', { item_id: run.id, action: 'share' }); } catch {}
+      try { handleGameEvent({ type: 'social_share', where: 'text' }); } catch {}
     } catch {}
   };
 
@@ -43,16 +47,17 @@ export default function RunSummaryScreen() {
     try {
       const url = api.exportRunPdf(run.remoteId || '');
       await Linking.openURL(url);
+      try { await track('action_performed', { action_name: 'export_pdf', context: 'run_summary' }); } catch {}
     } catch {}
   };
 
-  const onExportGpx = async () => { try { await shareText('GPX', toGPX(run)); } catch {} };
-  const onExportTcx = async () => { try { await shareText('TCX', toTCX(run)); } catch {} };
-  const onShareStrava = async () => { try { await Share.share({ message: 'Enviar para Strava (placeholder). Exporte GPX e importe na Strava.' }); } catch {} };
+  const onExportGpx = async () => { try { await shareText('GPX', toGPX(run)); try { await track('action_performed', { action_name: 'export_gpx', context: 'run_summary' }); } catch {} } catch {} };
+  const onExportTcx = async () => { try { await shareText('TCX', toTCX(run)); try { await track('action_performed', { action_name: 'export_tcx', context: 'run_summary' }); } catch {} } catch {} };
+  const onShareStrava = async () => { try { await Share.share({ message: 'Enviar para Strava (placeholder). Exporte GPX e importe na Strava.' }); try { await track('feed_item_engage', { item_id: run.id, action: 'share' }); } catch {} try { handleGameEvent({ type: 'social_share', where: 'deep_link' }); } catch {} } catch {} };
   const onStory = async () => {
     const res = await generateStoryCard({ distanceKm: run.distanceKm, avgPace: run.avgPace });
-    if (res.uri) { try { await Share.share({ url: res.uri }); } catch {} }
-    else if (res.prompt) { try { await Share.share({ message: res.prompt }); } catch {} }
+    if (res.uri) { try { await Share.share({ url: res.uri }); try { await track('feed_item_engage', { item_id: run.id, action: 'share' }); } catch {} try { handleGameEvent({ type: 'social_share', where: 'image' }); } catch {} } catch {} }
+    else if (res.prompt) { try { await Share.share({ message: res.prompt }); try { await track('feed_item_engage', { item_id: run.id, action: 'share' }); } catch {} try { handleGameEvent({ type: 'social_share', where: 'text' }); } catch {} } catch {} }
   };
 
   const saveAsRoute = async () => {

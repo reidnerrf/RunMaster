@@ -24,6 +24,8 @@ import BackToStartBadge from '../components/BackToStartBadge';
 import { buildShareUrl, getLive, pingLive, startLive, stopLive } from '../Lib/live';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
+import { track } from '@/utils/analyticsClient';
+import { handleEvent as handleGameEvent } from '@/utils/gamificationEngine';
 
 export default function RunScreen() {
   const nav = useNavigation();
@@ -140,6 +142,16 @@ export default function RunScreen() {
       splits: getSplits(),
       synced: false,
     });
+    try {
+      await track('run_completed', {
+        distance_km: Number(state.distanceKm.toFixed(3)),
+        duration_s: state.elapsedSec,
+        calories: state.calories,
+      });
+    } catch {}
+    try {
+      handleGameEvent({ type: 'run_completed', distanceKm: Number(state.distanceKm.toFixed(3)), durationMin: Math.round(state.elapsedSec / 60) });
+    } catch {}
     // Navigate to summary/share screen
     // @ts-ignore
     (nav as any).navigate('RunSummary', { runId: newId });
