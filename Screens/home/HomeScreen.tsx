@@ -5,6 +5,7 @@ import { Bell, Settings, Play, Target as TargetIcon } from 'lucide-react-native'
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Gradient from '../../components/ui/Gradient';
+import EmptyState from '../../components/ui/EmptyState';
 import FadeInUp from '../../components/FadeInUp';
 import FlowHint from '../../components/FlowHint';
 import GeneratedImage from '../../components/GeneratedImage';
@@ -72,6 +73,7 @@ export default function HomeScreen() {
       <View style={[styles.map, theme.shadows.heavy, { backgroundColor: theme.colors.card, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }]}> 
         <GeneratedImage text="Pulse mapa com rotas urbanas brilhantes, estilo esportivo moderno" aspect="16:9" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
         <View style={[styles.gradientOverlay]} />
+        <Gradient from={theme.colors.primary} to={theme.colors.secondary} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, opacity: 0.25, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }} />
         <Text style={{ color: theme.colors.text, fontWeight: '800' }}>Mapa Interativo (mock)</Text>
         <View style={styles.fabRow}>
           <IconButton onPress={() => nav.navigate('ConnectSpotify' as never)} style={theme.shadows.heavy}>
@@ -209,12 +211,7 @@ export default function HomeScreen() {
 
         <SectionTitle title="Favoritos" subtitle="Rotas salvas" actionLabel="Ver todas" onAction={() => nav.navigate('SavedRoutes' as never)} />
         {savedRoutes.length === 0 ? (
-          <View style={[styles.card, { backgroundColor: theme.colors.card, alignItems: 'center' }]}> 
-            <Text style={{ color: theme.colors.muted, marginBottom: 8 }}>Nenhuma rota salva ainda</Text>
-            <Pressable onPress={saveCurrentRoute} style={[styles.playBtn, { borderColor: theme.colors.border }]}> 
-              <Text style={{ color: theme.colors.text }}>Gerar e salvar uma rota</Text>
-            </Pressable>
-          </View>
+          <EmptyState title="Nenhuma rota salva" description="Gere e salve uma rota para acessar depois." ctaLabel="Gerar rota" onCtaPress={saveCurrentRoute} />
         ) : (
           savedRoutes.slice(0, 3).map((r) => (
             <Pressable key={r.id} onPress={() => (nav as any).navigate('RouteDetail', { id: r.id })} style={[styles.savedItem, { backgroundColor: theme.colors.card }]}> 
