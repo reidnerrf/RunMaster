@@ -64,6 +64,15 @@
       "expo-task-manager",
       "expo-notifications",
       "expo-image-picker"
-    ]
+    ],
+    "assetBundlePatterns": ["**/*"],
+    "extra": {
+      "fonts": {
+        "Inter-Regular": "./assets/fonts/Inter-Regular.ttf",
+        "Inter-Medium": "./assets/fonts/Inter-Medium.ttf",
+        "Inter-SemiBold": "./assets/fonts/Inter-SemiBold.ttf",
+        "Inter-Bold": "./assets/fonts/Inter-Bold.ttf"
+      }
+    }
   }
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, ViewStyle, TextStyle, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { hapticSelection } from '../../utils/haptics';
 import { useTheme } from '../../hooks/useTheme';
 
 type ButtonVariant = 'primary' | 'ghost' | 'destructive' | 'outline';
@@ -29,7 +29,7 @@ export default function Button({ title, onPress, disabled, variant = 'primary', 
   const paddingHorizontal = size === 'lg' ? 18 : size === 'sm' ? 12 : 16;
 
   const handlePress = () => {
-    if (haptic) Haptics.selectionAsync().catch(() => {});
+    if (haptic) hapticSelection();
     onPress && onPress();
   };
 
