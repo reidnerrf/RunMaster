@@ -19,12 +19,17 @@ export function getModelInfo(): { name: string; version: string } | null {
 export async function loadLocalModel(_uri?: string): Promise<boolean> {
 	try {
 		// Dynamically import to avoid runtime errors if module is missing
-		// const ort = await import('onnxruntime-react-native');
-		// const buffer = await fetch(_uri ?? '').then((r) => r.arrayBuffer());
-		// session = await ort.InferenceSession.create(buffer);
-		// In this scaffold, we simulate as not loaded until model is provided
-		session = null;
-		return false;
+		const ort = await import('onnxruntime-react-native');
+		if (!_uri) {
+			// No model path provided; keep null
+			session = null;
+			return false;
+		}
+		const resp = await fetch(_uri);
+		const buffer = await resp.arrayBuffer();
+		// @ts-ignore
+		session = await (ort as any).InferenceSession.create(buffer);
+		return true;
 	} catch {
 		session = null;
 		return false;

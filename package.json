@@ -47,6 +47,7 @@
     "lucide-react-native": "^0.541.0",
     "metro": "^0.83.1",
     "metro-config": "^0.83.1",
+    "onnxruntime-react-native": "^1.22.0",
     "pnpm": "^10.15.0",
     "react": "19.0.0",
     "react-dom": "^19.1.1",

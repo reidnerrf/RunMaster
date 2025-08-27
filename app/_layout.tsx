@@ -11,6 +11,8 @@ import { recordScreenView } from '@/utils/navigationInsights';
 import * as ExpoLinking from 'expo-linking';
 import { handleIncomingUrl } from '@/utils/voiceCommands';
 import { startOfflineOrchestrator } from '@/utils/offlineOrchestrator';
+import { loadLocalModel, getModelInfo } from '@/utils/mlRuntime';
+import { track } from '@/utils/analyticsClient';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -41,6 +43,14 @@ export default function RootLayout() {
   useEffect(() => {
     const stop = startOfflineOrchestrator(undefined);
     return () => stop();
+  }, []);
+
+  useEffect(() => {
+    // Tenta carregar modelo local (se empacotado via asset, ajustar URI)
+    loadLocalModel(undefined).then((loaded) => {
+      const info = getModelInfo();
+      track('ml_model_loaded', { model_name: info?.name ?? 'nav_suggester', model_version: info?.version ?? '0.0.1', size_kb: 0 }).catch(() => {});
+    });
   }, []);
 
   return (
