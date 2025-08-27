@@ -69,8 +69,8 @@ describe('OpenRouter AI Service', () => {
     const p1 = openRouterAI.chat(messages as any);
     const p2 = openRouterAI.chat(messages as any);
 
-    // Allow microtasks to run so the fetch call is scheduled
-    await new Promise<void>(resolve => queueMicrotask(() => resolve()));
+    // Allow async steps (awaits) to progress so fetch() happens
+    await new Promise<void>(resolve => setTimeout(resolve, 0));
     // Only one network call should be made
     expect((global as any).fetch).toHaveBeenCalledTimes(1);
 
