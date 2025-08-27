@@ -20,6 +20,7 @@ import EmptyState from '../components/ui/EmptyState';
 import Skeleton from '../components/ui/Skeleton';
 import Banner from '../components/ui/Banner';
 import AppBar from '../components/ui/AppBar';
+import Chip from '../components/ui/Chip';
 import { createExplorerManager, ExplorerRoute, ExplorerWaypoint, SecretPoint } from '../Lib/explorer';
 import * as Location from 'expo-location';
 
@@ -301,21 +302,7 @@ export default function ExplorerScreen({ navigation }: any) {
                   </TouchableOpacity>
                   
                   {difficulties.map((difficulty) => (
-                    <TouchableOpacity
-                      key={difficulty}
-                      style={[
-                        styles.filterChip,
-                        selectedDifficulty === difficulty && styles.filterChipActive
-                      ]}
-                      onPress={() => setSelectedDifficulty(difficulty)}
-                    >
-                      <Text style={[
-                        styles.filterChipText,
-                        selectedDifficulty === difficulty && styles.filterChipTextActive
-                      ]}>
-                        {difficulty}
-                      </Text>
-                    </TouchableOpacity>
+                    <Chip key={difficulty} label={difficulty} selected={selectedDifficulty === difficulty} onPress={() => setSelectedDifficulty(difficulty)} style={{ marginRight: 8 }} />
                   ))}
                 </ScrollView>
 
@@ -340,21 +327,7 @@ export default function ExplorerScreen({ navigation }: any) {
                   </TouchableOpacity>
                   
                   {routeTypes.map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[
-                        styles.filterChip,
-                        selectedType === type && styles.filterChipActive
-                      ]}
-                      onPress={() => setSelectedType(type)}
-                    >
-                      <Text style={[
-                        styles.filterChipText,
-                        selectedType === type && styles.filterChipTextActive
-                      ]}>
-                        {type}
-                      </Text>
-                    </TouchableOpacity>
+                    <Chip key={type} label={type} selected={selectedType === type} onPress={() => setSelectedType(type)} style={{ marginRight: 8 }} />
                   ))}
                 </ScrollView>
               </View>

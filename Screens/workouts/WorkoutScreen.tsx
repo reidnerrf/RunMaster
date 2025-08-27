@@ -12,6 +12,7 @@ import { generatePlan, getWeeklyPlan, PlanDay } from '../../Lib/planner';
 import EmptyState from '../../components/ui/EmptyState';
 import Banner from '../../components/ui/Banner';
 import Skeleton from '../../components/ui/Skeleton';
+import { t as tt } from '../../utils/i18n';
 
 export default function WorkoutsScreen() {
   const nav = useNavigation();
@@ -28,7 +29,7 @@ export default function WorkoutsScreen() {
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: theme.colors.background }}>
-      <SectionTitle title="Treinos" subtitle="Plano adaptativo semanal" actionLabel="Gerar novamente" onAction={async () => setPlan(await generatePlan())} />
+      <SectionTitle title={tt('workouts_title')} subtitle={tt('workouts_sub')} actionLabel="Gerar novamente" onAction={async () => setPlan(await generatePlan())} />
 
       {error ? <Banner type="error" title={error} /> : null}
       {loading ? (

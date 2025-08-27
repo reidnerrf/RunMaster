@@ -7,6 +7,7 @@ import Card from '../../components/ui/Card';
 import Gradient from '../../components/ui/Gradient';
 import EmptyState from '../../components/ui/EmptyState';
 import AppBar from '../../components/ui/AppBar';
+import { t as tt } from '../../utils/i18n';
 import FadeInUp from '../../components/FadeInUp';
 import FlowHint from '../../components/FlowHint';
 import GeneratedImage from '../../components/GeneratedImage';
@@ -111,8 +112,8 @@ export default function HomeScreen() {
 
         <Card>
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>Pronto para correr?</Text>
-            <Button title="Iniciar Corrida" onPress={handleStartRun} leftIcon={<Play size={18} color={'#fff'} />} />
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>{tt('home_welcome')}</Text>
+            <Button title={tt('home_start')} onPress={handleStartRun} leftIcon={<Play size={18} color={'#fff'} />} />
           </View>
         </Card>
 
