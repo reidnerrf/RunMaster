@@ -416,6 +416,21 @@ export default function CommunityScreen() {
         </Pressable>
       </View>
 
+      {/* Benchmarking (exemplo com primeira comunidade do usuário) */}
+      {userCommunities[0] && (
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Comparação (Top 3)</ThemedText>
+          <BlurCard style={styles.communityCard}>
+            {getCommunityRanking(userCommunities[0].id).slice(0,3).map((row) => (
+              <View key={row.memberId} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText>{row.rank}. {row.username}</ThemedText>
+                <ThemedText>{row.totalDistance.toFixed(1)} km</ThemedText>
+              </View>
+            ))}
+          </BlurCard>
+        </View>
+      )}
+
       {/* Eventos Locais */}
       <View style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Eventos Locais</ThemedText>
