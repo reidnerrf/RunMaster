@@ -174,4 +174,6 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+    // Google Play Services Wearable (for real Data Layer integration)
+    implementation 'com.google.android.gms:play-services-wearable:18.2.0'
 }

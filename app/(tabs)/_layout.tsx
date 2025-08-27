@@ -40,6 +40,27 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="challenges"
+        options={{
+          title: 'Desafios',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="flag.checkered.2.crossed" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings.model"
+        options={{
+          title: 'Modelo',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings.injury"
+        options={{
+          title: 'Risco',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="heart.text.square.fill" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
