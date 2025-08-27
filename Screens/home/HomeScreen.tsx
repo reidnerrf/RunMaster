@@ -30,6 +30,7 @@ import { t } from '../../Lib/i18n';
 import { getNearbyEvents, enrichRoutesWithEvents } from '../../Lib/events';
 import RitualPicker from '../../components/RitualPicker';
 import { RunnerProfileType } from '../../Lib/rituals';
+import AISmartSuggestions from '../../components/ui/AISmartSuggestions';
 
 
 export default function HomeScreen() {
@@ -116,6 +117,29 @@ export default function HomeScreen() {
             <Button title={tt('home_start')} onPress={handleStartRun} leftIcon={<Play size={18} color={'#fff'} />} />
           </View>
         </Card>
+
+        {/* Sugestões Inteligentes de IA */}
+        <AISmartSuggestions
+          userContext={{
+            currentLocation: { lat: -23.5505, lon: -46.6333 },
+            lastWorkout: { intensity: 'high', date: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            currentGoals: [{ deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) }],
+            weatherConditions: { temperature: 26, precipitation: 0.1, wind: 8 },
+            timeOfDay: new Date().getHours() >= 6 && new Date().getHours() <= 9 ? 'morning' : 'afternoon',
+            energyLevel: 'medium',
+            recentInjuries: []
+          }}
+          onSuggestionAccepted={(suggestion) => {
+            console.log('Sugestão aceita:', suggestion);
+            // Implementar lógica baseada no tipo de sugestão
+            if (suggestion.type === 'workout') {
+              handleStartRun();
+            }
+          }}
+          onSuggestionDismissed={(suggestion) => {
+            console.log('Sugestão dispensada:', suggestion);
+          }}
+        />
 
         <SectionTitle title="Metas" subtitle="Seu progresso" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
         <View style={{ flexDirection: 'row', gap: 10 }}>
