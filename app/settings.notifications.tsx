@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
-import { ScrollView, View, Text, Switch, StyleSheet } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { ScrollView, View, Text, Switch, StyleSheet, Pressable, Linking } from 'react-native';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { updateUserSettings } from '@/store/slices/userSlice';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { track } from '@/utils/analyticsClient';
+import * as Notifications from 'expo-notifications';
 
 export default function NotificationSettingsScreen() {
   const scheme = useColorScheme();
@@ -18,6 +19,19 @@ export default function NotificationSettingsScreen() {
     primary: '#6C63FF',
   }), [scheme]);
 
+  const [notifGranted, setNotifGranted] = useState<boolean>(true);
+  useEffect(() => {
+    (async () => {
+      const perm = await Notifications.getPermissionsAsync();
+      if (perm.status !== 'granted') {
+        const req = await Notifications.requestPermissionsAsync();
+        setNotifGranted(req.status === 'granted');
+      } else {
+        setNotifGranted(true);
+      }
+    })();
+  }, []);
+
   if (!settings) return null;
 
   const update = async (field: keyof typeof settings.notifications, value: boolean) => {
@@ -29,6 +43,18 @@ export default function NotificationSettingsScreen() {
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: 16 }}>
       <Text style={[styles.title, { color: colors.text }]}>Notificações</Text>
       <Text style={{ color: colors.muted, marginBottom: 12 }}>Controle granular por categoria</Text>
+
+      {!notifGranted && (
+        <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border, alignItems: 'center' }]}> 
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontWeight: '800' }}>Permissão necessária</Text>
+            <Text style={{ color: colors.muted, marginTop: 4 }}>Ative as notificações nas configurações do sistema.</Text>
+          </View>
+          <Pressable onPress={() => Linking.openSettings?.()} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: colors.primary }}> 
+            <Text style={{ color: 'white', fontWeight: '800' }}>Configurar</Text>
+          </Pressable>
+        </View>
+      )}
 
       {(
         [
@@ -42,7 +68,7 @@ export default function NotificationSettingsScreen() {
       ).map(([key, label]) => (
         <View key={key} style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}> 
           <Text style={{ color: colors.text, fontWeight: '600' }}>{label}</Text>
-          <Switch value={settings.notifications[key]} onValueChange={(v) => update(key, v)} />
+          <Switch value={settings.notifications[key]} onValueChange={(v) => update(key, v)} disabled={!notifGranted} />
         </View>
       ))}
     </ScrollView>
