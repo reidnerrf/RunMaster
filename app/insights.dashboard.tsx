@@ -5,17 +5,32 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { track } from '@/utils/analyticsClient';
 
+type Period = 'week' | 'month' | 'year';
+
 export default function InsightsDashboardScreen() {
   const stats = useAppSelector((s) => (s as any).user?.stats);
   const runs = useAppSelector((s) => (s as any).workout?.sessions ?? []);
+  const [period, setPeriod] = React.useState<Period>('week');
 
   const trend = React.useMemo(() => {
     if (!stats) return null;
-    const weeks = stats.weeklyProgress.slice(-6);
-    const distances = weeks.map((w: any) => w.distance);
+    if (period === 'week') {
+      const weeks = stats.weeklyProgress.slice(-6);
+      const distances = weeks.map((w: any) => w.distance);
+      const delta = distances.length >= 2 ? distances[distances.length - 1] - distances[0] : 0;
+      return { labels: weeks.map((w: any) => w.week.slice(-2)), values: distances, delta };
+    }
+    if (period === 'month') {
+      const months = stats.monthlyProgress.slice(-6);
+      const distances = months.map((m: any) => m.distance);
+      const delta = distances.length >= 2 ? distances[distances.length - 1] - distances[0] : 0;
+      return { labels: months.map((m: any) => m.month.slice(-2)), values: distances, delta };
+    }
+    const years = stats.yearlyProgress.slice(-5);
+    const distances = years.map((y: any) => y.distance);
     const delta = distances.length >= 2 ? distances[distances.length - 1] - distances[0] : 0;
-    return { weeks, delta };
-  }, [stats]);
+    return { labels: years.map((y: any) => y.year), values: distances, delta };
+  }, [stats, period]);
 
   const exportJson = async () => {
     try {
@@ -53,8 +68,31 @@ export default function InsightsDashboardScreen() {
       </ThemedView>
 
       <ThemedView style={styles.card}> 
-        <ThemedText type="subtitle">Tendências (6 semanas)</ThemedText>
-        {trend && <ThemedText>Δ distância: {trend.delta.toFixed(1)} km</ThemedText>}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <ThemedText type="subtitle">Tendências</ThemedText>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {(['week','month','year'] as Period[]).map((p) => (
+              <Pressable key={p} onPress={() => setPeriod(p)} style={[styles.pill, { backgroundColor: period === p ? '#111827' : 'transparent', borderColor: '#E5E7EB' }]}> 
+                <Text style={{ color: period === p ? 'white' : '#111827', fontWeight: '800', textTransform: 'capitalize' }}>{p}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+        {trend && (
+          <>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 8 }}>
+              {trend.values.map((v: number, i: number) => (
+                <View key={i} style={{ width: 16, height: Math.max(4, Math.min(80, v)), backgroundColor: '#6C63FF', borderRadius: 4, opacity: 0.9 }} />
+              ))}
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+              {trend.labels.map((l: string, i: number) => (
+                <Text key={i} style={{ color: '#6B7280', fontSize: 12 }}>{l}</Text>
+              ))}
+            </View>
+            <ThemedText style={{ marginTop: 6 }}>Δ distância: {trend.delta.toFixed(1)} km</ThemedText>
+          </>
+        )}
       </ThemedView>
 
       <ThemedView style={styles.card}> 
