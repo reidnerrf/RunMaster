@@ -55,6 +55,7 @@ export default function ModelSettingsScreen() {
 	return (
 		<ThemedView style={styles.container}>
 			<ThemedText type="title">Modelo de Navegação</ThemedText>
+			<ActiveModelIndicator />
 			<ThemedText>URI</ThemedText>
 			<TextInput style={styles.input} value={uri} onChangeText={setUri} placeholder="https://.../model.onnx" />
 			<ThemedText>SHA-256 (opcional)</ThemedText>

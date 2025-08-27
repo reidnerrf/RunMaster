@@ -55,6 +55,7 @@ export default function InjuryModelSettings() {
 	return (
 		<ThemedView style={styles.container}>
 			<ThemedText type="title">Modelo de Risco de Lesão</ThemedText>
+			<ActiveModelIndicator />
 			<ThemedText>URI</ThemedText>
 			<TextInput style={styles.input} value={uri} onChangeText={setUri} placeholder="https://.../injury.onnx" />
 			<ThemedText>SHA-256 (opcional)</ThemedText>
