@@ -6,6 +6,7 @@ import Fastify from 'fastify';
 import { env } from './env';
 import { metricsHandler, setupMetrics } from './metrics';
 import { authRoutes } from './routes/auth';
+import fastifyMongodb from '@fastify/mongodb';
 
 const app = Fastify({
 	logger: {
@@ -31,10 +32,15 @@ app.addHook('onSend', async (request, reply) => {
 // Metrics hooks
 setupMetrics(app);
 
-if (env.ENABLE_DB && env.MONGODB_URI) {
-	// Only attempt MongoDB connection if we're confident it's available
-	// For development, we'll skip the connection attempt to avoid startup failures
-	app.log.warn('MongoDB is configured but connection will not be attempted in development mode to prevent startup failures.');
+if (env.ENABLE_DB) {
+	const uri = env.MONGODB_URI || 'mongodb://localhost:27017/?authSource=pulse';
+	const dbName = 'pulse';
+	try {
+		await app.register(fastifyMongodb, { forceClose: true, url: uri, database: dbName });
+		app.log.info({ uri, dbName }, 'MongoDB connected');
+	} catch (err) {
+		app.log.error({ err }, 'Failed to connect to MongoDB');
+	}
 } else {
 	app.log.warn('MongoDB disabled (ENABLE_DB=false). Skipping database connection.');
 }
@@ -49,6 +55,21 @@ app.decorate('authenticate', async (request: any, reply: any) => {
 	}
 });
 await authRoutes(app);
+
+// DB health check endpoint
+app.get('/db/health', async (request, reply) => {
+	if (!env.ENABLE_DB) return reply.code(200).send({ ok: true, db: 'disabled' });
+	try {
+		// @ts-ignore
+		const client = (app as any).mongo?.client as import('mongodb').MongoClient | undefined;
+		if (!client) return reply.code(503).send({ ok: false, error: 'mongo not registered' });
+		await client.db().command({ ping: 1 });
+		return { ok: true };
+	} catch (err) {
+		app.log.error({ err }, 'Mongo ping failed');
+		return reply.code(503).send({ ok: false });
+	}
+});
 
 const start = async () => {
 	try {
