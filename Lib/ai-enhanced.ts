@@ -1,4 +1,12 @@
 import { hapticSuccess, hapticWarning } from '../utils/haptics';
+import { 
+  analyzePerformanceWithAI, 
+  suggestRoutesWithAI, 
+  generateWorkoutPlanWithAI, 
+  getNutritionAdviceWithAI, 
+  assessInjuryRiskWithAI, 
+  optimizeForWeatherWithAI 
+} from './openrouter-ai';
 
 // Tipos expandidos para IA avançada
 export type AIWorkoutPlan = {
@@ -209,6 +217,11 @@ export class AIAssistant {
   async analyzePerformance(): Promise<AIPerformanceAnalysis> {
     try {
       const recentRuns = this.runningHistory.slice(-10);
+      
+      // Usar OpenRouter AI para análise avançada
+      const aiAnalysis = await analyzePerformanceWithAI(recentRuns, this.userProfile);
+      
+      // Combinar análise da IA com cálculos locais
       const avgPace = this.calculateAveragePace(recentRuns);
       const vo2Max = this.estimateVO2Max(recentRuns);
       
@@ -222,6 +235,9 @@ export class AIAssistant {
         },
         improvement_areas: this.generateImprovementAreas(recentRuns),
         race_predictions: this.generateRacePredictions(recentRuns),
+        ai_insights: aiAnalysis.analysis,
+        ai_confidence: aiAnalysis.confidence,
+        ai_timestamp: aiAnalysis.timestamp,
       };
     } catch (error) {
       console.error('Erro na análise de performance:', error);
@@ -239,11 +255,32 @@ export class AIAssistant {
     surface_preference?: 'road' | 'trail' | 'mixed';
   }): Promise<AIRouteSuggestion[]> {
     try {
-      const routes = await this.generateRouteSuggestions(context);
-      const personalizedRoutes = this.personalizeRoutes(routes);
+      // Usar OpenRouter AI para sugestões inteligentes
+      const aiSuggestions = await suggestRoutesWithAI({
+        location: context.location,
+        distance_preference_km: context.distance_preference_km,
+        difficulty: context.difficulty,
+        weather_conditions: context.weather_conditions,
+        time_of_day: context.time_of_day,
+        user_preferences: {
+          surface_preference: context.surface_preference,
+          safety_priority: 'high',
+          scenic_routes: true
+        }
+      });
+      
+      // Combinar com sugestões locais
+      const localRoutes = await this.generateRouteSuggestions(context);
+      const allRoutes = [...aiSuggestions.routes, ...localRoutes];
+      const personalizedRoutes = this.personalizeRoutes(allRoutes);
       
       hapticSuccess();
-      return personalizedRoutes;
+      return personalizedRoutes.map(route => ({
+        ...route,
+        ai_reasoning: aiSuggestions.aiReasoning,
+        ai_confidence: aiSuggestions.confidence,
+        ai_timestamp: aiSuggestions.timestamp
+      }));
     } catch (error) {
       console.error('Erro nas sugestões de rotas:', error);
       hapticWarning();
@@ -260,8 +297,23 @@ export class AIAssistant {
     preferred_duration_minutes: number;
   }): Promise<AIWorkoutPlan> {
     try {
-      const plan = await this.createPersonalizedPlan(goal);
-      const adaptedPlan = this.adaptPlanToUser(plan);
+      // Usar OpenRouter AI para plano personalizado
+      const aiPlan = await generateWorkoutPlanWithAI({
+        ...goal,
+        recent_performance: this.runningHistory.slice(-5)
+      });
+      
+      // Combinar com plano local
+      const localPlan = await this.createPersonalizedPlan(goal);
+      const combinedPlan = {
+        ...localPlan,
+        ...aiPlan.plan,
+        ai_reasoning: aiPlan.aiReasoning,
+        ai_confidence: aiPlan.confidence,
+        ai_timestamp: aiPlan.timestamp
+      };
+      
+      const adaptedPlan = this.adaptPlanToUser(combinedPlan);
       
       hapticSuccess();
       return adaptedPlan;
@@ -290,8 +342,27 @@ export class AIAssistant {
   // Recomendações nutricionais
   async getNutritionAdvice(workout_intensity: 'low' | 'moderate' | 'high', duration_minutes: number): Promise<AINutritionAdvice> {
     try {
-      const advice = await this.generateNutritionPlan(workout_intensity, duration_minutes);
-      const personalizedAdvice = this.personalizeNutrition(advice);
+      // Usar OpenRouter AI para conselhos nutricionais
+      const aiAdvice = await getNutritionAdviceWithAI({
+        workout_intensity,
+        duration_minutes,
+        time_of_day: new Date().getHours() >= 6 && new Date().getHours() <= 9 ? 'morning' : 'afternoon',
+        weather_conditions: this.userProfile?.weather_preferences,
+        user_dietary_restrictions: this.userProfile?.dietary_restrictions || [],
+        fitness_goals: this.currentGoals.map(g => g.type)
+      });
+      
+      // Combinar com conselhos locais
+      const localAdvice = await this.generateNutritionPlan(workout_intensity, duration_minutes);
+      const combinedAdvice = {
+        ...localAdvice,
+        ...aiAdvice.nutrition,
+        ai_reasoning: aiAdvice.aiReasoning,
+        ai_confidence: aiAdvice.confidence,
+        ai_timestamp: aiAdvice.timestamp
+      };
+      
+      const personalizedAdvice = this.personalizeNutrition(combinedAdvice);
       
       hapticSuccess();
       return personalizedAdvice;
@@ -305,11 +376,29 @@ export class AIAssistant {
   // Prevenção de lesões
   async assessInjuryRisk(): Promise<AIInjuryPrevention> {
     try {
-      const riskFactors = this.analyzeRiskFactors();
-      const prevention = this.generatePreventionPlan(riskFactors);
+      // Usar OpenRouter AI para avaliação de risco
+      const aiRiskAssessment = await assessInjuryRiskWithAI({
+        recent_workouts: this.runningHistory.slice(-10),
+        current_symptoms: this.userProfile?.current_symptoms || [],
+        training_load: this.calculateTrainingLoad(),
+        recovery_patterns: this.analyzeRecoveryPatterns(),
+        injury_history: this.userProfile?.injury_history || []
+      });
+      
+      // Combinar com análise local
+      const localRiskFactors = this.analyzeRiskFactors();
+      const localPrevention = this.generatePreventionPlan(localRiskFactors);
+      
+      const combinedPrevention = {
+        ...localPrevention,
+        ...aiRiskAssessment.riskAssessment,
+        ai_reasoning: aiRiskAssessment.aiReasoning,
+        ai_confidence: aiRiskAssessment.confidence,
+        ai_timestamp: aiRiskAssessment.timestamp
+      };
       
       hapticSuccess();
-      return prevention;
+      return combinedPrevention;
     } catch (error) {
       console.error('Erro na avaliação de risco:', error);
       hapticWarning();
@@ -320,11 +409,32 @@ export class AIAssistant {
   // Otimização climática
   async optimizeForWeather(location: { lat: number; lon: number }, planned_time: string): Promise<AIWeatherOptimization> {
     try {
-      const weather = await this.getWeatherData(location);
-      const optimization = this.generateWeatherOptimization(weather, planned_time);
+      // Usar OpenRouter AI para otimização climática
+      const aiOptimization = await optimizeForWeatherWithAI({
+        location,
+        planned_time,
+        weather_forecast: await this.getWeatherData(location),
+        user_preferences: {
+          temperature_range: this.userProfile?.temperature_preferences || [15, 25],
+          rain_tolerance: this.userProfile?.rain_tolerance || 'moderate',
+          wind_tolerance: this.userProfile?.wind_tolerance || 'moderate'
+        }
+      });
+      
+      // Combinar com otimização local
+      const localWeather = await this.getWeatherData(location);
+      const localOptimization = this.generateWeatherOptimization(localWeather, planned_time);
+      
+      const combinedOptimization = {
+        ...localOptimization,
+        ...aiOptimization.optimization,
+        ai_reasoning: aiOptimization.aiReasoning,
+        ai_confidence: aiOptimization.confidence,
+        ai_timestamp: aiOptimization.timestamp
+      };
       
       hapticSuccess();
-      return optimization;
+      return combinedOptimization;
     } catch (error) {
       console.error('Erro na otimização climática:', error);
       hapticWarning();
@@ -456,6 +566,32 @@ export class AIAssistant {
   private generateSocialRecommendations(social: any): AISocialRecommendations {
     // Implementação da geração de recomendações sociais
     return {} as AISocialRecommendations;
+  }
+
+  // Métodos auxiliares adicionais
+  private calculateTrainingLoad(): number {
+    const recentWorkouts = this.runningHistory.slice(-7);
+    const totalDistance = recentWorkouts.reduce((sum, workout) => sum + (workout.distance_km || 0), 0);
+    const totalDuration = recentWorkouts.reduce((sum, workout) => sum + (workout.duration_minutes || 0), 0);
+    
+    // Cálculo simplificado de carga de treino (0-10)
+    const distanceScore = Math.min(totalDistance / 50, 1) * 5; // Máximo 50km = 5 pontos
+    const durationScore = Math.min(totalDuration / 300, 1) * 5; // Máximo 5h = 5 pontos
+    
+    return Math.round((distanceScore + durationScore) * 10) / 10;
+  }
+
+  private analyzeRecoveryPatterns(): any {
+    const recentWorkouts = this.runningHistory.slice(-14);
+    const recoveryDays = recentWorkouts.filter(workout => 
+      workout.type === 'recovery' || workout.intensity === 'low'
+    ).length;
+    
+    return {
+      recovery_frequency: recoveryDays / recentWorkouts.length,
+      last_recovery: recentWorkouts.findIndex(w => w.type === 'recovery'),
+      recovery_quality: 'good' // Simplificado
+    };
   }
 
   // Métodos de fallback
