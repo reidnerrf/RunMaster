@@ -5,6 +5,7 @@ import { updateUserSettings } from '@/store/slices/userSlice';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { track } from '@/utils/analyticsClient';
 import * as Notifications from 'expo-notifications';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function NotificationSettingsScreen() {
   const scheme = useColorScheme();
@@ -20,6 +21,8 @@ export default function NotificationSettingsScreen() {
   }), [scheme]);
 
   const [notifGranted, setNotifGranted] = useState<boolean>(true);
+  const [justGrantedMsg, setJustGrantedMsg] = useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
       const perm = await Notifications.getPermissionsAsync();
@@ -31,6 +34,25 @@ export default function NotificationSettingsScreen() {
       }
     })();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let active = true;
+      (async () => {
+        const perm = await Notifications.getPermissionsAsync();
+        const next = perm.status === 'granted';
+        const wasMissing = !notifGranted;
+        if (active) {
+          setNotifGranted(next);
+          if (wasMissing && next) {
+            setJustGrantedMsg('Permissão concedida. Controles ativados.');
+            setTimeout(() => setJustGrantedMsg(null), 2000);
+          }
+        }
+      })();
+      return () => { active = false; };
+    }, [notifGranted])
+  );
 
   if (!settings) return null;
 
@@ -53,6 +75,12 @@ export default function NotificationSettingsScreen() {
           <Pressable onPress={() => Linking.openSettings?.()} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: colors.primary }}> 
             <Text style={{ color: 'white', fontWeight: '800' }}>Configurar</Text>
           </Pressable>
+        </View>
+      )}
+
+      {!!justGrantedMsg && (
+        <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <Text style={{ color: colors.text }}>{justGrantedMsg}</Text>
         </View>
       )}
 

@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 import * as Calendar from 'expo-calendar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/utils/analyticsClient';
+import { useFocusEffect } from '@react-navigation/native';
 
 type ReminderConfig = {
   enabled: boolean;
@@ -35,6 +36,7 @@ export default function ReminderSettingsScreen() {
   });
   const [notifGranted, setNotifGranted] = useState<boolean>(true);
   const [calGranted, setCalGranted] = useState<boolean>(true);
+  const [justGrantedMsg, setJustGrantedMsg] = useState<string | null>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -47,6 +49,28 @@ export default function ReminderSettingsScreen() {
       setCalGranted(cal.status === 'granted');
     })();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let active = true;
+      (async () => {
+        const notif = await Notifications.getPermissionsAsync();
+        const cal = await Calendar.getCalendarPermissionsAsync();
+        const nextNotif = notif.status === 'granted';
+        const nextCal = cal.status === 'granted';
+        const wasMissing = (!notifGranted || !calGranted);
+        if (active) {
+          setNotifGranted(nextNotif);
+          setCalGranted(nextCal);
+          if (wasMissing && nextNotif && nextCal) {
+            setJustGrantedMsg('Permissões concedidas. Controles ativados.');
+            setTimeout(() => setJustGrantedMsg(null), 2000);
+          }
+        }
+      })();
+      return () => { active = false; };
+    }, [notifGranted, calGranted])
+  );
 
   const persist = async (next: ReminderConfig) => {
     setCfg(next);
@@ -74,6 +98,8 @@ export default function ReminderSettingsScreen() {
     </View>
   );
 
+  const allGranted = notifGranted && calGranted;
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: 16 }}>
       <Text style={[styles.title, { color: colors.text }]}>Lembretes</Text>
@@ -94,14 +120,20 @@ export default function ReminderSettingsScreen() {
         </View>
       )}
 
+      {!!justGrantedMsg && (
+        <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <Text style={{ color: colors.text }}>{justGrantedMsg}</Text>
+        </View>
+      )}
+
       <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}> 
         <Text style={{ color: colors.text, fontWeight: '600' }}>Ativar</Text>
-        <Switch value={cfg.enabled} onValueChange={(v) => persist({ ...cfg, enabled: v })} disabled={!notifGranted} />
+        <Switch value={cfg.enabled} onValueChange={(v) => persist({ ...cfg, enabled: v })} disabled={!allGranted} />
       </View>
 
       <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border, alignItems: 'center' }]}> 
         <Text style={{ color: colors.text, fontWeight: '600' }}>Horário</Text>
-        <TextInput value={cfg.timeOfDay} onChangeText={(v) => persist({ ...cfg, timeOfDay: v })} editable={notifGranted} placeholder="HH:MM" placeholderTextColor={colors.muted} style={{ color: colors.text, minWidth: 100, textAlign: 'right' }} />
+        <TextInput value={cfg.timeOfDay} onChangeText={(v) => persist({ ...cfg, timeOfDay: v })} editable={allGranted} placeholder="HH:MM" placeholderTextColor={colors.muted} style={{ color: colors.text, minWidth: 100, textAlign: 'right' }} />
       </View>
 
       <Text style={[styles.subtitle, { color: colors.text }]}>Dias</Text>
@@ -110,20 +142,20 @@ export default function ReminderSettingsScreen() {
       <Text style={[styles.subtitle, { color: colors.text }]}>Horário Silencioso</Text>
       <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}> 
         <Text style={{ color: colors.text, fontWeight: '600' }}>Ativar</Text>
-        <Switch value={cfg.quietHours.enabled} onValueChange={(v) => persist({ ...cfg, quietHours: { ...cfg.quietHours, enabled: v } })} disabled={!notifGranted} />
+        <Switch value={cfg.quietHours.enabled} onValueChange={(v) => persist({ ...cfg, quietHours: { ...cfg.quietHours, enabled: v } })} disabled={!allGranted} />
       </View>
       <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border, alignItems: 'center' }]}> 
         <Text style={{ color: colors.text, fontWeight: '600' }}>Início</Text>
-        <TextInput value={cfg.quietHours.start} onChangeText={(v) => persist({ ...cfg, quietHours: { ...cfg.quietHours, start: v } })} editable={notifGranted} placeholder="HH:MM" placeholderTextColor={colors.muted} style={{ color: colors.text, minWidth: 100, textAlign: 'right' }} />
+        <TextInput value={cfg.quietHours.start} onChangeText={(v) => persist({ ...cfg, quietHours: { ...cfg.quietHours, start: v } })} editable={allGranted} placeholder="HH:MM" placeholderTextColor={colors.muted} style={{ color: colors.text, minWidth: 100, textAlign: 'right' }} />
       </View>
       <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border, alignItems: 'center' }]}> 
         <Text style={{ color: colors.text, fontWeight: '600' }}>Fim</Text>
-        <TextInput value={cfg.quietHours.end} onChangeText={(v) => persist({ ...cfg, quietHours: { ...cfg.quietHours, end: v } })} editable={notifGranted} placeholder="HH:MM" placeholderTextColor={colors.muted} style={{ color: colors.text, minWidth: 100, textAlign: 'right' }} />
+        <TextInput value={cfg.quietHours.end} onChangeText={(v) => persist({ ...cfg, quietHours: { ...cfg.quietHours, end: v } })} editable={allGranted} placeholder="HH:MM" placeholderTextColor={colors.muted} style={{ color: colors.text, minWidth: 100, textAlign: 'right' }} />
       </View>
 
       <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}> 
         <Text style={{ color: colors.text, fontWeight: '600' }}>Agendar Lembrete de Teste</Text>
-        <Text onPress={notifGranted ? scheduleDemo : undefined} style={{ color: notifGranted ? colors.primary : colors.muted, fontWeight: '800' }}>Agendar</Text>
+        <Text onPress={allGranted ? scheduleDemo : undefined} style={{ color: allGranted ? colors.primary : colors.muted, fontWeight: '800' }}>Agendar</Text>
       </View>
     </ScrollView>
   );
