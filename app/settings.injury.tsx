@@ -11,6 +11,8 @@ export default function InjuryModelSettings() {
 	const [name, setName] = useState('injury_risk');
 	const [version, setVersion] = useState('0.0.1');
 	const [status, setStatus] = useState<string>('');
+  const [checksum, setChecksum] = useState<string>('');
+  const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
 		getModelConfig().then((cfg) => {
@@ -23,15 +25,17 @@ export default function InjuryModelSettings() {
 	}, []);
 
 	async function apply() {
+		setLoading(true);
 		await setModelConfig({ uri, name, version });
 		setStatus('Carregando modelo de risco...');
 		const t0 = Date.now();
 		let localUri = uri;
 		if (/^https?:\/\//.test(uri)) {
 			try {
-				localUri = await downloadModel(uri);
+				localUri = await downloadModel(uri, checksum || undefined);
 			} catch (e) {
 				setStatus('Falha no download do modelo');
+				setLoading(false);
 				return;
 			}
 		}
@@ -40,6 +44,7 @@ export default function InjuryModelSettings() {
 		track('ml_model_loaded', { model_name: info?.name ?? name, model_version: info?.version ?? version, size_kb: 0 }).catch(() => {});
 		track('ml_inference', { model_name: info?.name ?? name, latency_ms: Date.now() - t0, success: loaded }).catch(() => {});
 		setStatus(loaded ? 'Modelo de risco carregado' : 'Falha ao carregar o modelo');
+		setLoading(false);
 	}
 
 	async function reset() {
@@ -52,11 +57,13 @@ export default function InjuryModelSettings() {
 			<ThemedText type="title">Modelo de Risco de Lesão</ThemedText>
 			<ThemedText>URI</ThemedText>
 			<TextInput style={styles.input} value={uri} onChangeText={setUri} placeholder="https://.../injury.onnx" />
+			<ThemedText>SHA-256 (opcional)</ThemedText>
+			<TextInput style={styles.input} value={checksum} onChangeText={setChecksum} placeholder="sha256..." />
 			<ThemedText>Nome</ThemedText>
 			<TextInput style={styles.input} value={name} onChangeText={setName} />
 			<ThemedText>Versão</ThemedText>
 			<TextInput style={styles.input} value={version} onChangeText={setVersion} />
-			<TouchableOpacity style={styles.btn} onPress={apply}><ThemedText>Aplicar</ThemedText></TouchableOpacity>
+			<TouchableOpacity style={styles.btn} onPress={apply} disabled={loading}><ThemedText>{loading ? 'Aplicando...' : 'Aplicar'}</ThemedText></TouchableOpacity>
 			<TouchableOpacity style={styles.btnSecondary} onPress={reset}><ThemedText>Remover Modelo</ThemedText></TouchableOpacity>
 			<ThemedText>{status}</ThemedText>
 		</ThemedView>
