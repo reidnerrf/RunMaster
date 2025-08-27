@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import SectionTitle from '../../components/SectionTitle';
@@ -8,30 +8,40 @@ import FadeInUp from '../../components/FadeInUp';
 import { useGate } from '../../hooks/useGate';
 import ActionButton from '../../components/ActionButton';
 import { useTheme } from '../../hooks/useTheme';
+import { generatePlan, getWeeklyPlan, PlanDay } from '../../Lib/planner';
 
 export default function WorkoutsScreen() {
   const nav = useNavigation();
   const { isPremium, open } = useGate();
   const { theme } = useTheme();
+  const [plan, setPlan] = useState<{ days: PlanDay[] } | null>(null);
+
+  useEffect(() => { (async () => { const p = await getWeeklyPlan(); setPlan(p || await generatePlan()); })(); }, []);
+
+  const today = new Date().toISOString().slice(0,10);
+  const todayPlan = plan?.days.find(d => d.date === today);
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: theme.colors.background }}>
-      <SectionTitle title="Treinos" subtitle="Monte seu plano" />
+      <SectionTitle title="Treinos" subtitle="Plano adaptativo semanal" actionLabel="Gerar novamente" onAction={async () => setPlan(await generatePlan())} />
 
-      <View style={[styles.calendar, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.muted }}>Calendário (mock)</Text></View>
-
-      {['Intervalado', 'Resistência', 'Velocidade'].map((t, i) => (
-        <FadeInUp key={t} delay={i * 70}>
-          <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
-            <Text style={[styles.title, { color: theme.colors.text }]}>{t}</Text>
-            <View style={styles.row}> 
-              <IconButton onPress={() => nav.navigate('ConnectSpotify' as never)}><Text style={{ color: 'white' }}>🎵</Text></IconButton>
-              <IconButton onPress={() => nav.navigate('ConnectWatch' as never)}><Text style={{ color: 'white' }}>⌚</Text></IconButton>
-              <ActionButton label="Iniciar" onPress={() => nav.navigate('Run' as never, { from: 'Workouts' } as never)} style={{ flex: 1 }} />
-            </View>
+      <View style={[styles.calendar, { backgroundColor: theme.colors.card }]}>
+        {plan?.days.map((d) => (
+          <View key={d.date} style={[styles.day, { backgroundColor: d.date === today ? theme.colors.primary : theme.colors.card, borderColor: theme.colors.border }]}> 
+            <Text style={{ color: d.date === today ? '#fff' : theme.colors.text, fontWeight: '800' }}>{new Date(d.date).toLocaleDateString('pt-BR', { weekday: 'short' })}</Text>
+            <Text style={{ color: d.date === today ? '#fff' : theme.colors.muted }}>{d.type.toUpperCase()}</Text>
+            {d.targetKm && <Text style={{ color: d.date === today ? '#fff' : theme.colors.text }}>{d.targetKm} km</Text>}
           </View>
-        </FadeInUp>
-      ))}
+        ))}
+      </View>
+
+      {todayPlan && (
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+          <Text style={[styles.title, { color: theme.colors.text }]}>Hoje: {todayPlan.type.toUpperCase()}</Text>
+          <Text style={{ color: theme.colors.muted }}>{todayPlan.description}</Text>
+          <ActionButton label="Iniciar" onPress={() => nav.navigate('Run' as never, { from: 'Workouts' } as never)} style={{ marginTop: 8 }} />
+        </View>
+      )}
 
       {!isPremium && (
         <Pressable onPress={() => open('workouts_personalized')} style={[styles.locked, { borderColor: theme.colors.border }]}> 
@@ -39,15 +49,15 @@ export default function WorkoutsScreen() {
         </Pressable>
       )}
 
-      <FlowHint steps={["Escolher treino", "3…2…1 (contagem)", "Tela Corrida"]} />
+      <FlowHint steps={["Gerar plano", "Ver treino do dia", "Iniciar treino"]} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  calendar: { height: 120, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  calendar: { borderRadius: 16, padding: 8, marginBottom: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' },
+  day: { width: '31%', borderRadius: 12, padding: 10, borderWidth: 1, alignItems: 'center' },
   card: { borderRadius: 16, padding: 14, marginBottom: 12 },
   title: { fontWeight: '800', marginBottom: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   locked: { borderRadius: 12, borderWidth: 1, padding: 14, alignItems: 'center' },
 });

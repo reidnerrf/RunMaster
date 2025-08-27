@@ -8,8 +8,9 @@ import MapTrace from '../components/MapTrace';
 import { useTheme } from '../hooks/useTheme';
 import { getRecoveryAdvice } from '../Lib/analysis';
 import { api } from '../Lib/api';
-import { addRoute } from '../Lib/routeStore';
-import { getRuns, Run } from '../Lib/runStore';
+import { toGPX, toTCX, shareText } from '../Lib/exports';
+import { generateStoryCard } from '../Lib/story';
+
 
 export default function RunSummaryScreen() {
   const route = useRoute<any>();
@@ -43,6 +44,15 @@ export default function RunSummaryScreen() {
       const url = api.exportRunPdf(run.remoteId || '');
       await Linking.openURL(url);
     } catch {}
+  };
+
+  const onExportGpx = async () => { try { await shareText('GPX', toGPX(run)); } catch {} };
+  const onExportTcx = async () => { try { await shareText('TCX', toTCX(run)); } catch {} };
+  const onShareStrava = async () => { try { await Share.share({ message: 'Enviar para Strava (placeholder). Exporte GPX e importe na Strava.' }); } catch {} };
+  const onStory = async () => {
+    const res = await generateStoryCard({ distanceKm: run.distanceKm, avgPace: run.avgPace });
+    if (res.uri) { try { await Share.share({ url: res.uri }); } catch {} }
+    else if (res.prompt) { try { await Share.share({ message: res.prompt }); } catch {} }
   };
 
   const saveAsRoute = async () => {
@@ -79,6 +89,10 @@ export default function RunSummaryScreen() {
         <GeneratedImage text={`Cartão de corrida: ${run.distanceKm.toFixed(2)} km, pace ${run.avgPace}, estilo esportivo com gradientes vibrantes` as any} aspect="1:1" style={{ width: '100%', height: 200, borderRadius: 12 }} />
         <ActionButton label="Compartilhar" onPress={onShare} />
         <ActionButton label="Exportar PDF (server)" onPress={onExportPdf} />
+        <ActionButton label="Exportar GPX" onPress={onExportGpx} />
+        <ActionButton label="Exportar TCX" onPress={onExportTcx} />
+        <ActionButton label="Enviar para Strava (placeholder)" onPress={onShareStrava} />
+        <ActionButton label="Gerar Story" onPress={onStory} />
       </View>
 
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>

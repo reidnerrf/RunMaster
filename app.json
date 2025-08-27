@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#262626"
     },
     "ios": {
       "supportsTablet": true,
@@ -26,7 +26,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#262626"
       },
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
@@ -50,7 +50,7 @@
       ],
       "notification": {
         "icon": "./assets/notification-icon.png",
-        "color": "#FF6B00",
+        "color": "#FF7E47",
         "channelId": "run-tracking"
       },
       "package": "com.anonymous.runmaster"

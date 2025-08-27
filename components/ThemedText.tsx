@@ -22,7 +22,7 @@ export function ThemedText({
       allowFontScaling
       maxFontSizeMultiplier={2.0}
       style={[
-        { color },
+        { color, fontFamily: 'EuclidCircularA' },
         type === 'default' ? styles.default : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,

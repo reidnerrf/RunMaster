@@ -135,6 +135,7 @@ const App: React.FC = () => {
           state.gamification.pendingChanges,
         ].reduce((total, changes) => total + changes.length, 0);
 
+
         if (totalPending > 0) {
           console.log(`${totalPending} mudanças pendentes para sincronizar`);
         }

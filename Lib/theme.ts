@@ -1,22 +1,25 @@
 export const Colors = {
   light: {
-    background: '#FFFFFF', // Updated background color
-    card: '#F5F5F5', // Updated card color
-    text: '#333333',
-    primary: '#FF6B00', // Updated primary color
-    secondary: '#00CFFF',
+    background: '#FFFFFF',
+    card: '#FFFFFF',
+    text: '#262626',
+    primary: '#FF7E47',
+    secondary: '#FFA97C',
+
     gold: '#FFD700',
     muted: '#8E8E93',
-    border: '#E5E5EA',
+    border: '#E9E9EA',
     danger: '#FF3B30',
     success: '#34C759',
   },
   dark: {
-    background: '#1E1E1E',
-    card: '#2A2A2A',
+    background: '#262626',
+    card: '#2F2F2F',
     text: '#FFFFFF',
-    primary: '#FF6B00', // Updated primary color
-    secondary: '#00CFFF',
+
+    primary: '#FF7E47',
+    secondary: '#FFA97C',
+
     gold: '#FFD700',
     muted: '#A1A1AA',
     border: '#3A3A3C',

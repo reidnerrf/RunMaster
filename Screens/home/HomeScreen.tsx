@@ -7,6 +7,9 @@ import GeneratedImage from '../../components/GeneratedImage';
 import IconButton from '../../components/IconButton';
 import PulsingButton from '../../components/PulsingButton';
 import SectionTitle from '../../components/SectionTitle';
+import GeneratedImage from '../../components/GeneratedImage';
+import FadeInUp from '../../components/FadeInUp';
+
 import { useGate } from '../../hooks/useGate';
 import { useTheme } from '../../hooks/useTheme';
 import { AISuggestions, suggestPlan } from '../../Lib/ai';
@@ -20,6 +23,7 @@ import { t } from '../../Lib/i18n';
 import { getNearbyEvents, enrichRoutesWithEvents } from '../../Lib/events';
 import RitualPicker from '../../components/RitualPicker';
 import { RunnerProfileType } from '../../Lib/rituals';
+
 
 export default function HomeScreen() {
   const nav = useNavigation();
@@ -58,6 +62,7 @@ export default function HomeScreen() {
     nav.navigate('Run' as never);
   };
 
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <View style={[styles.map, theme.shadows.heavy, { backgroundColor: theme.colors.card, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }]}> 
@@ -81,6 +86,19 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <SectionTitle title="Metas" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <GoalCard title="Diária: Calorias" value={goals?.daily?.calories ? `${goals.daily.calories} kcal` : '—'} />
+          <GoalCard title="Diária: Distância" value={goals?.daily?.distanceKm ? `${goals.daily.distanceKm} km` : '—'} />
+          <GoalCard title="Diária: Passos" value={goals?.daily?.steps ? `${goals.daily.steps}` : '—'} />
+        </View>
+
+        <SectionTitle title="Estatísticas" subtitle="Resumo rápido" />
+        <View style={[styles.statsRow]}> 
+          <GoalCard title="Total (km)" value={stats?.totalDistanceKm?.toFixed(1) ?? '0'} />
+          <GoalCard title="Semana (km)" value={stats?.weekDistanceKm?.toFixed(1) ?? '0'} />
+        </View>
+
         <SectionTitle title="Rotas Inteligentes" subtitle="Sugestões rápidas perto de você" />
         {!ai ? (
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
@@ -179,23 +197,6 @@ export default function HomeScreen() {
             </Pressable>
           ))
         )}
-
-        <SectionTitle title="Conquistas dos amigos" subtitle={isPremium ? 'Feed completo' : 'Feed limitado na versão grátis'} />
-        {[...Array(isPremium ? 6 : 3)].map((_, i) => (
-          <FadeInUp key={i} delay={i * 60}>
-            <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
-              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>@runner{i + 1}</Text>
-              <Text style={[styles.cardBody, { color: theme.colors.muted }]}>Bateu recorde de 5km! 🏅</Text>
-            </View>
-          </FadeInUp>
-        ))}
-        {!isPremium && (
-          <Pressable onPress={() => open('home_feed')} style={[styles.locked, { borderColor: theme.colors.border }]}> 
-            <Text style={{ color: theme.colors.muted }}>Ver mais (Premium)</Text>
-          </Pressable>
-        )}
-
-        <FlowHint steps={["Mapa/Rotas", "Iniciar Corrida", "Feed Social", "Upgrade Premium"]} />
       </ScrollView>
       <RitualPicker
         visible={showRitualPicker}
@@ -216,11 +217,9 @@ const styles = StyleSheet.create({
   card: { borderRadius: 16, padding: 14, marginBottom: 12 },
   cardTitle: { fontWeight: '800', marginBottom: 6 },
   cardBody: { },
-  locked: { borderWidth: 1, borderRadius: 12, padding: 12, alignItems: 'center' },
   routeCard: { borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1 },
   routeTitle: { fontSize: 16, fontWeight: '800', marginBottom: 6 },
   routeBtn: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
-  playBtn: { borderWidth: 1, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, marginTop: 8 },
   savedItem: { borderRadius: 12, padding: 12, marginBottom: 8 },
   routeHeader: {
     flexDirection: 'row',
@@ -255,3 +254,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
