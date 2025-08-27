@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { predictNextWindow } from '@/utils/timePredictor';
+import { predictTimeWindowOnnx } from '@/utils/timeOnnx';
 import { track } from '@/utils/analyticsClient';
 
 export default function PredictionHint() {
@@ -9,7 +10,8 @@ export default function PredictionHint() {
 
 	useEffect(() => {
 		(async () => {
-			const win = await predictNextWindow();
+			const onnx = await predictTimeWindowOnnx();
+			const win = onnx ?? (await predictNextWindow());
 			if (win) {
 				const msg = `Sua melhor janela de treino: ${win.startHour}h–${win.endHour}h`;
 				setText(msg);
