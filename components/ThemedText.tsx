@@ -19,6 +19,8 @@ export function ThemedText({
 
   return (
     <Text
+      allowFontScaling
+      maxFontSizeMultiplier={2.0}
       style={[
         { color, fontFamily: 'EuclidCircularA' },
         type === 'default' ? styles.default : undefined,

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { getSettings, setSettings } from '../Lib/settings';
+import { sendWatchCommand } from '../Lib/background';
+import { connectHealth } from '../Lib/health';
 
 export default function ConnectWatchScreen() {
   const [connected, setConnected] = useState(false);
@@ -29,6 +31,18 @@ export default function ConnectWatchScreen() {
       <Pressable onPress={handleConnect} style={[styles.btn, connected && styles.btnConnected]}> 
         <Text style={styles.btnText}>{connected ? 'Desconectar' : 'Conectar'}</Text>
       </Pressable>
+
+      {connected && (
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+          <Pressable onPress={() => sendWatchCommand('start')} style={[styles.smallBtn]}><Text style={styles.smallText}>Start</Text></Pressable>
+          <Pressable onPress={() => sendWatchCommand('pause')} style={[styles.smallBtn]}><Text style={styles.smallText}>Pause</Text></Pressable>
+          <Pressable onPress={() => sendWatchCommand('resume')} style={[styles.smallBtn]}><Text style={styles.smallText}>Resume</Text></Pressable>
+        </View>
+      )}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+        <Pressable onPress={() => connectHealth('apple')} style={[styles.smallBtn]}><Text style={styles.smallText}>Apple Health</Text></Pressable>
+        <Pressable onPress={() => connectHealth('google')} style={[styles.smallBtn]}><Text style={styles.smallText}>Google Fit</Text></Pressable>
+      </View>
     </View>
   );
 }
@@ -42,4 +56,6 @@ const styles = StyleSheet.create({
   btn: { marginTop: 16, backgroundColor: '#00CFFF', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
   btnConnected: { backgroundColor: '#00B7E6' },
   btnText: { color: 'white', fontWeight: '800' },
+  smallBtn: { backgroundColor: '#2A2A2A', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10 },
+  smallText: { color: 'white', fontWeight: '800' },
 });

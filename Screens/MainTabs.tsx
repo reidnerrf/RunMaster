@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { BarChart2, Dumbbell, Home, User, Users } from 'lucide-react-native';
+import { BarChart2, Dumbbell, Home, Lock, User, Users, Heart } from 'lucide-react-native';
 import React from 'react';
-import { Animated } from 'react-native';
+import { Animated, Pressable } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import type { MainTabParamList } from '../Types/Navigation';
 import HomeScreen from './home/HomeScreen';
@@ -9,6 +9,11 @@ import ProfileScreen from './profile/ProfileScreen';
 import SocialScreen from './Social/SocialScreen';
 import StatsScreen from './stats/StatsScreen';
 import WorkoutsScreen from './workouts/WorkoutScreen';
+import WellnessScreen from './WellnessScreen';
+import CommunityScreen from './CommunityScreen';
+import MentorshipScreen from './MentorshipScreen';
+import ExplorerScreen from './ExplorerScreen';
+import { useFlags, useGate } from '../hooks/useGate';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -22,6 +27,10 @@ function AnimatedIcon({ focused, children }: { focused: boolean; children: React
 
 export default function MainTabs() {
   const { theme } = useTheme();
+  const { flags } = useFlags();
+  const { open } = useGate();
+  const plannerEnabled = !!flags.feature_planner;
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -34,12 +43,47 @@ export default function MainTabs() {
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarIcon: ({ color, focused }) => (
         <AnimatedIcon focused={focused}><Home color={color} size={22} /></AnimatedIcon>
       ) }} />
-      <Tab.Screen name="Workouts" component={WorkoutsScreen} options={{ tabBarIcon: ({ color, focused }) => (
-        <AnimatedIcon focused={focused}><Dumbbell color={color} size={22} /></AnimatedIcon>
-      ) }} />
-      <Tab.Screen name="Social" component={SocialScreen} options={{ tabBarIcon: ({ color, focused }) => (
-        <AnimatedIcon focused={focused}><Users color={color} size={22} /></AnimatedIcon>
-      ) }} />
+      {plannerEnabled ? (
+        <Tab.Screen name="Workouts" component={WorkoutsScreen} options={{ tabBarIcon: ({ color, focused }) => (
+          <AnimatedIcon focused={focused}><Dumbbell color={color} size={22} /></AnimatedIcon>
+        ) }} />
+      ) : (
+        <Tab.Screen name="Workouts" component={WorkoutsScreen} listeners={{
+          tabPress: (e) => { e.preventDefault(); open('planner_tab'); },
+        }} options={{
+          tabBarLabel: 'Planner',
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedIcon focused={focused}><Lock color={color} size={20} /></AnimatedIcon>
+          ),
+        }} />
+      )}
+                          <Tab.Screen name="Wellness" component={WellnessScreen} options={{ 
+                      tabBarLabel: 'Bem-estar',
+                      tabBarIcon: ({ color, focused }) => (
+                        <AnimatedIcon focused={focused}><Heart color={color} size={22} /></AnimatedIcon>
+                      ) 
+                    }} />
+                    <Tab.Screen name="Community" component={CommunityScreen} options={{ 
+                      tabBarLabel: 'Comunidades',
+                      tabBarIcon: ({ color, focused }) => (
+                        <AnimatedIcon focused={focused}><Users color={color} size={22} /></AnimatedIcon>
+                      ) 
+                    }} />
+                    <Tab.Screen name="Mentorship" component={MentorshipScreen} options={{ 
+                      tabBarLabel: 'Mentoria',
+                      tabBarIcon: ({ color, focused }) => (
+                        <AnimatedIcon focused={focused}><User color={color} size={22} /></AnimatedIcon>
+                      ) 
+                    }} />
+                    <Tab.Screen name="Explorer" component={ExplorerScreen} options={{ 
+                      tabBarLabel: 'Explorador',
+                      tabBarIcon: ({ color, focused }) => (
+                        <AnimatedIcon focused={focused}><MapPin color={color} size={22} /></AnimatedIcon>
+                      ) 
+                    }} />
+                    <Tab.Screen name="Social" component={SocialScreen} options={{ tabBarIcon: ({ color, focused }) => (
+                      <AnimatedIcon focused={focused}><Users color={color} size={22} /></AnimatedIcon>
+                    ) }} />
       <Tab.Screen name="Stats" component={StatsScreen} options={{ tabBarIcon: ({ color, focused }) => (
         <AnimatedIcon focused={focused}><BarChart2 color={color} size={22} /></AnimatedIcon>
       ) }} />

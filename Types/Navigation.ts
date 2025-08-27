@@ -9,6 +9,10 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Home: undefined;
   Workouts: undefined;
+  Wellness: undefined;
+  Community: undefined;
+  Mentorship: undefined;
+  Explorer: undefined;
   Social: undefined;
   Stats: undefined;
   Profile: undefined;
@@ -25,7 +29,6 @@ export type RootStackParamList = {
   RouteDetail: { id: string };
   SavedRoutes: undefined;
   RunSummary: { runId: string };
-  Goals: undefined;
-  CreateRoute: undefined;
-  PostSignup: undefined;
+  Registration: undefined;
+  MentorApplication: undefined;
 };

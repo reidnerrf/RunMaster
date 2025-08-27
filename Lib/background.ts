@@ -94,3 +94,13 @@ export async function stopBackground() {
   } catch {}
   await Storage.removeItem('runmaster_current_run_id');
 }
+
+export async function sendWatchCommand(cmd: 'start' | 'pause' | 'resume' | 'finish', payload?: any) {
+	console.log('[watch] command', cmd, payload || {});
+	return { ok: true };
+}
+
+export async function updateDailyGoalWidget(km: number) {
+	console.log('[widget] update daily goal', km);
+	return { ok: true };
+}

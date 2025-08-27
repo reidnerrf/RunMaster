@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
+import { funnelStep, track } from '../../Lib/analytics';
 
 export default function LoginScreen() {
   const nav = useNavigation();
@@ -10,6 +11,12 @@ export default function LoginScreen() {
   const { login, socialLogin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const doLogin = async () => {
+    funnelStep('login_attempt');
+    await login(email, password);
+    funnelStep('login_success');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
@@ -22,16 +29,16 @@ export default function LoginScreen() {
         <TextInput placeholder="E-mail" placeholderTextColor={theme.colors.muted} autoCapitalize="none" value={email} onChangeText={setEmail} style={[styles.input, { borderColor: theme.colors.border, backgroundColor: theme.colors.background, color: theme.colors.text }]} />
         <TextInput placeholder="Senha" placeholderTextColor={theme.colors.muted} secureTextEntry value={password} onChangeText={setPassword} style={[styles.input, { borderColor: theme.colors.border, backgroundColor: theme.colors.background, color: theme.colors.text }]} />
 
-        <Pressable onPress={() => login(email, password)} style={[styles.primaryBtn, { backgroundColor: theme.colors.primary }]}>
-          <Text style={styles.primaryText}>Entrar</Text>
+        <Pressable onPress={doLogin} style={[styles.btn, { backgroundColor: theme.colors.primary }]}> 
+          <Text style={styles.btnText}>Login</Text>
         </Pressable>
 
         <Text style={{ textAlign: 'center', color: theme.colors.muted, marginVertical: 10 }}>ou continue com</Text>
 
         <View style={styles.row}> 
-          <Pressable onPress={() => socialLogin('google')} style={[styles.socialBtn, { backgroundColor: '#DB4437' }]}><Text style={styles.socialText}>Google</Text></Pressable>
-          <Pressable onPress={() => socialLogin('apple')} style={[styles.socialBtn, { backgroundColor: '#000000' }]}><Text style={styles.socialText}>Apple</Text></Pressable>
-          <Pressable onPress={() => socialLogin('facebook')} style={[styles.socialBtn, { backgroundColor: '#1877F2' }]}><Text style={styles.socialText}>Facebook</Text></Pressable>
+          <Pressable onPress={() => { track('social_login', { provider: 'google' }); socialLogin('google'); }} style={[styles.socialBtn, { backgroundColor: '#DB4437' }]}><Text style={styles.socialText}>Google</Text></Pressable>
+          <Pressable onPress={() => { track('social_login', { provider: 'apple' }); socialLogin('apple'); }} style={[styles.socialBtn, { backgroundColor: '#000000' }]}><Text style={styles.socialText}>Apple</Text></Pressable>
+          <Pressable onPress={() => { track('social_login', { provider: 'facebook' }); socialLogin('facebook'); }} style={[styles.socialBtn, { backgroundColor: '#1877F2' }]}><Text style={styles.socialText}>Facebook</Text></Pressable>
         </View>
       </View>
 

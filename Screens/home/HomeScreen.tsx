@@ -14,8 +14,16 @@ import { useGate } from '../../hooks/useGate';
 import { useTheme } from '../../hooks/useTheme';
 import { AISuggestions, suggestPlan } from '../../Lib/ai';
 import { addRoute, getRoutes, SavedRoute } from '../../Lib/routeStore';
-import { summarize } from '../../Lib/runStore';
-import { getGoals } from '../../Lib/goals';
+import { getSettings, setSettings } from '../../Lib/settings';
+import { updateDailyGoalWidget } from '../../Lib/background';
+import Shimmer from '../../components/ui/Shimmer';
+import BlurCard from '../../components/ui/BlurCard';
+import { initNavigationSdk, requestOfflineTiles, startTurnByTurn } from '../../Lib/navigation';
+import { t } from '../../Lib/i18n';
+import { getNearbyEvents, enrichRoutesWithEvents } from '../../Lib/events';
+import RitualPicker from '../../components/RitualPicker';
+import { RunnerProfileType } from '../../Lib/rituals';
+
 
 export default function HomeScreen() {
   const nav = useNavigation();
@@ -24,12 +32,16 @@ export default function HomeScreen() {
   const [ai, setAI] = useState<AISuggestions | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
-  const [stats, setStats] = useState<{ totalDistanceKm: number; weekDistanceKm: number } | null>(null);
-  const [goals, setGoals] = useState<any>(null);
+  const [dailyGoalKm, setDailyGoalKm] = useState<number>(5);
+  const [showRitualPicker, setShowRitualPicker] = useState(false);
+  const [currentProfile, setCurrentProfile] = useState<RunnerProfileType>('endurance');
+  const [recommendations, setRecommendations] = useState<any[]>([]);
 
   useEffect(() => {
     suggestPlan({ city: 'São Paulo', goal: 'easy', distancePreferenceKm: 5 }).then(setAI).catch(() => {});
-    (async () => { setSavedRoutes(await getRoutes()); setStats(await summarize()); setGoals(await getGoals()); })();
+    (async () => setSavedRoutes(await getRoutes()))();
+    getSettings().then((s) => setDailyGoalKm(s.widgetDailyGoalKm || 5)).catch(() => {});
+    initNavigationSdk('mapbox').catch(() => {});
   }, []);
 
   const saveCurrentRoute = async () => {
@@ -40,12 +52,16 @@ export default function HomeScreen() {
     setTimeout(() => setSavedMsg(null), 1500);
   };
 
-  const GoalCard = ({ title, value }: any) => (
-    <View style={[styles.goalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
-      <Text style={{ color: theme.colors.muted }}>{title}</Text>
-      <Text style={{ color: theme.colors.text, fontWeight: '800' }}>{value}</Text>
-    </View>
-  );
+  const handleStartRun = () => {
+    setShowRitualPicker(true);
+  };
+
+  const handleRitualSelect = (ritual: any) => {
+    console.log('Ritual selecionado:', ritual);
+    // Aqui você pode salvar o ritual selecionado e navegar para a corrida
+    nav.navigate('Run' as never);
+  };
+
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
@@ -62,7 +78,10 @@ export default function HomeScreen() {
           </IconButton>
         </View>
         <View style={styles.centerBtn}>
-          <PulsingButton label="INICIAR CORRIDA" onPress={() => nav.navigate('Run' as never)} />
+          <PulsingButton 
+            label={t('start_run')} 
+            onPress={handleStartRun} 
+          />
         </View>
       </View>
 
@@ -81,27 +100,95 @@ export default function HomeScreen() {
         </View>
 
         <SectionTitle title="Rotas Inteligentes" subtitle="Sugestões rápidas perto de você" />
+        {!ai ? (
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+            <Shimmer height={18} style={{ marginBottom: 10 }} />
+            <Shimmer height={14} width={'80%'} />
+          </View>
+        ) : (
         <FadeInUp>
-          <View style={[styles.routeCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
+          <BlurCard>
             <Text style={[styles.routeTitle, { color: theme.colors.text }]}>{ai?.route?.[0]?.name ?? 'Parque Central • 5.2 km'}</Text>
             <Text style={{ color: theme.colors.muted }}>{ai ? `${ai.route[0].distance_km} km • ${ai.route[0].notes.join(' • ')}` : 'Plano, bem iluminado, pontos de água'}</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              <Pressable onPress={() => isPremium ? nav.navigate('Run' as never) : open('smart_routes')} style={[styles.routeBtn, { backgroundColor: theme.colors.primary }]}>
+              <Pressable onPress={() => isPremium ? nav.navigate('Run' as never) : open('smart_routes')} style={[styles.routeBtn, { backgroundColor: theme.colors.primary }]}> 
                 <Text style={{ color: 'white', fontWeight: '800' }}>Ir agora</Text>
               </Pressable>
-              <Pressable onPress={saveCurrentRoute} style={[styles.routeBtn, { backgroundColor: theme.colors.secondary }]}>
+              <Pressable onPress={saveCurrentRoute} style={[styles.routeBtn, { backgroundColor: theme.colors.secondary }]}> 
                 <Text style={{ color: 'white', fontWeight: '800' }}>{savedMsg ?? 'Salvar'}</Text>
               </Pressable>
-              <Pressable onPress={() => (nav as any).navigate('CreateRoute')} style={[styles.routeBtn, { backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border }]}>
-                <Text style={{ color: theme.colors.text, fontWeight: '800' }}>Criar rota</Text>
+              <Pressable onPress={() => requestOfflineTiles({ north: -23.5, south: -23.7, east: -46.5, west: -46.7 })} style={[styles.routeBtn, { backgroundColor: '#6C63FF' }]}> 
+                <Text style={{ color: 'white', fontWeight: '800' }}>Offline</Text>
+              </Pressable>
+              <Pressable onPress={() => ai && startTurnByTurn({ name: ai.route[0].name, points: ai.route[0].points || [] })} style={[styles.routeBtn, { backgroundColor: '#00B894' }]}> 
+                <Text style={{ color: 'white', fontWeight: '800' }}>TBT</Text>
               </Pressable>
             </View>
-          </View>
+            {ai && (
+              <View style={{ marginTop: 8, gap: 4 }}>
+                <Text style={{ color: theme.colors.muted }}>Clima: {ai.climate.summary} • {ai.climate.temperature_c}°C • AQ {ai.climate.air_quality}</Text>
+                <Text style={{ color: theme.colors.muted }}>Pacing sugerido: {ai.pacing.target_min_per_km} • Dica: {ai.pacing.tip}</Text>
+              </View>
+            )}
+          </BlurCard>
         </FadeInUp>
+        )}
+
+        <SectionTitle title="Meta diária" subtitle="Widget" />
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Meta de hoje: {dailyGoalKm} km</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {[3,5,8,10].map((g) => (
+              <Pressable key={g} onPress={async () => { setDailyGoalKm(g); await setSettings({ widgetDailyGoalKm: g }); await updateDailyGoalWidget(g); }} style={[styles.playBtn, { borderColor: theme.colors.border }]}> 
+                <Text style={{ color: theme.colors.text }}>{g} km</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* Rotas Temáticas com Eventos */}
+        <SectionTitle title="Rotas Temáticas" subtitle="Recomendadas para você" />
+        {recommendations && recommendations.length > 0 ? (
+          recommendations.slice(0, 3).map((route, index) => (
+            <BlurCard key={route.id} style={styles.routeCard}>
+              <View style={styles.routeHeader}>
+                <View style={styles.routeInfo}>
+                  <Text style={[styles.routeTitle, { color: theme.colors.text }]}>{route.name}</Text>
+                  <Text style={{ color: theme.colors.muted }}>
+                    {route.distance}km • {route.estimatedTime}min • {route.difficulty}
+                  </Text>
+                  {/* Event Badge */}
+                  {route.name.includes('•') && (
+                    <View style={styles.eventBadge}>
+                      <Text style={styles.eventIcon}>🎉</Text>
+                      <Text style={[styles.eventText, { color: theme.colors.primary }]}>Evento Local</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.routeTheme}>
+                  <Text style={styles.themeIcon}>
+                    {route.theme === 'parks' ? '🌳' : 
+                     route.theme === 'historical' ? '🏛️' : 
+                     route.theme === 'gastronomic' ? '🍕' : '🏃'}
+                  </Text>
+                </View>
+              </View>
+            </BlurCard>
+          ))
+        ) : (
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+            <Text style={{ color: theme.colors.muted }}>Carregando rotas temáticas...</Text>
+          </View>
+        )}
 
         <SectionTitle title="Favoritos" subtitle="Rotas salvas" actionLabel="Ver todas" onAction={() => nav.navigate('SavedRoutes' as never)} />
         {savedRoutes.length === 0 ? (
-          <Text style={{ color: theme.colors.muted, marginBottom: 8 }}>Nenhuma rota salva ainda</Text>
+          <View style={[styles.card, { backgroundColor: theme.colors.card, alignItems: 'center' }]}> 
+            <Text style={{ color: theme.colors.muted, marginBottom: 8 }}>Nenhuma rota salva ainda</Text>
+            <Pressable onPress={saveCurrentRoute} style={[styles.playBtn, { borderColor: theme.colors.border }]}> 
+              <Text style={{ color: theme.colors.text }}>Gerar e salvar uma rota</Text>
+            </Pressable>
+          </View>
         ) : (
           savedRoutes.slice(0, 3).map((r) => (
             <Pressable key={r.id} onPress={() => (nav as any).navigate('RouteDetail', { id: r.id })} style={[styles.savedItem, { backgroundColor: theme.colors.card }]}> 
@@ -111,6 +198,12 @@ export default function HomeScreen() {
           ))
         )}
       </ScrollView>
+      <RitualPicker
+        visible={showRitualPicker}
+        onClose={() => setShowRitualPicker(false)}
+        onSelect={handleRitualSelect}
+        currentProfile={currentProfile}
+      />
     </View>
   );
 }
@@ -128,7 +221,37 @@ const styles = StyleSheet.create({
   routeTitle: { fontSize: 16, fontWeight: '800', marginBottom: 6 },
   routeBtn: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
   savedItem: { borderRadius: 12, padding: 12, marginBottom: 8 },
-  goalCard: { flex: 1, padding: 12, borderRadius: 12, borderWidth: 1 },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  routeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  routeInfo: {
+    flex: 1,
+  },
+  routeTheme: {
+    marginLeft: 12,
+  },
+  themeIcon: {
+    fontSize: 24,
+  },
+  eventBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    alignSelf: 'flex-start',
+  },
+  eventIcon: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  eventText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
 });
 

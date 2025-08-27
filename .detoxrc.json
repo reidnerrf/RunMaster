@@ -1,0 +1,23 @@
+{
+	"testRunner": "jest",
+	"runnerConfig": "e2e/jest.e2e.config.js",
+	"apps": {
+		"ios.sim.debug": {
+			"type": "ios.simulator",
+			"binaryPath": "bin/ios/Debug-iphonesimulator/app.app",
+			"build": "echo 'Build iOS app here'",
+			"device": { "type": "iPhone 15" }
+		},
+		"android.emu.debug": {
+			"type": "android.emulator",
+			"binaryPath": "bin/android/debug/app.apk",
+			"build": "echo 'Build Android app here'",
+			"device": { "avdName": "Pixel_6_Pro_API_33" }
+		}
+	},
+	"behaviors": { "init": { "reinstallApp": true, "exposeGlobals": true } },
+	"configurations": {
+		"ios.sim.debug": { "device": "ios.sim.debug", "app": "ios.sim.debug" },
+		"android.emu.debug": { "device": "android.emu.debug", "app": "android.emu.debug" }
+	}
+}

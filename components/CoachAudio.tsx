@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { getSettings } from '../Lib/settings';
+import * as Haptics from 'expo-haptics';
 
 let Speech: any = null;
 try { Speech = require('expo-speech'); } catch {}
@@ -10,6 +11,7 @@ export default function CoachAudio({ active, paceStr, distanceKm, heartRate, ela
   const phaseRef = useRef<string | null>(null);
   const lastTempoRef = useRef<number>(0);
   const [connected, setConnected] = useState({ spotify: false, health: false });
+  const metroTimerRef = useRef<any>(null);
 
   useEffect(() => {
     getSettings().then((s) => setConnected({ spotify: !!s.spotifyConnected, health: !!s.healthConnected })).catch(() => {});
@@ -80,6 +82,17 @@ export default function CoachAudio({ active, paceStr, distanceKm, heartRate, ela
       try { Speech.speak('Atenção: frequência muito alta. Reduza o ritmo.', { language: 'pt-BR' }); } catch {}
     }
   }, [active, connected.health, heartRate]);
+
+  // Haptic metronome ticks
+  useEffect(() => {
+    if (!active || !targetBpm) { if (metroTimerRef.current) { clearInterval(metroTimerRef.current); metroTimerRef.current = null; } return; }
+    const intervalMs = Math.max(250, Math.round(60000 / targetBpm));
+    if (metroTimerRef.current) clearInterval(metroTimerRef.current);
+    metroTimerRef.current = setInterval(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }, intervalMs);
+    return () => { if (metroTimerRef.current) { clearInterval(metroTimerRef.current); metroTimerRef.current = null; } };
+  }, [active, targetBpm]);
 
   return null;
 }
