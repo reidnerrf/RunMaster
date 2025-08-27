@@ -4,11 +4,10 @@ module.exports = {
 	transform: {
 		'^.+\\.(ts|tsx)$': 'babel-jest',
 	},
-	setupFiles: ['react-native/jest/setup'],
 	setupFilesAfterEnv: [],
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 	transformIgnorePatterns: [
-		'node_modules/(?!(react-native|@react-native|react-clone-referenced-element|@react-navigation|@react-native-community)/)'
+		'node_modules/(?!(react-native|@react-native|@react-native/js-polyfills|react-clone-referenced-element|@react-navigation|@react-native-community)/)'
 	],
     moduleNameMapper: {
       '^react-native-reanimated$': 'react-native-reanimated/mock',
