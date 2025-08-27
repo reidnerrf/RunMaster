@@ -5,6 +5,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { track } from '@/utils/analyticsClient';
 import { useGate } from '@/hooks/useGate';
+import ViewShot, { captureRef } from 'react-native-view-shot';
+import * as Print from 'expo-print';
 
 type Period = 'week' | 'month' | 'year';
 
@@ -15,6 +17,7 @@ export default function InsightsDashboardScreen() {
   const community = useAppSelector((s) => (s as any).community?.rankings ?? []);
   const { isPremium, open } = useGate();
   const [normalize, setNormalize] = React.useState<'absolute' | 'per_session'>('absolute');
+  const chartRef = React.useRef<View | null>(null);
 
   const trend = React.useMemo(() => {
     if (!stats) return null;
@@ -56,12 +59,22 @@ export default function InsightsDashboardScreen() {
 
   const exportImage = async () => {
     if (!isPremium) { open('insights_export'); return; }
-    try { await track('action_performed', { action_name: 'export_chart_image', context: 'insights' }); console.log('Export image (placeholder)'); } catch {}
+    try {
+      const uri = await captureRef(chartRef, { format: 'png', quality: 0.9 });
+      await track('action_performed', { action_name: 'export_chart_image', context: 'insights' });
+      console.log('saved image uri', uri);
+    } catch {}
   };
 
   const exportPdf = async () => {
     if (!isPremium) { open('insights_export'); return; }
-    try { await track('action_performed', { action_name: 'export_chart_pdf', context: 'insights' }); console.log('Export PDF (placeholder)'); } catch {}
+    try {
+      const uri = await captureRef(chartRef, { format: 'png', quality: 0.9, result: 'base64' } as any);
+      const html = `<!DOCTYPE html><html><body><h1>Insights</h1><img style="width:100%" src="data:image/png;base64,${uri}" /></body></html>`;
+      const file = await Print.printToFileAsync({ html });
+      await track('action_performed', { action_name: 'export_chart_pdf', context: 'insights' });
+      console.log('pdf file', file.uri);
+    } catch {}
   };
 
   const smartGoal = React.useMemo(() => {
@@ -135,6 +148,7 @@ export default function InsightsDashboardScreen() {
         </View>
         {trend && (
           <>
+            <ViewShot ref={chartRef as any} style={{ width: '100%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 8 }}>
               {trend.values.map((v: number, i: number) => (
                 <View key={i} style={{ width: 16, height: Math.max(4, Math.min(80, v)), backgroundColor: '#6C63FF', borderRadius: 4, opacity: 0.9 }} />
@@ -145,6 +159,7 @@ export default function InsightsDashboardScreen() {
                 <Text key={i} style={{ color: '#6B7280', fontSize: 12 }}>{l}</Text>
               ))}
             </View>
+            </ViewShot>
             <ThemedText style={{ marginTop: 6 }}>Δ distância: {trend.delta.toFixed(1)} km</ThemedText>
           </>
         )}
