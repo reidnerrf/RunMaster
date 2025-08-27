@@ -1,6 +1,7 @@
 import * as Linking from 'expo-linking';
 import { startRun, stopRun, pauseRun, resumeRun } from './runSession';
 import { Router } from 'expo-router';
+import { track } from './analyticsClient';
 
 export async function handleIncomingUrl(url: string | null, router: Router) {
 	if (!url) return;
@@ -12,6 +13,7 @@ export async function handleIncomingUrl(url: string | null, router: Router) {
 		if (path.startsWith('run/')) {
 			const action = path.split('/')[1];
 			await handleAction(action, router);
+			track('deeplink_open', { url, route: '/run', source: 'external' }).catch(() => {});
 			return;
 		}
 		if (name) {

@@ -1,5 +1,7 @@
 import { EventEmitter } from 'events';
 import { pauseRun, resumeRun, startRun, stopRun } from './runSession';
+import { watchNative } from './watchNative';
+import { track } from './analyticsClient';
 
 type BridgeEvent =
 	| { type: 'run_control'; action: 'start' | 'pause' | 'resume' | 'stop' }
@@ -11,6 +13,9 @@ class WatchBridgeImpl {
 
 	connect() {
 		this.paired = true;
+		watchNative.connect();
+		track('watch_paired', { platform: 'auto' }).catch(() => {});
+		watchNative.onMessage((e) => this.receive(e));
 	}
 
 	disconnect() {
@@ -35,12 +40,13 @@ class WatchBridgeImpl {
 			if (event.action === 'pause') pauseRun();
 			if (event.action === 'resume') resumeRun();
 			if (event.action === 'stop') stopRun();
+			track('action_performed', { action_name: `watch_${event.action}` }).catch(() => {});
 		}
 	}
 
 	send(event: BridgeEvent) {
-		// Em produção, enviar via WCSession/Data Layer
-		console.log('[WatchBridge] send', event);
+		watchNative.send(event);
+		if (event.type === 'metrics') track('watch_sync', { items: 1 }).catch(() => {});
 	}
 }
 
