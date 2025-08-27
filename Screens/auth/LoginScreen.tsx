@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Input from '../../components/ui/Input';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
@@ -25,16 +28,16 @@ export default function LoginScreen() {
         <Text style={{ color: theme.colors.muted }}>Entre para continuar</Text>
       </View>
 
-      <View style={[styles.card, theme.shadows.heavy, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
+      <Card>
         <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Boas-vindas</Text>
         <Text style={{ color: theme.colors.muted, marginBottom: 12 }}>Acesse sua conta para continuar</Text>
 
-        <TextInput placeholder="E-mail" placeholderTextColor={theme.colors.muted} autoCapitalize="none" value={email} onChangeText={setEmail} style={[styles.input, { borderColor: theme.colors.border, backgroundColor: theme.colors.background, color: theme.colors.text }]} />
-        <TextInput placeholder="Senha" placeholderTextColor={theme.colors.muted} secureTextEntry value={password} onChangeText={setPassword} style={[styles.input, { borderColor: theme.colors.border, backgroundColor: theme.colors.background, color: theme.colors.text }]} />
+        <Input placeholder="E-mail" value={email} onChangeText={setEmail} />
+        <View style={{ height: 8 }} />
+        <Input placeholder="Senha" secureTextEntry value={password} onChangeText={setPassword} />
 
-        <Pressable onPress={doLogin} style={[styles.primaryBtn, { backgroundColor: theme.colors.primary }]}> 
-          <Text style={styles.primaryText}>Entrar</Text>
-        </Pressable>
+        <View style={{ height: 10 }} />
+        <Button title="Entrar" onPress={doLogin} />
 
         <Text style={{ textAlign: 'center', color: theme.colors.muted, marginVertical: 12 }}>ou continue com</Text>
 
@@ -43,7 +46,7 @@ export default function LoginScreen() {
           <Pressable onPress={() => { track('social_login', { provider: 'apple' }); socialLogin('apple'); }} style={[styles.socialBtn, { backgroundColor: '#000000' }]}><Text style={styles.socialText}>Apple</Text></Pressable>
           <Pressable onPress={() => { track('social_login', { provider: 'facebook' }); socialLogin('facebook'); }} style={[styles.socialBtn, { backgroundColor: '#1877F2' }]}><Text style={styles.socialText}>Facebook</Text></Pressable>
         </View>
-      </View>
+      </Card>
 
       <Pressable onPress={() => nav.navigate('Signup' as never)}><Text style={{ textAlign: 'center', color: theme.colors.text, marginTop: 14 }}>Criar nova conta</Text></Pressable>
       <Pressable onPress={() => {}}><Text style={{ textAlign: 'center', marginTop: 6, color: theme.colors.muted }}>Esqueci a senha</Text></Pressable>

@@ -2,6 +2,9 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Bell, Settings, Play, Target as TargetIcon } from 'lucide-react-native';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import Gradient from '../../components/ui/Gradient';
 import FadeInUp from '../../components/FadeInUp';
 import FlowHint from '../../components/FlowHint';
 import GeneratedImage from '../../components/GeneratedImage';
@@ -102,15 +105,12 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+        <Card>
           <View style={{ alignItems: 'center' }}>
             <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>Pronto para correr?</Text>
-            <Pressable onPress={handleStartRun} style={[styles.startBtn, { backgroundColor: theme.colors.primary }]}> 
-              <Play size={20} color={'#fff'} />
-              <Text style={styles.startBtnText}>Iniciar Corrida</Text>
-            </Pressable>
+            <Button title="Iniciar Corrida" onPress={handleStartRun} leftIcon={<Play size={18} color={'#fff'} />} />
           </View>
-        </View>
+        </Card>
 
         <SectionTitle title="Metas" subtitle="Seu progresso" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
         <View style={{ flexDirection: 'row', gap: 10 }}>

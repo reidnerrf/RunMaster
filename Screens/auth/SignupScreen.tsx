@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Card from '../../components/ui/Card';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
@@ -18,21 +21,22 @@ export default function SignupScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      <View style={[styles.card, theme.shadows.heavy, { backgroundColor: theme.colors.card }]}> 
+      <Card>
         <Text style={[styles.title, { color: theme.colors.text }]}>Criar conta</Text>
-        <TextInput placeholder="Nome" placeholderTextColor={theme.colors.muted} value={name} onChangeText={setName} style={[styles.input, { borderColor: theme.colors.border, backgroundColor: theme.colors.background, color: theme.colors.text }]} />
-        <TextInput placeholder="E-mail" placeholderTextColor={theme.colors.muted} autoCapitalize="none" value={email} onChangeText={setEmail} style={[styles.input, { borderColor: theme.colors.border, backgroundColor: theme.colors.background, color: theme.colors.text }]} />
-        <TextInput placeholder="Senha" placeholderTextColor={theme.colors.muted} secureTextEntry value={password} onChangeText={setPassword} style={[styles.input, { borderColor: theme.colors.border, backgroundColor: theme.colors.background, color: theme.colors.text }]} />
-        <TextInput placeholder="Confirmar senha" placeholderTextColor={theme.colors.muted} secureTextEntry value={confirm} onChangeText={setConfirm} style={[styles.input, { borderColor: theme.colors.border, backgroundColor: theme.colors.background, color: theme.colors.text }]} />
+        <Input placeholder="Nome" value={name} onChangeText={setName} />
+        <View style={{ height: 8 }} />
+        <Input placeholder="E-mail" value={email} onChangeText={setEmail} />
+        <View style={{ height: 8 }} />
+        <Input placeholder="Senha" secureTextEntry value={password} onChangeText={setPassword} />
+        <View style={{ height: 8 }} />
+        <Input placeholder="Confirmar senha" secureTextEntry value={confirm} onChangeText={setConfirm} />
 
         <Pressable onPress={() => setAccepted(!accepted)} style={styles.checkboxRow}>
           <View style={[styles.checkbox, { backgroundColor: accepted ? theme.colors.primary : theme.colors.background, borderColor: theme.colors.border }]} />
           <Text style={{ flex: 1, color: theme.colors.text }}>Aceito termos e política</Text>
         </Pressable>
 
-        <Pressable disabled={!canSubmit} onPress={() => signup(name, email, password)} style={[styles.primaryBtn, { backgroundColor: canSubmit ? theme.colors.primary : '#ccc' }]}>
-          <Text style={styles.primaryText}>Cadastrar-se</Text>
-        </Pressable>
+        <Button title="Cadastrar-se" onPress={() => signup(name, email, password)} disabled={!canSubmit} />
 
         <View style={styles.row}> 
           <Pressable onPress={() => socialLogin('google')} style={[styles.socialBtn, { backgroundColor: '#DB4437' }]}><Text style={styles.socialText}>Google</Text></Pressable>
@@ -41,7 +45,7 @@ export default function SignupScreen() {
         </View>
 
         <Pressable onPress={() => nav.navigate('Login' as never)}><Text style={{ textAlign: 'center', marginTop: 10, color: theme.colors.text }}>Já tenho conta</Text></Pressable>
-      </View>
+      </Card>
     </View>
   );
 }
