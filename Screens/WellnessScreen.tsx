@@ -15,6 +15,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { createWellnessManager, NutritionPlan, NutritionMeal, HydrationReminder } from '../Lib/wellness';
+import EmptyState from '../components/ui/EmptyState';
+import Skeleton from '../components/ui/Skeleton';
+import Banner from '../components/ui/Banner';
 
 const wellnessManager = createWellnessManager();
 const { width } = Dimensions.get('window');
@@ -23,6 +26,8 @@ export default function WellnessScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState<'nutrition' | 'hydration' | 'supplements' | 'rest' | 'progress'>('nutrition');
   const [nutritionPlan, setNutritionPlan] = useState<NutritionPlan | null>(null);
   const [hydrationReminders, setHydrationReminders] = useState<HydrationReminder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState({
     gender: 'male',
     age: 30,
@@ -84,6 +89,7 @@ export default function WellnessScreen({ navigation }: any) {
 
     setUserProfile(profile);
     setWorkoutSession(workout);
+    setLoading(false);
   };
 
   const generateDailyPlan = () => {
@@ -91,6 +97,8 @@ export default function WellnessScreen({ navigation }: any) {
     if (plan) {
       setNutritionPlan(plan);
       setHydrationReminders(plan.hydrationReminders);
+    } else {
+      setError('Não foi possível gerar o plano diário');
     }
   };
 
@@ -531,7 +539,7 @@ export default function WellnessScreen({ navigation }: any) {
 
   return (
     <LinearGradient
-      colors={['#667eea', '#764ba2']}
+      colors={[error ? '#EF4444' : '#6C63FF', '#00B894']}
       style={styles.container}
     >
       <View style={styles.header}>
@@ -545,6 +553,8 @@ export default function WellnessScreen({ navigation }: any) {
         <View style={styles.placeholder} />
       </View>
 
+      {error ? <View style={{ paddingHorizontal: 16 }}><Banner type="error" title={error} /></View> : null}
+      {loading ? <View style={{ padding: 16, gap: 10 }}><Skeleton height={120} /><Skeleton height={120} /></View> : null}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'nutrition' && styles.activeTab]}

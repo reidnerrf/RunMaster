@@ -14,6 +14,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { createMentorshipManager, MentorProfile, MentorshipSubscription, MentorshipSession } from '../Lib/mentorshipSystem';
+import EmptyState from '../components/ui/EmptyState';
+import Skeleton from '../components/ui/Skeleton';
+import Banner from '../components/ui/Banner';
 
 const mentorshipManager = createMentorshipManager();
 
@@ -21,6 +24,8 @@ export default function MentorshipScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState<'browse' | 'my-mentors' | 'sessions' | 'apply'>('browse');
   const [mentors, setMentors] = useState<MentorProfile[]>([]);
   const [filteredMentors, setFilteredMentors] = useState<MentorProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('');
   const [selectedMentor, setSelectedMentor] = useState<MentorProfile | null>(null);
@@ -44,8 +49,14 @@ export default function MentorshipScreen({ navigation }: any) {
   }, [searchQuery, selectedSpecialty, mentors]);
 
   const loadMentorshipData = () => {
-    const availableMentors = mentorshipManager.getAvailableMentors();
-    setMentors(availableMentors);
+    try {
+      const availableMentors = mentorshipManager.getAvailableMentors();
+      setMentors(availableMentors);
+    } catch (e) {
+      setError('Falha ao carregar mentores');
+    } finally {
+      setLoading(false);
+    }
     
     // Simular dados do usuário atual
     const userId = 'current_user_id';
@@ -256,13 +267,23 @@ export default function MentorshipScreen({ navigation }: any) {
               </ScrollView>
             </View>
 
-            <FlatList
-              data={filteredMentors}
-              renderItem={renderMentorCard}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.mentorsList}
-            />
+            {error ? <Banner type="error" title={error} /> : null}
+            {loading ? (
+              <View style={{ gap: 10 }}>
+                <Skeleton height={120} />
+                <Skeleton height={120} />
+              </View>
+            ) : filteredMentors.length === 0 ? (
+              <EmptyState title="Nenhum mentor encontrado" description="Ajuste os filtros ou busque outro termo." />
+            ) : (
+              <FlatList
+                data={filteredMentors}
+                renderItem={renderMentorCard}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.mentorsList}
+              />
+            )}
           </View>
         );
 
