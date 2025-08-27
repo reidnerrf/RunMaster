@@ -11,6 +11,7 @@ export default function InsightsDashboardScreen() {
   const stats = useAppSelector((s) => (s as any).user?.stats);
   const runs = useAppSelector((s) => (s as any).workout?.sessions ?? []);
   const [period, setPeriod] = React.useState<Period>('week');
+  const community = useAppSelector((s) => (s as any).community?.rankings ?? []);
 
   const trend = React.useMemo(() => {
     if (!stats) return null;
@@ -56,6 +57,38 @@ export default function InsightsDashboardScreen() {
     return { label: `Meta semanal sugerida: ${base} km`, value: base };
   }, [stats]);
 
+  const paceSeries = React.useMemo(() => {
+    if (!stats) return null;
+    const sample = (period === 'week' ? stats.weeklyProgress : period === 'month' ? stats.monthlyProgress : stats.yearlyProgress).slice(-6);
+    const values = sample.map((_: any, i: number) => {
+      const r = runs[runs.length - 1 - i];
+      return r ? (r.durationSec / (r.distanceKm || 1)) : 0;
+    }).reverse();
+    return { labels: sample.map((_: any, i: number) => `${i+1}`), values };
+  }, [stats, runs, period]);
+
+  const timeSeries = React.useMemo(() => {
+    if (!stats) return null;
+    const sample = (period === 'week' ? stats.weeklyProgress : period === 'month' ? stats.monthlyProgress : stats.yearlyProgress).slice(-6);
+    const values = sample.map((s: any) => s.time || 0);
+    return { labels: sample.map((_: any, i: number) => `${i+1}`), values };
+  }, [stats, period]);
+
+  const caloriesSeries = React.useMemo(() => {
+    if (!stats) return null;
+    const sample = (period === 'week' ? stats.weeklyProgress : period === 'month' ? stats.monthlyProgress : stats.yearlyProgress).slice(-6);
+    const values = sample.map((s: any) => s.calories || 0);
+    return { labels: sample.map((_: any, i: number) => `${i+1}`), values };
+  }, [stats, period]);
+
+  const communityAvg = React.useMemo(() => {
+    // Mock: average distance from top 10 ranking if exists
+    const top = (community?.[0]?.rankings || []).slice(0, 10);
+    if (!top.length) return null;
+    const avg = top.reduce((a: number, r: any) => a + (r.value || 0), 0) / top.length;
+    return Math.round(avg * 10) / 10;
+  }, [community]);
+
   if (!stats) return null;
 
   return (
@@ -94,6 +127,47 @@ export default function InsightsDashboardScreen() {
           </>
         )}
       </ThemedView>
+
+      {paceSeries && (
+        <ThemedView style={styles.card}> 
+          <ThemedText type="subtitle">Pace (s/km)</ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 8 }}>
+            {paceSeries.values.map((v: number, i: number) => (
+              <View key={i} style={{ width: 16, height: Math.max(4, Math.min(80, v / 10)), backgroundColor: '#10B981', borderRadius: 4, opacity: 0.9 }} />
+            ))}
+          </View>
+        </ThemedView>
+      )}
+
+      {timeSeries && (
+        <ThemedView style={styles.card}> 
+          <ThemedText type="subtitle">Tempo (min)</ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 8 }}>
+            {timeSeries.values.map((v: number, i: number) => (
+              <View key={i} style={{ width: 16, height: Math.max(4, Math.min(80, v / 10)), backgroundColor: '#3B82F6', borderRadius: 4, opacity: 0.9 }} />
+            ))}
+          </View>
+        </ThemedView>
+      )}
+
+      {caloriesSeries && (
+        <ThemedView style={styles.card}> 
+          <ThemedText type="subtitle">Calorias</ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 8 }}>
+            {caloriesSeries.values.map((v: number, i: number) => (
+              <View key={i} style={{ width: 16, height: Math.max(4, Math.min(80, v / 20)), backgroundColor: '#F59E0B', borderRadius: 4, opacity: 0.9 }} />
+            ))}
+          </View>
+        </ThemedView>
+      )}
+
+      {communityAvg !== null && trend && (
+        <ThemedView style={styles.card}> 
+          <ThemedText type="subtitle">Comparação com comunidade</ThemedText>
+          <ThemedText>Sua última {period === 'week' ? 'semana' : period === 'month' ? 'mês' : 'ano'}: {trend.values[trend.values.length - 1]?.toFixed?.(1) ?? trend.values[trend.values.length - 1]}</ThemedText>
+          <ThemedText>Média comunidade: {communityAvg} km</ThemedText>
+        </ThemedView>
+      )}
 
       <ThemedView style={styles.card}> 
         <ThemedText type="subtitle">Exportar</ThemedText>
