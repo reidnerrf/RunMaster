@@ -9,6 +9,8 @@ import NavSuggestions from '@/components/NavSuggestions';
 import PredictionHint from '@/components/PredictionHint';
 import RouteHint from '@/components/RouteHint';
 import InjuryRiskCard from '@/components/InjuryRiskCard';
+import ShareAchievement from '@/components/ShareAchievement';
+import RewardsBanner from '@/components/RewardsBanner';
 
 export default function HomeScreen() {
   return (
@@ -49,6 +51,8 @@ export default function HomeScreen() {
       <RouteHint />
       <InjuryRiskCard />
       <NavSuggestions />
+      <ShareAchievement title="10K Concluídos" description="Você atingiu a marca de 10 km!" />
+      <RewardsBanner partner="Loja X" reward="10% OFF" />
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
         <ThemedText>
