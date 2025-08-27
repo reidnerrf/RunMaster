@@ -16,6 +16,7 @@ import { pushUnsyncedRuns } from '../../Lib/sync';
 import * as Storage from '../../Lib/storage';
 import { getGoals } from '../../Lib/goals';
 import { connectHealth } from '../../Lib/health';
+import PermissionSheet from '../../components/ui/PermissionSheet';
 let ImagePicker: any = null; try { ImagePicker = require('expo-image-picker'); } catch {}
 
 const PROFILE_KEY = 'runmaster_profile_v1';
@@ -30,6 +31,7 @@ export default function ProfileScreen() {
   const [goals, setLocalGoals] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [permVisible, setPermVisible] = useState(false);
 
   useEffect(() => { (async () => { try { setRuns(await getRuns()); const raw = await Storage.getItem(PROFILE_KEY); if (raw) try { const p = JSON.parse(raw); setPhotoUri(p.photoUri ?? null); } catch {} setLocalGoals(await getGoals()); } catch { setError('Falha ao carregar perfil'); } finally { setLoading(false); } })(); }, []);
 
@@ -113,12 +115,14 @@ export default function ProfileScreen() {
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Spotify</Text><Switch /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Smartwatch</Text><Switch /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Conectar Apple Health/Google Fit</Text><Pressable onPress={connectHealth}><Text style={{ color: theme.colors.primary, fontWeight: '800' }}>Conectar</Text></Pressable></View>
+      <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Permissões</Text><Pressable onPress={() => setPermVisible(true)}><Text style={{ color: theme.colors.primary, fontWeight: '800' }}>Gerenciar</Text></Pressable></View>
       <SectionTitle title="Preferências de Rota" />
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Mais segura à noite</Text><Switch value={false} /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Evitar aclives</Text><Switch value={false} /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Circuito circular</Text><Switch value={true} /></View>
 
       <ActionButton label="Sair" color="#eee" textColor="#111" onPress={logout} />
+      <PermissionSheet visible={permVisible} onClose={() => setPermVisible(false)} />
     </ScrollView>
   );
 }

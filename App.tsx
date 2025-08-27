@@ -24,6 +24,7 @@ import MainTabs from './Screens/MainTabs';
 import LoadingScreen from './Components/LoadingScreen';
 import ErrorBoundary from './Components/ErrorBoundary';
 import OfflineBanner from './components/ui/OfflineBanner';
+import ConsentBanner from './components/ui/ConsentBanner';
 import OnboardingScreen from './Screens/auth/OnboardingScreen';
 import LoginScreen from './Screens/auth/LoginScreen';
 import { useAuth } from './hooks/useAuth';
@@ -227,6 +228,7 @@ const App: React.FC = () => {
             <SafeAreaProvider>
               <StatusBar style="auto" />
               <OfflineBanner />
+              <ConsentBanner />
               <MainTabs />
             </SafeAreaProvider>
           </ReanimatedProvider>
