@@ -13,6 +13,7 @@ import { handleIncomingUrl } from '@/utils/voiceCommands';
 import { startOfflineOrchestrator } from '@/utils/offlineOrchestrator';
 import { loadLocalModel, getModelInfo, getModelConfig } from '@/utils/mlRuntime';
 import { track } from '@/utils/analyticsClient';
+import { startMetricsFlusher } from '@/utils/mlMetrics';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -59,6 +60,11 @@ export default function RootLayout() {
         track('ml_inference', { model_name: info?.name ?? cfg.name, latency_ms: Date.now() - t0, success: loaded }).catch(() => {});
       });
     });
+  }, []);
+
+  useEffect(() => {
+    const stop = startMetricsFlusher(60000);
+    return () => stop();
   }, []);
 
   return (

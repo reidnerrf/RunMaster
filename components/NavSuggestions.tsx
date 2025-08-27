@@ -7,6 +7,8 @@ import { getHistory, getSuggestions } from '@/utils/navigationInsights';
 import { rankSuggestions } from '@/utils/mlEngine';
 import { getPersonalization, updateFeedback, applyPersonalizationOrder } from '@/utils/personalization';
 import { track } from '@/utils/analyticsClient';
+import { getModelInfo } from '@/utils/mlRuntime';
+import { recordInference } from '@/utils/mlMetrics';
 
 type Props = { userId?: string };
 
@@ -23,11 +25,14 @@ export default function NavSuggestions({ userId }: Props) {
 			]);
 			const last = history[0]?.screenName;
 			const now = new Date();
+			const t0 = Date.now();
 			const ranked = rankSuggestions(candidates, {
 				hourOfDay: now.getHours(),
 				dayOfWeek: now.getDay(),
 				lastVisited: last,
 			});
+			const info = getModelInfo();
+			recordInference(info?.name ?? 'nav_suggester', { latency_ms: Date.now() - t0, success: true }).catch(() => {});
 			const personalized = applyPersonalizationOrder(ranked, prefs.weights);
 			setItems(personalized.slice(0, 3));
 		})().catch(() => setItems([]));
