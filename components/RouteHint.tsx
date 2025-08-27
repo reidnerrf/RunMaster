@@ -28,7 +28,6 @@ export default function RouteHint() {
         let maxIdx = 0
         for (let i = 1; i < scores.length; i++) if ((scores[i] ?? 0) > (scores[maxIdx] ?? 0)) maxIdx = i
         setBestId(ids[maxIdx])
-
         try { await track('ml_suggestion_shown', { type: 'terrain_route', score: scores[maxIdx] }); } catch {}
       }
     })().catch(() => {})

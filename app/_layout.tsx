@@ -14,6 +14,7 @@ import { startOfflineOrchestrator } from '@/utils/offlineOrchestrator';
 import { loadLocalModel, getModelInfo, getModelConfig } from '@/utils/mlRuntime';
 import { track } from '@/utils/analyticsClient';
 import { startMetricsFlusher } from '@/utils/mlMetrics';
+import { track } from '@/utils/analyticsClient';
 
 import { track } from '@/utils/analyticsClient';
 
@@ -39,7 +40,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     // Inicial + listener para deep links (Siri/Assistant)
-
     ExpoLinking.getInitialURL().then((url) => { if (url) { track('deeplink_open', { url, source: 'external' }).catch(() => {}); } handleIncomingUrl(url, router); });
     const sub = ExpoLinking.addEventListener('url', ({ url }) => { track('deeplink_open', { url, source: 'external' }).catch(() => {}); handleIncomingUrl(url, router); });
     return () => sub.remove();
