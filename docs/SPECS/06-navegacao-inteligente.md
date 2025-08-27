@@ -42,8 +42,9 @@ Levar o usuário rapidamente à ação certa, com recuperação de contexto via 
 - Testes E2E: abrir 5 rotas via deep link (fechado/aberto) com sucesso
 - Sugestões melhoram tempo até ação em >10% vs controle
 
-### Implementação (RN)
-- Configurar `linking` no React Navigation com schema `app://`
+### Implementação (RN/Expo Router)
+- Definir `scheme` e `deeplinks` no `app.json`
+- Gravar histórico via hook de `useSegments()/usePathname()`
 - Utilizar `@react-native-async-storage/async-storage`
 - Detectar rede com `@react-native-community/netinfo`
 
