@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import React from 'react';
-import { View } from 'react-native';
+import { View, Switch, Pressable } from 'react-native';
 import { getCurrentWeather } from '@/utils/weatherService';
 import { scoreRoutesOnnx } from '@/utils/routeOnnx';
 import { track } from '@/utils/analyticsClient';
@@ -16,6 +16,7 @@ import { track } from '@/utils/analyticsClient';
 export default function TabTwoScreen() {
   const [weather, setWeather] = React.useState<{ temp?: number; desc?: string } | null>(null);
   const [bestRouteLabel, setBestRouteLabel] = React.useState<string | null>(null);
+  const [preferCool, setPreferCool] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     (async () => {
@@ -37,6 +38,27 @@ export default function TabTwoScreen() {
     })();
   }, []);
 
+  React.useEffect(() => {
+    (async () => {
+      // re-score with preference: if preferCool, bias trail/park in hot conditions
+      if (!weather) return;
+      const hot = (weather.temp ?? 0) >= 26;
+      const ids = ['park', 'trail', 'city'];
+      const feats = [
+        { elevationGainM: 20, distanceKm: 5.0, surfaceTrail: 0.2 },
+        { elevationGainM: 120, distanceKm: 7.0, surfaceTrail: 0.7 },
+        { elevationGainM: 5, distanceKm: 4.5, surfaceTrail: 0.0 },
+      ];
+      const scores = await scoreRoutesOnnx(ids, feats as any);
+      if (!scores) return;
+      const bias = preferCool && hot ? [0.05, 0.1, -0.05] : [0,0,0];
+      const adjusted = scores.map((s, i) => (s ?? 0) + bias[i]);
+      const maxIdx = adjusted.indexOf(Math.max(...adjusted));
+      const label = maxIdx === 1 ? 'Trilha fresca' : maxIdx === 2 ? 'Urbana plana' : 'Parque equilibrado';
+      setBestRouteLabel(label);
+    })();
+  }, [preferCool, weather]);
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -55,7 +77,18 @@ export default function TabTwoScreen() {
         <ThemedView style={{ borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 12, marginBottom: 12 }}> 
           <ThemedText type="subtitle">Clima agora</ThemedText>
           <ThemedText>{Math.round(weather.temp!)}°C • {weather.desc}</ThemedText>
-          {bestRouteLabel && <ThemedText style={{ marginTop: 6 }}>Melhor rota agora: {bestRouteLabel}</ThemedText>}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+            <ThemedText>Preferir rotas frescas/sombreadas</ThemedText>
+            <Switch value={preferCool} onValueChange={async (v) => { setPreferCool(v); await track('action_performed', { action_name: 'prefer_cool_routes_toggle', context: v ? 'on' : 'off' }); }} />
+          </View>
+          {bestRouteLabel && (
+            <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <ThemedText>Melhor rota agora: {bestRouteLabel}</ThemedText>
+              <Pressable onPress={async () => { await track('ml_suggestion_accepted', { type: 'best_route_now' }); }} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#6C63FF' }}> 
+                <ThemedText style={{ color: 'white' }}>Aceitar</ThemedText>
+              </Pressable>
+            </View>
+          )}
         </ThemedView>
       )}
       <ThemedText>This app includes example code to help you get started.</ThemedText>
