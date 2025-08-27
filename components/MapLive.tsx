@@ -24,6 +24,7 @@ export default function MapLive({ points, height = 260, pois = [], showLighting,
   const [aqLayer, setAqLayer] = useState<any[] | null>(null);
   const [lightPins, setLightPins] = useState<{ lat: number; lon: number }[] | null>(null);
   const [weatherCells, setWeatherCells] = useState<{ lat: number; lon: number; i: number }[] | null>(null);
+  const lastFitRef = useRef<number>(0);
 
   const region = useMemo(() => {
     if (!points || points.length === 0) return null as any;
@@ -46,17 +47,22 @@ export default function MapLive({ points, height = 260, pois = [], showLighting,
   useEffect(() => {
     if (!hasMaps || !mapRef.current || !region) return;
     try {
-      // Prefer fitToCoordinates when we have enough points for a path
+      const now = Date.now();
+      if (now - lastFitRef.current < 500) return; // throttle map camera updates
+      lastFitRef.current = now;
       if (points.length >= 2 && typeof mapRef.current.fitToCoordinates === 'function') {
         const coords = points.map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
         mapRef.current.fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
       } else {
-        mapRef.current.animateToRegion(region, 400);
+        mapRef.current.animateToRegion(region, 240);
       }
     } catch {}
   }, [region, points]);
 
   const polyCoords = useMemo(() => points.map((p) => ({ latitude: p.latitude, longitude: p.longitude })), [points]);
+  const memoPois = useMemo(() => pois, [pois]);
+
+  const customMapStyle = useMemo(() => (theme.mode === 'dark' ? darkStyle : lightStyle), [theme.mode]);
 
   // Mock data refresh for safety layers
   useEffect(() => {
@@ -96,6 +102,7 @@ export default function MapLive({ points, height = 260, pois = [], showLighting,
         style={StyleSheet.absoluteFill}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         initialRegion={region || { latitude: -23.55052, longitude: -46.633308, latitudeDelta: 0.01, longitudeDelta: 0.01 }}
+        customMapStyle={customMapStyle}
         showsUserLocation
         showsMyLocationButton={false}
         showsCompass={false}
@@ -125,7 +132,7 @@ export default function MapLive({ points, height = 260, pois = [], showLighting,
         {polyCoords[polyCoords.length - 1] && (
           <Marker coordinate={polyCoords[polyCoords.length - 1]} title="Agora" pinColor="#E74C3C" />
         )}
-        {pois.map((p) => (
+        {memoPois.map((p) => (
           <Marker key={p.id} coordinate={{ latitude: p.latitude, longitude: p.longitude }} title={p.label || p.type}>
             <View style={[styles.poiDot, { backgroundColor: poiColor(p.type), borderColor: theme.colors.card }]} />
           </Marker>
@@ -164,3 +171,17 @@ const styles = StyleSheet.create({
   overlay: { position: 'absolute', left: 12, right: 12, bottom: 12, borderRadius: 16, padding: 12, borderWidth: 1 },
   ovTitle: { fontSize: 20, fontWeight: '900' },
 });
+
+const lightStyle = [
+  { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
+];
+
+const darkStyle = [
+  { elementType: 'geometry', stylers: [{ color: '#1f2937' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#9ca3af' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#111827' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#374151' }] },
+];

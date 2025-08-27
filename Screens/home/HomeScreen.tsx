@@ -1,6 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Bell, Settings, Play, Target as TargetIcon } from 'lucide-react-native';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import Gradient from '../../components/ui/Gradient';
+import EmptyState from '../../components/ui/EmptyState';
+import AppBar from '../../components/ui/AppBar';
+import { t as tt } from '../../utils/i18n';
 import FadeInUp from '../../components/FadeInUp';
 import FlowHint from '../../components/FlowHint';
 import GeneratedImage from '../../components/GeneratedImage';
@@ -23,6 +30,7 @@ import { t } from '../../Lib/i18n';
 import { getNearbyEvents, enrichRoutesWithEvents } from '../../Lib/events';
 import RitualPicker from '../../components/RitualPicker';
 import { RunnerProfileType } from '../../Lib/rituals';
+import AISmartSuggestions from '../../components/ui/AISmartSuggestions';
 
 
 export default function HomeScreen() {
@@ -65,9 +73,11 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
+      <AppBar title="Início" />
       <View style={[styles.map, theme.shadows.heavy, { backgroundColor: theme.colors.card, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }]}> 
         <GeneratedImage text="Pulse mapa com rotas urbanas brilhantes, estilo esportivo moderno" aspect="16:9" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
         <View style={[styles.gradientOverlay]} />
+        <Gradient from={theme.colors.primary} to={theme.colors.secondary} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, opacity: 0.25, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }} />
         <Text style={{ color: theme.colors.text, fontWeight: '800' }}>Mapa Interativo (mock)</Text>
         <View style={styles.fabRow}>
           <IconButton onPress={() => nav.navigate('ConnectSpotify' as never)} style={theme.shadows.heavy}>
@@ -86,7 +96,52 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <SectionTitle title="Metas" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <View>
+            <Text style={{ color: theme.colors.muted, fontSize: 12 }}>Bem-vindo de volta,</Text>
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 18 }}>Corredor</Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <IconButton onPress={() => {}} style={theme.shadows.heavy}>
+              <Bell size={18} color={'#fff'} />
+            </IconButton>
+            <IconButton onPress={() => (nav as any).navigate('Settings')} style={theme.shadows.heavy}>
+              <Settings size={18} color={'#fff'} />
+            </IconButton>
+          </View>
+        </View>
+
+        <Card>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>{tt('home_welcome')}</Text>
+            <Button title={tt('home_start')} onPress={handleStartRun} leftIcon={<Play size={18} color={'#fff'} />} />
+          </View>
+        </Card>
+
+        {/* Sugestões Inteligentes de IA */}
+        <AISmartSuggestions
+          userContext={{
+            currentLocation: { lat: -23.5505, lon: -46.6333 },
+            lastWorkout: { intensity: 'high', date: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            currentGoals: [{ deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) }],
+            weatherConditions: { temperature: 26, precipitation: 0.1, wind: 8 },
+            timeOfDay: new Date().getHours() >= 6 && new Date().getHours() <= 9 ? 'morning' : 'afternoon',
+            energyLevel: 'medium',
+            recentInjuries: []
+          }}
+          onSuggestionAccepted={(suggestion) => {
+            console.log('Sugestão aceita:', suggestion);
+            // Implementar lógica baseada no tipo de sugestão
+            if (suggestion.type === 'workout') {
+              handleStartRun();
+            }
+          }}
+          onSuggestionDismissed={(suggestion) => {
+            console.log('Sugestão dispensada:', suggestion);
+          }}
+        />
+
+        <SectionTitle title="Metas" subtitle="Seu progresso" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <GoalCard title="Diária: Calorias" value={goals?.daily?.calories ? `${goals.daily.calories} kcal` : '—'} />
           <GoalCard title="Diária: Distância" value={goals?.daily?.distanceKm ? `${goals.daily.distanceKm} km` : '—'} />
@@ -181,14 +236,9 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <SectionTitle title="Favoritos" subtitle="Rotas salvas" actionLabel="Ver todas" onAction={() => nav.navigate('SavedRoutes' as never)} />
+        <SectionTitle title={tt('home_favorites')} subtitle={tt('home_saved_routes')} actionLabel={tt('common_view_all')} onAction={() => nav.navigate('SavedRoutes' as never)} />
         {savedRoutes.length === 0 ? (
-          <View style={[styles.card, { backgroundColor: theme.colors.card, alignItems: 'center' }]}> 
-            <Text style={{ color: theme.colors.muted, marginBottom: 8 }}>Nenhuma rota salva ainda</Text>
-            <Pressable onPress={saveCurrentRoute} style={[styles.playBtn, { borderColor: theme.colors.border }]}> 
-              <Text style={{ color: theme.colors.text }}>Gerar e salvar uma rota</Text>
-            </Pressable>
-          </View>
+          <EmptyState title={tt('home_no_saved_routes')} description="Gere e salve uma rota para acessar depois." ctaLabel={tt('home_create_route')} onCtaPress={saveCurrentRoute} />
         ) : (
           savedRoutes.slice(0, 3).map((r) => (
             <Pressable key={r.id} onPress={() => (nav as any).navigate('RouteDetail', { id: r.id })} style={[styles.savedItem, { backgroundColor: theme.colors.card }]}> 

@@ -10,6 +10,11 @@ import {
   TextInput,
   Dimensions
 } from 'react-native';
+import Card from '../components/ui/Card';
+import ListItem from '../components/ui/ListItem';
+import EmptyState from '../components/ui/EmptyState';
+import Skeleton from '../components/ui/Skeleton';
+import Banner from '../components/ui/Banner';
 import { track } from '@/utils/analyticsClient';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
@@ -36,6 +41,8 @@ import {
   Target,
   Zap
 } from 'lucide-react-native';
+import AppBar from '../components/ui/AppBar';
+import { t as tt } from '../../utils/i18n';
 import { addEventToCalendar } from '@/utils/calendarSync';
 
 const { width } = Dimensions.get('window');
@@ -258,6 +265,7 @@ export default function CommunityScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+              <AppBar title={tt('community_title')} subtitle={tt('community_subtitle')} />
       {/* Header */}
       <View style={styles.header}>
         <ThemedText style={styles.title}>Comunidades</ThemedText>
@@ -308,36 +316,23 @@ export default function CommunityScreen() {
         </View>
 
         {userCommunities.length === 0 ? (
-          <BlurCard style={styles.emptyCard}>
-            <Users color={theme.colors.muted} size={48} />
-            <ThemedText style={styles.emptyTitle}>Nenhuma comunidade</ThemedText>
-            <ThemedText style={styles.emptyDescription}>
-              Crie ou entre em uma comunidade para começar
-            </ThemedText>
-            <ActionButton
-              label="Criar Comunidade"
-              onPress={() => setShowCreateModal(true)}
-              style={styles.createButton}
-            />
-          </BlurCard>
+          <EmptyState title="Nenhuma comunidade" description="Crie ou entre em uma comunidade para começar" ctaLabel="Criar Comunidade" onCtaPress={() => setShowCreateModal(true)} />
         ) : (
           userCommunities.map((community) => (
-            <BlurCard key={community.id} style={styles.communityCard}>
+            <Card key={community.id} style={styles.communityCard}>
               <View style={styles.communityHeader}>
                 <View style={styles.communityInfo}>
-                  <ThemedText style={styles.communityName}>{community.name}</ThemedText>
-                  <ThemedText style={styles.communityDescription}>
+                  <Text style={styles.communityName}>{community.name}</Text>
+                  <Text style={styles.communityDescription}>
                     {community.description}
-                  </ThemedText>
-                  <ThemedText style={styles.communityStats}>
+                  </Text>
+                  <Text style={styles.communityStats}>
                     {community.members.length} membros • {community.challenges.length} desafios
-                  </ThemedText>
+                  </Text>
                 </View>
                 <View style={styles.communityActions}>
                   <Pressable onPress={() => openCommunityDetails(community)}>
-                    <IconButton>
-                      <Users color={theme.colors.primary} size={20} />
-                    </IconButton>
+                    <Users color={theme.colors.primary} size={20} />
                   </Pressable>
                   <Pressable onPress={() => {
                     setSelectedCommunity(community);
@@ -345,21 +340,17 @@ export default function CommunityScreen() {
                     setCommunityDescription(community.description);
                     setShowEditModal(true);
                   }}>
-                    <IconButton>
-                      <Edit color={theme.colors.primary} size={20} />
-                    </IconButton>
+                    <Edit color={theme.colors.primary} size={20} />
                   </Pressable>
                   <Pressable onPress={() => {
                     setSelectedCommunity(community);
                     deleteCommunity();
                   }}>
-                    <IconButton>
-                      <Trash2 color={theme.colors.danger || '#FF6B6B'} size={20} />
-                    </IconButton>
+                    <Trash2 color={theme.colors.danger || '#FF6B6B'} size={20} />
                   </Pressable>
                 </View>
               </View>
-            </BlurCard>
+            </Card>
           ))
         )}
       </View>
@@ -368,24 +359,22 @@ export default function CommunityScreen() {
       <View style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Descobrir Comunidades</ThemedText>
         {publicCommunities.slice(0, 3).map((community) => (
-          <BlurCard key={community.id} style={styles.communityCard}>
+          <Card key={community.id} style={styles.communityCard}>
             <View style={styles.communityHeader}>
               <View style={styles.communityInfo}>
-                <ThemedText style={styles.communityName}>{community.name}</ThemedText>
-                <ThemedText style={styles.communityDescription}>
+                <Text style={styles.communityName}>{community.name}</Text>
+                <Text style={styles.communityDescription}>
                   {community.description}
-                </ThemedText>
-                <ThemedText style={styles.communityStats}>
+                </Text>
+                <Text style={styles.communityStats}>
                   {community.members.length} membros • {community.tags.join(', ')}
-                </ThemedText>
+                </Text>
               </View>
-              <ActionButton
-                label="Entrar"
-                onPress={() => joinCommunity(community)}
-                style={styles.joinButton}
-              />
+              <Pressable onPress={() => joinCommunity(community)}>
+                <Text style={{ fontWeight: '800', color: theme.colors.primary }}>Entrar</Text>
+              </Pressable>
             </View>
-          </BlurCard>
+          </Card>
         ))}
       </View>
 

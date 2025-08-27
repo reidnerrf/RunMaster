@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import * as Font from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReanimatedProvider } from 'react-native-reanimated';
@@ -22,6 +23,12 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import MainTabs from './Screens/MainTabs';
 import LoadingScreen from './Components/LoadingScreen';
 import ErrorBoundary from './Components/ErrorBoundary';
+import OfflineBanner from './components/ui/OfflineBanner';
+import ConsentBanner from './components/ui/ConsentBanner';
+import OnboardingScreen from './Screens/auth/OnboardingScreen';
+import LoginScreen from './Screens/auth/LoginScreen';
+import { useAuth } from './hooks/useAuth';
+import { useOnboarding } from './hooks/useOnboarding';
 
 // Utilitários
 import { initializeApp } from './utils/appInitializer';
@@ -41,6 +48,8 @@ interface AppState {
 }
 
 const App: React.FC = () => {
+  const { user } = useAuth();
+  const { onboardingDone, hydrated: onboardingHydrated } = useOnboarding();
   const [appState, setAppState] = useState<AppState>({
     isInitialized: false,
     isLoading: true,
@@ -59,6 +68,17 @@ const App: React.FC = () => {
         if (integrityCheck.hasIssues) {
           console.warn('Problemas de integridade detectados:', integrityCheck.issues);
         }
+
+        // Carregar fontes
+        setAppState(prev => ({ ...prev, initializationStep: 'Carregando fontes...' }));
+        try {
+          await Font.loadAsync({
+            'Inter-Regular': require('./assets/fonts/Inter-Regular.ttf'),
+            'Inter-Medium': require('./assets/fonts/Inter-Medium.ttf'),
+            'Inter-SemiBold': require('./assets/fonts/Inter-SemiBold.ttf'),
+            'Inter-Bold': require('./assets/fonts/Inter-Bold.ttf'),
+          });
+        } catch {}
 
         // Passo 2: Inicializar serviços da aplicação
         setAppState(prev => ({ ...prev, initializationStep: 'Inicializando serviços...' }));
@@ -181,6 +201,24 @@ const App: React.FC = () => {
     );
   }
 
+  // Roteamento inicial (onboarding/auth)
+  if (!onboardingHydrated) {
+    return (
+      <LoadingScreen 
+        message={appState.initializationStep}
+        showProgress={true}
+      />
+    );
+  }
+
+  if (!onboardingDone) {
+    return <OnboardingScreen />;
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
   // Aplicação principal
   return (
     <ErrorBoundary>
@@ -189,6 +227,8 @@ const App: React.FC = () => {
           <ReanimatedProvider>
             <SafeAreaProvider>
               <StatusBar style="auto" />
+              <OfflineBanner />
+              <ConsentBanner />
               <MainTabs />
             </SafeAreaProvider>
           </ReanimatedProvider>

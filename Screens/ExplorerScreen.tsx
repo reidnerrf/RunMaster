@@ -14,6 +14,14 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import Input from '../components/ui/Input';
+import Card from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import Skeleton from '../components/ui/Skeleton';
+import Banner from '../components/ui/Banner';
+import AppBar from '../components/ui/AppBar';
+import Chip from '../components/ui/Chip';
+import { t as tt } from '../../utils/i18n';
 import { createExplorerManager, ExplorerRoute, ExplorerWaypoint, SecretPoint } from '../Lib/explorer';
 import * as Location from 'expo-location';
 
@@ -37,6 +45,8 @@ export default function ExplorerScreen({ navigation }: any) {
     routesCompleted: 0,
     treasureChests: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const difficulties = ['easy', 'medium', 'hard', 'expert'];
   const routeTypes = ['random', 'curated', 'challenge', 'discovery'];
@@ -54,7 +64,7 @@ export default function ExplorerScreen({ navigation }: any) {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'Precisamos da sua localização para criar rotas personalizadas');
+        setError('Precisamos da sua localização para criar rotas personalizadas');
         return;
       }
 
@@ -66,6 +76,7 @@ export default function ExplorerScreen({ navigation }: any) {
       generateLocalRoutes(latitude, longitude);
     } catch (error) {
       console.error('Erro ao obter localização:', error);
+      setError('Erro ao obter localização');
       // Usar localização padrão (São Paulo)
       setUserLocation({ latitude: -23.5505, longitude: -46.6333 });
       generateLocalRoutes(-23.5505, -46.6333);
@@ -89,6 +100,7 @@ export default function ExplorerScreen({ navigation }: any) {
   const loadExplorerData = () => {
     const availableRoutes = explorerManager.getAvailableRoutes(1);
     setRoutes(availableRoutes);
+    setLoading(false);
     
     // Simular dados do usuário
     setUserProgress({
@@ -265,16 +277,9 @@ export default function ExplorerScreen({ navigation }: any) {
       case 'routes':
         return (
           <View style={styles.tabContent}>
+            <AppBar title={tt('explorer_title')} subtitle={tt('explorer_subtitle')} />
             <View style={styles.searchContainer}>
-              <View style={styles.searchInputContainer}>
-                <Ionicons name="search" size={20} color="#666" />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Buscar rotas..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </View>
+                              <Input value={searchQuery} onChangeText={setSearchQuery} placeholder={tt('explorer_search_placeholder')} />
               
               <View style={styles.filtersContainer}>
                 <ScrollView
@@ -298,21 +303,7 @@ export default function ExplorerScreen({ navigation }: any) {
                   </TouchableOpacity>
                   
                   {difficulties.map((difficulty) => (
-                    <TouchableOpacity
-                      key={difficulty}
-                      style={[
-                        styles.filterChip,
-                        selectedDifficulty === difficulty && styles.filterChipActive
-                      ]}
-                      onPress={() => setSelectedDifficulty(difficulty)}
-                    >
-                      <Text style={[
-                        styles.filterChipText,
-                        selectedDifficulty === difficulty && styles.filterChipTextActive
-                      ]}>
-                        {difficulty}
-                      </Text>
-                    </TouchableOpacity>
+                    <Chip key={difficulty} label={difficulty} selected={selectedDifficulty === difficulty} onPress={() => setSelectedDifficulty(difficulty)} style={{ marginRight: 8 }} />
                   ))}
                 </ScrollView>
 
@@ -337,33 +328,37 @@ export default function ExplorerScreen({ navigation }: any) {
                   </TouchableOpacity>
                   
                   {routeTypes.map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[
-                        styles.filterChip,
-                        selectedType === type && styles.filterChipActive
-                      ]}
-                      onPress={() => setSelectedType(type)}
-                    >
-                      <Text style={[
-                        styles.filterChipText,
-                        selectedType === type && styles.filterChipTextActive
-                      ]}>
-                        {type}
-                      </Text>
-                    </TouchableOpacity>
+                    <Chip key={type} label={type} selected={selectedType === type} onPress={() => setSelectedType(type)} style={{ marginRight: 8 }} />
                   ))}
                 </ScrollView>
               </View>
             </View>
 
-            <FlatList
-              data={filteredRoutes}
-              renderItem={renderRouteCard}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.routesList}
-            />
+            {error ? <Banner type="error" title={error} /> : null}
+            {loading ? (
+              <View style={{ gap: 10 }}>
+                <Skeleton height={18} />
+                <Skeleton height={14} />
+                <Skeleton height={18} />
+              </View>
+            ) : filteredRoutes.length === 0 ? (
+              <EmptyState title={tt('explorer_no_routes')} description="Tente ajustar os filtros ou busque por outro termo." />
+            ) : (
+              <FlatList
+                data={filteredRoutes}
+                renderItem={({ item }) => (
+                  <View style={{ marginBottom: 12 }}>
+                    {renderRouteCard({ item })}
+                  </View>
+                )}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                windowSize={8}
+                removeClippedSubviews
+                initialNumToRender={8}
+                contentContainerStyle={styles.routesList}
+              />
+            )}
           </View>
         );
 

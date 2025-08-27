@@ -9,10 +9,16 @@ import BadgeChip from '../../components/BadgeChip';
 import ActionButton from '../../components/ActionButton';
 import { getRuns } from '../../Lib/runStore';
 import RunList from '../../components/RunList';
+import EmptyState from '../../components/ui/EmptyState';
+import Banner from '../../components/ui/Banner';
+import Skeleton from '../../components/ui/Skeleton';
 import { pushUnsyncedRuns } from '../../Lib/sync';
 import * as Storage from '../../Lib/storage';
 import { getGoals } from '../../Lib/goals';
 import { connectHealth } from '../../Lib/health';
+import PermissionSheet from '../../components/ui/PermissionSheet';
+import { t as tt } from '../../utils/i18n';
+import LanguageSwitcher from '../../components/ui/LanguageSwitcher';
 let ImagePicker: any = null; try { ImagePicker = require('expo-image-picker'); } catch {}
 
 const PROFILE_KEY = 'runmaster_profile_v1';
@@ -25,8 +31,11 @@ export default function ProfileScreen() {
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [goals, setLocalGoals] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [permVisible, setPermVisible] = useState(false);
 
-  useEffect(() => { (async () => { setRuns(await getRuns()); const raw = await Storage.getItem(PROFILE_KEY); if (raw) try { const p = JSON.parse(raw); setPhotoUri(p.photoUri ?? null); } catch {} setLocalGoals(await getGoals()); })(); }, []);
+  useEffect(() => { (async () => { try { setRuns(await getRuns()); const raw = await Storage.getItem(PROFILE_KEY); if (raw) try { const p = JSON.parse(raw); setPhotoUri(p.photoUri ?? null); } catch {} setLocalGoals(await getGoals()); } catch { setError('Falha ao carregar perfil'); } finally { setLoading(false); } })(); }, []);
 
   const pickPhoto = async () => {
     if (!ImagePicker || !ImagePicker.launchImageLibraryAsync) return;
@@ -67,7 +76,7 @@ export default function ProfileScreen() {
         )}
       </View>
 
-      <SectionTitle title="Metas" actionLabel="Editar" onAction={() => (nav as any).navigate('Goals')} />
+      <SectionTitle title={tt('profile_goals')} actionLabel={tt('common_edit')} onAction={() => (nav as any).navigate('Goals')} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={[styles.goalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
           <Text style={{ color: theme.colors.muted }}>Diária: Calorias</Text>
@@ -79,15 +88,27 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <SectionTitle title="Badges" />
+      <SectionTitle title={tt('profile_badges')} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <AnimatedBadge label="5k" />
         <AnimatedBadge label="10k" />
         <AnimatedBadge label="21k" />
       </View>
 
-      <SectionTitle title="Histórico" />
-      <RunList runs={runs} onPressItem={(r) => (nav as any).navigate('RunSummary', { runId: r.id })} />
+      <SectionTitle title={tt('profile_history')} />
+      {error ? <Banner type="error" title={error} /> : null}
+      
+      <LanguageSwitcher />
+      {loading ? (
+        <View style={{ gap: 8 }}>
+          <Skeleton height={18} />
+          <Skeleton height={18} />
+        </View>
+      ) : runs.length === 0 ? (
+        <EmptyState title={tt('profile_no_runs')} description="Inicie uma corrida para ver seu histórico aqui." ctaLabel={tt('profile_start_running')} onCtaPress={() => (nav as any).navigate('Run')} />
+      ) : (
+        <RunList runs={runs} onPressItem={(r) => (nav as any).navigate('RunSummary', { runId: r.id })} />
+      )}
       <Pressable onPress={syncRuns} style={[styles.syncBtn, { borderColor: theme.colors.border }]}> 
         <Text style={{ color: theme.colors.muted }}>{syncMsg ?? 'Sincronizar agora'}</Text>
       </Pressable>
@@ -98,12 +119,14 @@ export default function ProfileScreen() {
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Spotify</Text><Switch /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Smartwatch</Text><Switch /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Conectar Apple Health/Google Fit</Text><Pressable onPress={connectHealth}><Text style={{ color: theme.colors.primary, fontWeight: '800' }}>Conectar</Text></Pressable></View>
+      <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Permissões</Text><Pressable onPress={() => setPermVisible(true)}><Text style={{ color: theme.colors.primary, fontWeight: '800' }}>Gerenciar</Text></Pressable></View>
       <SectionTitle title="Preferências de Rota" />
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Mais segura à noite</Text><Switch value={false} /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Evitar aclives</Text><Switch value={false} /></View>
       <View style={[styles.settingRow, { backgroundColor: theme.colors.card }]}><Text style={{ color: theme.colors.text }}>Circuito circular</Text><Switch value={true} /></View>
 
       <ActionButton label="Sair" color="#eee" textColor="#111" onPress={logout} />
+      <PermissionSheet visible={permVisible} onClose={() => setPermVisible(false)} />
     </ScrollView>
   );
 }
