@@ -4,9 +4,14 @@ type OnnxSession = {
 	run: (feeds: Record<string, any>) => Promise<Record<string, any>>;
 };
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 let session: OnnxSession | null = null;
 let modelName = 'nav_suggester';
 let modelVersion = '0.0.1';
+const MODEL_CFG_KEY = 'ml_model_config';
+
+type ModelConfig = { uri: string; name: string; version: string };
 
 export function isModelLoaded(): boolean {
 	return session !== null;
@@ -34,6 +39,22 @@ export async function loadLocalModel(_uri?: string): Promise<boolean> {
 		session = null;
 		return false;
 	}
+}
+
+export async function setModelConfig(cfg: ModelConfig | null): Promise<void> {
+	if (!cfg) {
+		await AsyncStorage.removeItem(MODEL_CFG_KEY);
+		session = null;
+		return;
+	}
+	await AsyncStorage.setItem(MODEL_CFG_KEY, JSON.stringify(cfg));
+	modelName = cfg.name;
+	modelVersion = cfg.version;
+}
+
+export async function getModelConfig(): Promise<ModelConfig | null> {
+	const raw = await AsyncStorage.getItem(MODEL_CFG_KEY);
+	return raw ? (JSON.parse(raw) as ModelConfig) : null;
 }
 
 export async function scoreWithLocalModel(

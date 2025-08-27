@@ -11,7 +11,7 @@ import { recordScreenView } from '@/utils/navigationInsights';
 import * as ExpoLinking from 'expo-linking';
 import { handleIncomingUrl } from '@/utils/voiceCommands';
 import { startOfflineOrchestrator } from '@/utils/offlineOrchestrator';
-import { loadLocalModel, getModelInfo } from '@/utils/mlRuntime';
+import { loadLocalModel, getModelInfo, getModelConfig } from '@/utils/mlRuntime';
 import { track } from '@/utils/analyticsClient';
 
 export default function RootLayout() {
@@ -46,10 +46,18 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    // Tenta carregar modelo local (se empacotado via asset, ajustar URI)
-    loadLocalModel(undefined).then((loaded) => {
-      const info = getModelInfo();
-      track('ml_model_loaded', { model_name: info?.name ?? 'nav_suggester', model_version: info?.version ?? '0.0.1', size_kb: 0 }).catch(() => {});
+    // Tenta carregar modelo a partir de configuração persistida
+    getModelConfig().then((cfg) => {
+      if (!cfg) {
+        track('ml_model_loaded', { model_name: 'nav_suggester', model_version: '0.0.1', size_kb: 0 }).catch(() => {});
+        return;
+      }
+      const t0 = Date.now();
+      loadLocalModel(cfg.uri).then((loaded) => {
+        const info = getModelInfo();
+        track('ml_model_loaded', { model_name: info?.name ?? cfg.name, model_version: info?.version ?? cfg.version, size_kb: 0 }).catch(() => {});
+        track('ml_inference', { model_name: info?.name ?? cfg.name, latency_ms: Date.now() - t0, success: loaded }).catch(() => {});
+      });
     });
   }, []);
 
