@@ -1,21 +1,40 @@
 import { EventEmitter } from 'events';
+import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
 type BridgeEvent =
 	| { type: 'run_control'; action: 'start' | 'pause' | 'resume' | 'stop' }
 	| { type: 'metrics'; payload: Record<string, unknown> };
 
 const emitter = new EventEmitter();
+const Native = (NativeModules as any)?.WatchConnectivity as
+	| { connect: () => void; disconnect: () => void; send: (type: string, payload: string) => void }
+	| undefined;
+const NativeEmitter = Native ? new NativeEventEmitter(NativeModules.WatchConnectivity) : null;
 
 export const watchNative = {
 	connect() {
-		// TODO: integrate WCSession here
+		if (Platform.OS !== 'ios') return;
+		if (Native) {
+			NativeEmitter?.addListener('message', (event) => {
+				try {
+					const parsed = JSON.parse(event?.payload ?? '{}');
+					emitter.emit('message', parsed);
+				} catch {}
+			});
+			Native.connect();
+		}
 	},
 	disconnect() {
-		// TODO
+		if (Platform.OS !== 'ios') return;
+		Native?.disconnect();
 	},
 	send(event: BridgeEvent) {
-		// TODO: WCSession send
-		console.log('[watchNative.ios] send', event);
+		if (Platform.OS !== 'ios') return;
+		if (Native) {
+			Native.send(event.type, JSON.stringify(event));
+		} else {
+			console.log('[watchNative.ios] send (js)', event);
+		}
 	},
 	onMessage(cb: (event: BridgeEvent) => void) {
 		emitter.on('message', cb);
