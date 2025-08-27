@@ -1,16 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
+import { predictNextWindow } from '@/utils/timePredictor';
+import { track } from '@/utils/analyticsClient';
 
 export default function PredictionHint() {
 	const [text, setText] = useState<string | null>(null);
 
 	useEffect(() => {
-		const now = new Date();
-		const hour = now.getHours();
-		if (hour >= 6 && hour <= 9) setText('Sugestão: que tal iniciar uma corrida leve agora?');
-		else if (hour >= 18 && hour <= 21) setText('Sugestão: horário ótimo para um treino moderado.');
-		else setText(null);
+		(async () => {
+			const win = await predictNextWindow();
+			if (win) {
+				const msg = `Sua melhor janela de treino: ${win.startHour}h–${win.endHour}h`;
+				setText(msg);
+				track('ml_suggestion_shown', { type: 'time_window', score: 1 }).catch(() => {});
+			} else {
+				setText(null);
+			}
+		})().catch(() => setText(null));
 	}, []);
 
 	if (!text) return null;
