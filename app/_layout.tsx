@@ -16,6 +16,9 @@ import { track } from '@/utils/analyticsClient';
 import { startMetricsFlusher } from '@/utils/mlMetrics';
 import { track } from '@/utils/analyticsClient';
 
+import { track } from '@/utils/analyticsClient';
+
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
