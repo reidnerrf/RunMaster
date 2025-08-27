@@ -12,6 +12,7 @@ import { toGPX, toTCX, shareText } from '../Lib/exports';
 import { generateStoryCard } from '../Lib/story';
 import { track } from '@/utils/analyticsClient';
 import { handleEvent as handleGameEvent } from '@/utils/gamificationEngine';
+import { addEventToCalendar } from '@/utils/calendarSync';
 
 
 export default function RunSummaryScreen() {
@@ -64,6 +65,13 @@ export default function RunSummaryScreen() {
     await addRoute({ name: `Rota ${new Date(run.startedAt).toLocaleDateString()}`, distance_km: run.distanceKm, notes: 'Criada a partir de treino' });
   };
 
+  const addToCalendar = async () => {
+    const start = new Date(run.startedAt);
+    const end = new Date(run.startedAt + run.durationSec * 1000);
+    const id = await addEventToCalendar({ title: `Corrida ${run.distanceKm.toFixed(2)} km`, notes: `Pace ${run.avgPace}`, startDate: start, endDate: end, location: undefined });
+    if (id) { try { await track('action_performed', { action_name: 'calendar_add_run', context: id }); } catch {} }
+  };
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} contentContainerStyle={{ padding: 16 }}>
       <Text style={[styles.title, { color: theme.colors.text }]}>Treino Finalizado</Text>
@@ -93,6 +101,7 @@ export default function RunSummaryScreen() {
       <View style={[styles.shareCard, { backgroundColor: theme.colors.card }]}> 
         <GeneratedImage text={`Cartão de corrida: ${run.distanceKm.toFixed(2)} km, pace ${run.avgPace}, estilo esportivo com gradientes vibrantes` as any} aspect="1:1" style={{ width: '100%', height: 200, borderRadius: 12 }} />
         <ActionButton label="Compartilhar" onPress={onShare} />
+        <ActionButton label="Adicionar ao Calendário" onPress={addToCalendar} />
         <ActionButton label="Exportar PDF (server)" onPress={onExportPdf} />
         <ActionButton label="Exportar GPX" onPress={onExportGpx} />
         <ActionButton label="Exportar TCX" onPress={onExportTcx} />

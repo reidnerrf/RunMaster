@@ -36,6 +36,7 @@ import {
   Target,
   Zap
 } from 'lucide-react-native';
+import { addEventToCalendar } from '@/utils/calendarSync';
 
 const { width } = Dimensions.get('window');
 
@@ -435,6 +436,13 @@ export default function CommunityScreen() {
                 <ActionButton label="Participar" onPress={() => {
                   setLocalEvents((list) => list.map((e) => e.id === ev.id ? { ...e, participants: e.participants + 1 } : e));
                   try { track('event_joined', { event_id: ev.id }).catch(() => {}); } catch {}
+                }} />
+                <View style={{ width: 8 }} />
+                <ActionButton label="Adicionar ao Calendário" onPress={async () => {
+                  const start = new Date();
+                  const end = new Date(start.getTime() + 60 * 60 * 1000);
+                  const id = await addEventToCalendar({ title: ev.name, notes: ev.city, startDate: start, endDate: end, location: ev.address });
+                  if (id) { try { await track('action_performed', { action_name: 'calendar_add_event', context: id }); } catch {} }
                 }} />
               </View>
             </BlurCard>
