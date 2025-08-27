@@ -1,0 +1,29 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+
+android {
+	compileSdk rootProject.ext.compileSdkVersion
+	namespace 'com.pulse.wear'
+
+	defaultConfig {
+		applicationId 'com.pulse.wear'
+		minSdkVersion 26
+		targetSdkVersion rootProject.ext.targetSdkVersion
+		versionCode 1
+		versionName '1.0'
+	}
+
+	buildTypes {
+		release {
+			minifyEnabled false
+		}
+	}
+}
+
+dependencies {
+	implementation 'com.google.android.support:wearable:2.9.0'
+	compileOnly 'com.google.android.wearable:wearable:2.9.0'
+	implementation 'androidx.wear:wear:1.3.0'
+	implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+}
+
