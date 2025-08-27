@@ -6,6 +6,7 @@ import { estimateInjuryRisk } from '@/utils/injuryRisk';
 import { inferInjuryRiskOnnx } from '@/utils/injuryOnnx';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { track } from '@/utils/analyticsClient';
+import { applyRiskAdjustment } from '@/utils/planAdjuster';
 
 export default function InjuryRiskCard() {
 	const history = useAppSelector((s) => (s as any).workout?.history ?? []);
@@ -35,7 +36,7 @@ export default function InjuryRiskCard() {
 				Sugestão: reduza intensidade/volume nesta semana se risco alto.
 			</ThemedText>
 			<View style={styles.row}>
-				<TouchableOpacity style={styles.btn} onPress={() => track('ml_suggestion_accepted', { type: 'injury_risk' }).catch(() => {})}>
+				<TouchableOpacity style={styles.btn} onPress={async () => { track('ml_suggestion_accepted', { type: 'injury_risk' }).catch(() => {}); await applyRiskAdjustment(0.2, 7); }}>
 					<ThemedText>Ajustar Plano</ThemedText>
 				</TouchableOpacity>
 				<TouchableOpacity style={styles.btnSecondary} onPress={() => track('ml_suggestion_dismissed', { type: 'injury_risk' }).catch(() => {})}>
