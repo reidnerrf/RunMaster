@@ -10,6 +10,7 @@ import {
   TextInput,
   Dimensions
 } from 'react-native';
+import { track } from '@/utils/analyticsClient';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
 import { createCommunityManager, Community, CommunityMember } from '../Lib/community';
@@ -120,6 +121,7 @@ export default function CommunityScreen() {
       setCommunityDescription('');
       
       Alert.alert('Sucesso', 'Comunidade criada com sucesso!');
+      try { track('group_created', { group_id: newCommunity.id }).catch(() => {}); } catch {}
     } catch (error) {
       Alert.alert('Erro', 'Erro ao criar comunidade');
     }
@@ -196,6 +198,7 @@ export default function CommunityScreen() {
       setInviteEmail('');
       setInviteMessage('');
       Alert.alert('Sucesso', 'Convite enviado com sucesso!');
+      try { track('action_performed', { action_name: 'community_invite_sent', context: selectedCommunity.id }).catch(() => {}); } catch {}
     } catch (error) {
       Alert.alert('Erro', 'Erro ao enviar convite');
     }
@@ -215,6 +218,7 @@ export default function CommunityScreen() {
       if (member) {
         setUserCommunities([...userCommunities, community]);
         Alert.alert('Sucesso', 'Você entrou na comunidade!');
+        try { track('action_performed', { action_name: 'community_join', context: community.id }).catch(() => {}); } catch {}
       }
     } catch (error) {
       Alert.alert('Erro', 'Erro ao entrar na comunidade');

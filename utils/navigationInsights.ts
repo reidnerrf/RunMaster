@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
+import { track } from './analyticsClient';
 
 export type NavigationEvent = {
 	screenName: string;
@@ -17,6 +18,7 @@ export async function recordScreenView(userId: string | undefined, event: Naviga
 		const list: NavigationEvent[] = raw ? JSON.parse(raw) : [];
 		const next = [event, ...list].slice(0, MAX_HISTORY);
 		await AsyncStorage.setItem(key, JSON.stringify(next));
+		try { await track('screen_view', { screen_name: event.screenName }); } catch {}
 	} catch {}
 }
 
