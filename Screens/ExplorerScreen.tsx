@@ -19,6 +19,7 @@ import Card from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import Skeleton from '../components/ui/Skeleton';
 import Banner from '../components/ui/Banner';
+import AppBar from '../components/ui/AppBar';
 import { createExplorerManager, ExplorerRoute, ExplorerWaypoint, SecretPoint } from '../Lib/explorer';
 import * as Location from 'expo-location';
 
@@ -274,6 +275,7 @@ export default function ExplorerScreen({ navigation }: any) {
       case 'routes':
         return (
           <View style={styles.tabContent}>
+            <AppBar title="Explorar" />
             <View style={styles.searchContainer}>
               <Input value={searchQuery} onChangeText={setSearchQuery} placeholder="Buscar rotas..." />
               

@@ -6,6 +6,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Gradient from '../../components/ui/Gradient';
 import EmptyState from '../../components/ui/EmptyState';
+import AppBar from '../../components/ui/AppBar';
 import FadeInUp from '../../components/FadeInUp';
 import FlowHint from '../../components/FlowHint';
 import GeneratedImage from '../../components/GeneratedImage';
@@ -70,6 +71,7 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
+      <AppBar title="Início" />
       <View style={[styles.map, theme.shadows.heavy, { backgroundColor: theme.colors.card, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }]}> 
         <GeneratedImage text="Pulse mapa com rotas urbanas brilhantes, estilo esportivo moderno" aspect="16:9" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
         <View style={[styles.gradientOverlay]} />
