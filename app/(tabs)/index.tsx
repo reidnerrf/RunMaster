@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import NavSuggestions from '@/components/NavSuggestions';
 import PredictionHint from '@/components/PredictionHint';
+import RouteHint from '@/components/RouteHint';
 
 export default function HomeScreen() {
   return (
@@ -44,6 +45,7 @@ export default function HomeScreen() {
         </ThemedText>
       </ThemedView>
       <PredictionHint />
+      <RouteHint />
       <NavSuggestions />
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
