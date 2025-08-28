@@ -58,6 +58,14 @@ export async function deleteRouteLocal(id: string) {
   await Storage.setItem(KEY, JSON.stringify(next));
 }
 
+export async function insertRouteAt(route: SavedRoute, index: number) {
+  const all = await getRoutes();
+  const clamped = Math.max(0, Math.min(index, all.length));
+  const next = [...all.slice(0, clamped), route, ...all.slice(clamped)];
+  await Storage.setItem(KEY, JSON.stringify(next));
+  return next;
+}
+
 export async function getUnsyncedRoutes() {
   const all = await getRoutes();
   return all.filter(r => !r.synced);

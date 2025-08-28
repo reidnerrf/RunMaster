@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, RefreshControl } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { getRoutes, SavedRoute, deleteRouteLocal, updateRouteLocal } from '../../Lib/routeStore';
+import { getRoutes, SavedRoute, deleteRouteLocal, updateRouteLocal, insertRouteAt } from '../../Lib/routeStore';
 import { syncRoutes } from '../../Lib/sync';
 import { useNavigation } from '@react-navigation/native';
 import SectionTitle from '../../components/SectionTitle';
@@ -11,6 +11,7 @@ import { importGpxFromUrl } from '../../Lib/gpx';
 import Skeleton from '../../components/ui/Skeleton';
 import PressableScale from '../../components/ui/PressableScale';
 import { useRefresh } from '../../hooks/useRefresh';
+import Snackbar from '../../components/ui/Snackbar';
 
 export default function SavedRoutesScreen() {
   const { theme } = useTheme();
@@ -18,6 +19,8 @@ export default function SavedRoutesScreen() {
   const { user } = useAuth();
   const [routes, setRoutes] = useState<SavedRoute[]>([]);
   const [syncing, setSyncing] = useState(false);
+  const [snack, setSnack] = useState<{ visible: boolean; message: string; action?: () => void }>({ visible: false, message: '' });
+  const snackTimer = React.useRef<any>(null);
 
   const load = useCallback(async () => {
     const data = await getRoutes();
@@ -29,10 +32,23 @@ export default function SavedRoutesScreen() {
   const { refreshing, onRefresh } = useRefresh(load);
 
   const onDelete = async (r: SavedRoute) => {
-    // delete remote first if exists (best-effort)
+    const all = await getRoutes();
+    const idx = all.findIndex(x => x.id === r.id);
     if (r.remoteId) { try { await api.deleteRoute(r.remoteId); } catch {} }
     await deleteRouteLocal(r.id);
     setRoutes(await getRoutes());
+    if (snackTimer.current) { clearTimeout(snackTimer.current); snackTimer.current = null; }
+    setSnack({
+      visible: true,
+      message: 'Rota excluída',
+      action: async () => {
+        setSnack({ visible: false, message: '' });
+        // restore
+        await insertRouteAt(r, Math.max(0, idx));
+        setRoutes(await getRoutes());
+      },
+    });
+    snackTimer.current = setTimeout(() => setSnack({ visible: false, message: '' }), 10000);
   };
 
   const onRename = async (r: SavedRoute) => {
@@ -119,6 +135,7 @@ export default function SavedRoutesScreen() {
         ))}
       </View>
     </ScrollView>
+    <Snackbar visible={snack.visible} message={snack.message} actionLabel={snack.action ? 'Desfazer' : undefined} onAction={snack.action} />
   );
 }
 
