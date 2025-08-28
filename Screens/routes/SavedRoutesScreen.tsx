@@ -13,10 +13,12 @@ import PressableScale from '../../components/ui/PressableScale';
 import { useRefresh } from '../../hooks/useRefresh';
 import { useSWRStorage } from '../../hooks/useSWRStorage';
 import Snackbar from '../../components/ui/Snackbar';
+import { useScreenMetrics } from '../../hooks/useScreenMetrics';
 
 export default function SavedRoutesScreen() {
   const { theme } = useTheme();
   const nav = useNavigation();
+  useScreenMetrics('SavedRoutes');
   const { user } = useAuth();
   const [routes, setRoutes] = useState<SavedRoute[]>([]);
   const [syncing, setSyncing] = useState(false);
