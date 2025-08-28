@@ -43,7 +43,18 @@ export default function Button({ title, onPress, disabled, variant = 'primary', 
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityState={{ disabled: !!disabled }}
-      style={[styles.base, { backgroundColor: disabled ? theme.colors.border : bg, borderColor: border, paddingVertical, paddingHorizontal, opacity: disabled ? 0.6 : 1 }, style]}
+      style={({ pressed }) => [
+        styles.base,
+        {
+          backgroundColor: disabled ? theme.colors.border : bg,
+          borderColor: border,
+          paddingVertical,
+          paddingHorizontal,
+          opacity: disabled ? 0.6 : pressed ? 0.85 : 1,
+          transform: pressed ? [{ scale: 0.98 }] : undefined,
+        },
+        style,
+      ]}
     > 
       {leftIcon ? <View style={{ marginRight: 8 }}>{leftIcon}</View> : null}
       <Text
