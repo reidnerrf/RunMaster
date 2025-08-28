@@ -7,6 +7,8 @@ import { env } from './env';
 import { metricsHandler, setupMetrics } from './metrics';
 import { authRoutes } from './routes/auth';
 import fastifyMongodb from '@fastify/mongodb';
+import { ensureIndexes } from './db';
+import { aiRoutes } from './routes/ai';
 
 const app = Fastify({
 	logger: {
@@ -38,6 +40,7 @@ if (env.ENABLE_DB) {
 	try {
 		await app.register(fastifyMongodb, { forceClose: true, url: uri, database: dbName });
 		app.log.info({ uri, dbName }, 'MongoDB connected');
+		await ensureIndexes(app);
 	} catch (err) {
 		app.log.error({ err }, 'Failed to connect to MongoDB');
 	}
@@ -55,6 +58,7 @@ app.decorate('authenticate', async (request: any, reply: any) => {
 	}
 });
 await authRoutes(app);
+await aiRoutes(app);
 
 // DB health check endpoint
 app.get('/db/health', async (request, reply) => {

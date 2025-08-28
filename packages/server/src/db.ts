@@ -15,3 +15,10 @@ export function getCollection<TSchema extends Document = Document>(
 	return db?.collection<TSchema>(name);
 }
 
+export async function ensureIndexes(app: FastifyInstance): Promise<void> {
+	const col = getCollection(app, 'ai_logs');
+	if (!col) return;
+	await col.createIndex({ createdAt: -1 }, { name: 'createdAt_desc' });
+	await col.createIndex({ type: 1, userId: 1 }, { name: 'type_userId' });
+}
+
