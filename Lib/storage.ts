@@ -18,6 +18,13 @@ export async function setItem(key: string, value: string): Promise<void> {
   }
 }
 
+export async function getJson<T = any>(key: string, fallback: T): Promise<T> {
+  const raw = await getItem(key);
+  if (!raw) return fallback;
+  try { return JSON.parse(raw) as T; } catch { return fallback; }
+}
+
+
 export async function removeItem(key: string): Promise<void> {
   try {
     const AS = require('@react-native-async-storage/async-storage').default;

@@ -4,6 +4,7 @@ import { useTheme } from '../hooks/useTheme';
 import { getRoutes, SavedRoute } from '../Lib/routeStore';
 import { getRuns, Run } from '../Lib/runStore';
 import { useNavigation } from '@react-navigation/native';
+import { addQuery, getQueries } from '../utils/searchHistory';
 
 type ResultItem = { type: 'route'|'run'; id: string; title: string; subtitle: string };
 
@@ -13,8 +14,9 @@ export default function SearchScreen() {
   const [q, setQ] = useState('');
   const [routes, setRoutes] = useState<SavedRoute[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
+  const [history, setHistory] = useState<string[]>([]);
 
-  useEffect(() => { getRoutes().then(setRoutes); getRuns().then(setRuns); }, []);
+  useEffect(() => { getRoutes().then(setRoutes); getRuns().then(setRuns); getQueries().then(setHistory); }, []);
 
   const results = useMemo<ResultItem[]>(() => {
     const query = q.trim().toLowerCase();
@@ -44,8 +46,21 @@ export default function SearchScreen() {
           placeholderTextColor={theme.colors.textTertiary}
           style={[styles.input, { color: theme.colors.text }]}
           autoFocus
+          accessibilityLabel="Campo de busca"
+          returnKeyType="search"
+          onSubmitEditing={async () => { if (q.trim()) { await addQuery(q); setHistory(await getQueries()); } }}
         />
       </View>
+      {q.trim().length === 0 && history.length > 0 ? (
+        <View style={{ paddingHorizontal: 16 }}>
+          <Text style={{ color: theme.colors.muted, marginBottom: 8 }}>Recentes</Text>
+          {history.map(h => (
+            <Pressable key={h} onPress={() => setQ(h)} accessibilityRole="button" accessibilityLabel={`Buscar ${h}`} style={{ paddingVertical: 8 }}>
+              <Text style={{ color: theme.colors.text }}>{h}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
       <FlatList
         data={results}
         keyExtractor={(item) => item.type + ':' + item.id}
