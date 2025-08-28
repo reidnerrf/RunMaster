@@ -64,3 +64,25 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Weather API (Server proxy)
+
+The server exposes a proxy to WeatherAPI current conditions to simplify client usage and hide the API key.
+
+Endpoint:
+
+```
+GET /weather/current?q=<city_or_lat,lon>[&format=json|xml]
+```
+
+Examples:
+
+```bash
+curl "http://localhost:3000/weather/current?q=Sao%20Paulo" | jq .
+curl "http://localhost:3000/weather/current?q=-23.55,-46.63" | jq .
+curl -H "Accept: application/xml" "http://localhost:3000/weather/current?q=Lisbon&format=xml"
+```
+
+Notes:
+- Defaults to JSON; pass `format=xml` for XML.
+- Configure your own key by setting `WEATHERAPI_KEY` env var; a development key is used if not set.

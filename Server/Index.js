@@ -10,6 +10,41 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
+// WeatherAPI proxy (current conditions)
+// Usage: GET /weather/current?q=City%20Name[&format=json|xml]
+// Accepts either a city name or "lat,lon" for q. Defaults to JSON.
+app.get('/weather/current', async (req, res) => {
+  try {
+    const { q, format } = req.query || {};
+    if (!q) return res.status(400).json({ error: 'q (city or "lat,lon") is required' });
+
+    const output = String(format).toLowerCase() === 'xml' ? 'xml' : 'json';
+    const BASE_URL = 'http://api.weatherapi.com/v1';
+    const API_KEY = process.env.WEATHERAPI_KEY || 'e91594f87b884433860113718252808';
+    const endpoint = `${BASE_URL}/current.${output}?key=${API_KEY}&q=${encodeURIComponent(q)}&aqi=no`;
+
+    const response = await fetch(endpoint);
+    const contentType = response.headers.get('content-type') || '';
+    const status = response.status;
+
+    if (!response.ok) {
+      const errorPayload = contentType.includes('application/json') ? await response.json() : await response.text();
+      return res.status(status).json({ error: 'upstream_error', details: errorPayload });
+    }
+
+    if (output === 'xml') {
+      const text = await response.text();
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      return res.status(200).send(text);
+    }
+
+    const data = await response.json();
+    return res.status(200).json(data);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 const RunSchema = new mongoose.Schema({
   userId: { type: String, index: true, required: true },
   startedAt: { type: Number, required: true },
