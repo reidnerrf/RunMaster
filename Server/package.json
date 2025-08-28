@@ -1,0 +1,16 @@
+{
+  "name": "pulse-server",
+  "private": true,
+  "version": "1.0.0",
+  "main": "Index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node Index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.7.3",
+    "pdfkit": "^0.15.0"
+  }
+}

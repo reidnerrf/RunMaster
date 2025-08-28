@@ -299,6 +299,10 @@ app.get('/config', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 async function main() {
+  if (process.env.SKIP_DB === 'true') {
+    app.listen(PORT, () => console.log(`API listening on ${PORT} (DB skipped)`));
+    return;
+  }
   const mongo = process.env.MONGODB_URI || 'mongodb://localhost:27017/pulse';
   await mongoose.connect(mongo);
   console.log('Connected to MongoDB');
