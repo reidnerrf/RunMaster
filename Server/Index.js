@@ -10,11 +10,27 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
+// Very simple in-memory rate limiter for weather endpoint
+const rateWindowMs = 60 * 1000; // 1 minute
+const maxRequestsPerIp = 30; // allow 30 req/min per IP
+const ipToTimestamps = new Map();
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const arr = ipToTimestamps.get(ip) || [];
+  const recent = arr.filter((t) => now - t < rateWindowMs);
+  recent.push(now);
+  ipToTimestamps.set(ip, recent);
+  return recent.length > maxRequestsPerIp;
+}
+
 // WeatherAPI proxy (current conditions)
 // Usage: GET /weather/current?q=City%20Name[&format=json|xml]
 // Accepts either a city name or "lat,lon" for q. Defaults to JSON.
 app.get('/weather/current', async (req, res) => {
   try {
+    const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+    if (isRateLimited(ip)) return res.status(429).json({ error: 'rate_limited' });
     const { q, format } = req.query || {};
     if (!q) return res.status(400).json({ error: 'q (city or "lat,lon") is required' });
 
@@ -23,7 +39,9 @@ app.get('/weather/current', async (req, res) => {
     const API_KEY = process.env.WEATHERAPI_KEY || 'e91594f87b884433860113718252808';
     const endpoint = `${BASE_URL}/current.${output}?key=${API_KEY}&q=${encodeURIComponent(q)}&aqi=no`;
 
-    const response = await fetch(endpoint);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const response = await fetch(endpoint, { signal: controller.signal });
     const contentType = response.headers.get('content-type') || '';
     const status = response.status;
 
@@ -35,10 +53,12 @@ app.get('/weather/current', async (req, res) => {
     if (output === 'xml') {
       const text = await response.text();
       res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      clearTimeout(timeout);
       return res.status(200).send(text);
     }
 
     const data = await response.json();
+    clearTimeout(timeout);
     return res.status(200).json(data);
   } catch (e) {
     return res.status(500).json({ error: e.message });

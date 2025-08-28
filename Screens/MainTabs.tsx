@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { BarChart2, Dumbbell, Home as HomeIcon, Lock, User, Users, Heart, MapPin } from 'lucide-react-native';
+import { BarChart2, Dumbbell, Home as HomeIcon, Lock, User, Users, Heart, MapPin, CloudSun } from 'lucide-react-native';
 import React from 'react';
 import { Animated, View } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
@@ -13,6 +13,7 @@ import WellnessScreen from './WellnessScreen';
 import CommunityScreen from './CommunityScreen';
 import MentorshipScreen from './MentorshipScreen';
 import ExplorerScreen from './ExplorerScreen';
+import WeatherScreen from './WeatherScreen';
 import { useFlags, useGate } from '../hooks/useGate';
 import TabBarBackground from '../components/ui/TabBarBackground';
 
@@ -80,6 +81,12 @@ export default function MainTabs() {
           ),
         }} />
       )}
+      <Tab.Screen name="Weather" component={WeatherScreen} options={{ 
+        tabBarLabel: 'Clima',
+        tabBarIcon: ({ color, focused }) => (
+          <AnimatedIcon focused={focused}><CloudSun color={color} size={22} /></AnimatedIcon>
+        )
+      }} />
                           <Tab.Screen name="Wellness" component={WellnessScreen} options={{ 
                       tabBarLabel: 'Bem-estar',
                       tabBarIcon: ({ color, focused }) => (
