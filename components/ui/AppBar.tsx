@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, ViewStyle } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
 
 interface AppBarProps {
@@ -11,11 +12,17 @@ interface AppBarProps {
 
 export default function AppBar({ title, left, right, style }: AppBarProps) {
   const { theme } = useTheme();
+  const nav = useNavigation();
   return (
     <View style={[styles.base, { backgroundColor: theme.colors.background, borderBottomColor: theme.colors.border }, style]}> 
       <View style={styles.side}>{left}</View>
       <Text style={[styles.title, { color: theme.colors.text }]} numberOfLines={1}>{title}</Text>
-      <View style={[styles.side, { justifyContent: 'flex-end' }]}>{right}</View>
+      <View style={[styles.side, { justifyContent: 'flex-end' }]}>
+        {right}
+        <Pressable onPress={() => nav.navigate('Search' as never)} style={{ marginLeft: 12, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border }}>
+          <Text style={{ color: theme.colors.text }}>Buscar</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
