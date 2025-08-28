@@ -45,8 +45,13 @@ export async function aiRoutes(app: FastifyInstance) {
         try {
             const col = getCollection<AILog>(app, 'ai_logs');
             if (!col) return reply.code(503).send({ error: 'db_unavailable' });
+            const { userId, type, limit } = (request.query as any) || {};
+            const q: any = {};
+            if (userId) q.userId = userId;
+            if (type) q.type = type;
+            const lim = Math.min(Number(limit) || 50, 200);
             const items = await col
-                .find({}, { sort: { createdAt: -1 }, limit: 50 })
+                .find(q, { sort: { createdAt: -1 }, limit: lim })
                 .toArray();
             return items;
         } catch (err) {
