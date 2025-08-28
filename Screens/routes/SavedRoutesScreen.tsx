@@ -11,6 +11,7 @@ import { importGpxFromUrl } from '../../Lib/gpx';
 import Skeleton from '../../components/ui/Skeleton';
 import PressableScale from '../../components/ui/PressableScale';
 import { useRefresh } from '../../hooks/useRefresh';
+import { useSWRStorage } from '../../hooks/useSWRStorage';
 import Snackbar from '../../components/ui/Snackbar';
 
 export default function SavedRoutesScreen() {
@@ -27,7 +28,8 @@ export default function SavedRoutesScreen() {
     setRoutes(data);
   }, []);
 
-  useEffect(() => { load().catch(() => setRoutes([])); }, [load]);
+  const swr = useSWRStorage<SavedRoute[]>('routes:list', async () => await getRoutes(), 60_000);
+  useEffect(() => { if (swr.data) setRoutes(swr.data); }, [swr.data]);
 
   const { refreshing, onRefresh } = useRefresh(load);
 
