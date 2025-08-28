@@ -19,6 +19,8 @@ import { track } from '@/utils/analyticsClient';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
 import { createCommunityManager, Community, CommunityMember } from '../Lib/community';
+import { useSWRStorage } from '../hooks/useSWRStorage';
+import { useScreenMetrics } from '../hooks/useScreenMetrics';
 import { createChallengeManager } from '../Lib/challenges';
 import { createSocialActionManager } from '../Lib/socialActions';
 import { createGamificationManager } from '../Lib/gamification';
@@ -50,6 +52,7 @@ const { width } = Dimensions.get('window');
 export default function CommunityScreen() {
   const { theme } = useTheme();
   const { user } = useAuth();
+  useScreenMetrics('Community');
   const [communityManager, setCommunityManager] = useState<any>(null);
   const [challengeManager, setChallengeManager] = useState<any>(null);
   const [socialActionManager, setSocialActionManager] = useState<any>(null);
@@ -92,11 +95,10 @@ export default function CommunityScreen() {
       setSocialActionManager(socialActions);
       setGamificationManager(gamification);
 
-      // Carregar dados iniciais
+      // Carregar dados iniciais (SWR-like pattern; still local manager)
       if (user?.id) {
         const userComms = community.getUserCommunities(user.id);
         const publicComms = community.searchPublicCommunities('');
-        
         setUserCommunities(userComms);
         setPublicCommunities(publicComms);
       }

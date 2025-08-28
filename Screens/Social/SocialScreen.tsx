@@ -11,6 +11,7 @@ import { api, ApiChallenge } from '../../Lib/api';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { followUser, unfollowUser } from '@/store/slices/userSlice';
 import { track } from '@/utils/analyticsClient';
+import { useScreenMetrics } from '../../hooks/useScreenMetrics';
 import { getSuggestions } from '@/utils/navigationInsights';
 
 const FEED_KEY = 'runmaster_feed_v1';
@@ -20,6 +21,7 @@ type Post = { id: string; user: string; text: string; photo?: string; date: numb
 type BoardTab = 'city' | 'neighborhood' | 'route';
 
 export default function SocialScreen() {
+  useScreenMetrics('Social');
   const { isPremium, open } = useGate();
   const { theme } = useTheme();
   const dispatch = useAppDispatch();

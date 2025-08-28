@@ -60,7 +60,8 @@ export default function Button({ title, onPress, disabled, variant = 'primary', 
       <Text
         style={[styles.text, { color: textColor, fontSize: typo.fontSize.base }, textStyle]}
         allowFontScaling
-        maxFontSizeMultiplier={1.3}
+        maxFontSizeMultiplier={1.6}
+        accessibilityRole="text"
       >
         {title}
       </Text>

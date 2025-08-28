@@ -5,6 +5,7 @@ import AnimatedBadge from '../../components/AnimatedBadge';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
+import { useScreenMetrics } from '../../hooks/useScreenMetrics';
 import BadgeChip from '../../components/BadgeChip';
 import ActionButton from '../../components/ActionButton';
 import { getRuns } from '../../Lib/runStore';
@@ -27,6 +28,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const nav = useNavigation();
   const { mode, toggle, theme } = useTheme() as any;
+  useScreenMetrics('Profile');
   const [runs, setRuns] = useState<any[]>([]);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);

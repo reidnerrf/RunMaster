@@ -203,11 +203,11 @@ export default function OnboardingScreen() {
       </View>
 
       <View style={styles.footer}> 
-        <Pressable onPress={goBack} disabled={currentStep === 0} style={[styles.secondaryBtn, { borderColor: theme.colors.border, opacity: currentStep === 0 ? 0.5 : 1 }]}> 
+        <Pressable onPress={goBack} accessibilityRole="button" accessibilityLabel="Voltar" disabled={currentStep === 0} style={[styles.secondaryBtn, { borderColor: theme.colors.border, opacity: currentStep === 0 ? 0.5 : 1 }]}> 
           <ArrowLeft size={16} color={theme.colors.text} />
           <Text style={[styles.secondaryBtnText, { color: theme.colors.text }]}>Voltar</Text>
         </Pressable>
-        <Pressable onPress={goNext} disabled={!canProceed} style={[styles.primaryBtn, { backgroundColor: canProceed ? theme.colors.primary : theme.colors.border }]}> 
+        <Pressable onPress={goNext} accessibilityRole="button" accessibilityLabel={currentStep === stepsCount - 1 ? 'Começar' : 'Continuar'} disabled={!canProceed} style={[styles.primaryBtn, { backgroundColor: canProceed ? theme.colors.primary : theme.colors.border }]}> 
           <Text style={styles.primaryBtnText}>{currentStep === stepsCount - 1 ? 'Começar' : 'Continuar'}</Text>
           {currentStep === stepsCount - 1 ? (
             <Trophy size={16} color={'#fff'} />
