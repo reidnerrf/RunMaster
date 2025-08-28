@@ -19,8 +19,8 @@ export default function AppBar({ title, left, right, style }: AppBarProps) {
       <Text style={[styles.title, { color: theme.colors.text }]} numberOfLines={1}>{title}</Text>
       <View style={[styles.side, { justifyContent: 'flex-end' }]}>
         {right}
-        <Pressable onPress={() => nav.navigate('Search' as never)} style={{ marginLeft: 12, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border }}>
-          <Text style={{ color: theme.colors.text }}>Buscar</Text>
+        <Pressable onPress={() => nav.navigate('Search' as never)} accessibilityRole="button" accessibilityLabel="Buscar" style={{ marginLeft: 12, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border }}>
+          <Text allowFontScaling maxFontSizeMultiplier={1.6} style={{ color: theme.colors.text }}>Buscar</Text>
         </Pressable>
       </View>
     </View>

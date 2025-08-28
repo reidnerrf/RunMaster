@@ -123,7 +123,7 @@ export default function SavedRoutesScreen() {
       <View style={{ gap: 10 }}>
         {routes.map((r) => (
           <View key={r.id} style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
-            <PressableScale onPress={() => nav.navigate('RouteDetail' as never, { id: r.id } as never)} style={{ flex: 1 }}>
+            <PressableScale onPress={() => nav.navigate('RouteDetail' as never, { id: r.id } as never)} accessibilityRole="button" accessibilityLabel={`Abrir rota ${r.name}`} style={{ flex: 1 }}>
               <Text style={[styles.title, { color: theme.colors.text }]}>{r.name}</Text>
               <Text style={{ color: theme.colors.muted }}>{r.distance_km.toFixed(1)} km • {new Date(r.savedAt).toLocaleDateString()} {r.synced ? '' : '• Não sincronizado'}</Text>
             </PressableScale>
