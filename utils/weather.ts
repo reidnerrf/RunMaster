@@ -48,3 +48,23 @@ export function makeLatLonQuery(latitude: number, longitude: number): string {
   return `${latitude.toFixed(4)},${longitude.toFixed(4)}`;
 }
 
+export interface ForecastQuery {
+  q: string;
+  days?: number; // 1-10
+  hours?: number; // optional slice of first day hourly
+}
+
+export async function getForecast<T = any>({ q, days = 3, hours }: ForecastQuery): Promise<T> {
+  const url = `${API_BASE_URL}/weather/forecast?q=${encodeURIComponent(q)}&days=${days}${hours ? `&hours=${hours}` : ''}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`Forecast request failed: ${res.status}`);
+    const data = await res.json();
+    return data as T;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+

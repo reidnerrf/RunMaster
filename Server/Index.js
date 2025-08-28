@@ -65,6 +65,42 @@ app.get('/weather/current', async (req, res) => {
   }
 });
 
+// WeatherAPI proxy (forecast: hourly/daily)
+// Usage: GET /weather/forecast?q=City%20Name&days=1-10[&hours=1-24]
+app.get('/weather/forecast', async (req, res) => {
+  try {
+    const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+    if (isRateLimited(ip)) return res.status(429).json({ error: 'rate_limited' });
+    const { q, days = '3', hours } = req.query || {};
+    if (!q) return res.status(400).json({ error: 'q (city or "lat,lon") is required' });
+    const numDays = Math.min(Math.max(parseInt(String(days) || '3', 10) || 3, 1), 10);
+    const BASE_URL = 'http://api.weatherapi.com/v1';
+    const API_KEY = process.env.WEATHERAPI_KEY || 'e91594f87b884433860113718252808';
+    const endpoint = `${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(String(q))}&days=${numDays}&aqi=no&alerts=yes`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const response = await fetch(endpoint, { signal: controller.signal });
+    const status = response.status;
+    if (!response.ok) {
+      const errorPayload = await response.text();
+      return res.status(status).json({ error: 'upstream_error', details: errorPayload });
+    }
+    const data = await response.json();
+    clearTimeout(timeout);
+    // If hours is provided, slice the first day's hour array
+    if (hours) {
+      const n = Math.min(Math.max(parseInt(String(hours), 10) || 0, 1), 24);
+      if (data?.forecast?.forecastday?.[0]?.hour) {
+        data.forecast.forecastday[0].hour = data.forecast.forecastday[0].hour.slice(0, n);
+      }
+    }
+    return res.status(200).json(data);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 const RunSchema = new mongoose.Schema({
   userId: { type: String, index: true, required: true },
   startedAt: { type: Number, required: true },

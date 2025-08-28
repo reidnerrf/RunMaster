@@ -32,6 +32,7 @@ import RitualPicker from '../../components/RitualPicker';
 import { RunnerProfileType } from '../../Lib/rituals';
 import AISmartSuggestions from '../../components/ui/AISmartSuggestions';
 import { getSyncStatus, forceSync } from '../../utils/syncService';
+import WeatherWidget from '../../components/WeatherWidget';
 
 
 export default function HomeScreen() {
@@ -140,6 +141,14 @@ export default function HomeScreen() {
           <View style={{ alignItems: 'center' }}>
             <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>{tt('home_welcome')}</Text>
             <Button title={tt('home_start')} onPress={handleStartRun} leftIcon={<Play size={18} color={'#fff'} />} />
+          </View>
+        </Card>
+
+        {/* Clima compacto */}
+        <Card>
+          <View>
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>Clima</Text>
+            <WeatherWidget />
           </View>
         </Card>
 
