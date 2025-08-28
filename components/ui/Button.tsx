@@ -37,9 +37,22 @@ export default function Button({ title, onPress, disabled, variant = 'primary', 
   };
 
   return (
-    <Pressable onPress={handlePress} disabled={disabled} style={[styles.base, { backgroundColor: disabled ? theme.colors.border : bg, borderColor: border, paddingVertical, paddingHorizontal, opacity: disabled ? 0.6 : 1 }, style]}> 
+    <Pressable
+      onPress={handlePress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!disabled }}
+      style={[styles.base, { backgroundColor: disabled ? theme.colors.border : bg, borderColor: border, paddingVertical, paddingHorizontal, opacity: disabled ? 0.6 : 1 }, style]}
+    > 
       {leftIcon ? <View style={{ marginRight: 8 }}>{leftIcon}</View> : null}
-      <Text style={[styles.text, { color: textColor, fontSize: typo.fontSize.base }, textStyle]}>{title}</Text>
+      <Text
+        style={[styles.text, { color: textColor, fontSize: typo.fontSize.base }, textStyle]}
+        allowFontScaling
+        maxFontSizeMultiplier={1.3}
+      >
+        {title}
+      </Text>
       {rightIcon ? <View style={{ marginLeft: 8 }}>{rightIcon}</View> : null}
     </Pressable>
   );
