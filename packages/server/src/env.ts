@@ -7,7 +7,7 @@ const EnvSchema = z.object({
 	NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 	PORT: z.coerce.number().int().positive().default(4000),
 	JWT_SECRET: z.string().min(16),
-	MONGODB_URI: z.string().url().optional(),
+	MONGODB_URI: z.string().default('mongodb://localhost:27017/?authSource=pulse'),
 	ENABLE_DB: z
 		.enum(["true", "false"]) // ensure strings "true"/"false" are handled explicitly
 		.default("false")

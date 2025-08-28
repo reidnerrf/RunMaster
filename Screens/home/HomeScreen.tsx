@@ -31,6 +31,7 @@ import { getNearbyEvents, enrichRoutesWithEvents } from '../../Lib/events';
 import RitualPicker from '../../components/RitualPicker';
 import { RunnerProfileType } from '../../Lib/rituals';
 import AISmartSuggestions from '../../components/ui/AISmartSuggestions';
+import { getSyncStatus, forceSync } from '../../utils/syncService';
 
 
 export default function HomeScreen() {
@@ -44,12 +45,20 @@ export default function HomeScreen() {
   const [showRitualPicker, setShowRitualPicker] = useState(false);
   const [currentProfile, setCurrentProfile] = useState<RunnerProfileType>('endurance');
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [syncInfo, setSyncInfo] = useState<{ pending: number; failed: number; isSyncing: boolean }>({ pending: 0, failed: 0, isSyncing: false });
 
   useEffect(() => {
     suggestPlan({ city: 'São Paulo', goal: 'easy', distancePreferenceKm: 5 }).then(setAI).catch(() => {});
     (async () => setSavedRoutes(await getRoutes()))();
     getSettings().then((s) => setDailyGoalKm(s.widgetDailyGoalKm || 5)).catch(() => {});
     initNavigationSdk('mapbox').catch(() => {});
+    const loadSync = async () => {
+      const s = await getSyncStatus();
+      setSyncInfo({ pending: s.pendingItems, failed: s.failedItems, isSyncing: s.isSyncing });
+    };
+    loadSync();
+    const id = setInterval(loadSync, 10000);
+    return () => clearInterval(id);
   }, []);
 
   const saveCurrentRoute = async () => {
@@ -74,6 +83,22 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       <AppBar title="Início" />
+      {/* Sync Banner */}
+      {(syncInfo.pending > 0 || syncInfo.failed > 0 || syncInfo.isSyncing) && (
+        <View style={{ padding: 10, backgroundColor: theme.colors.card, borderBottomWidth: 1, borderColor: theme.colors.border }}>
+          <Text style={{ color: theme.colors.text, fontWeight: '700' }}>
+            {syncInfo.isSyncing ? 'Sincronizando...' : syncInfo.failed > 0 ? 'Erros de sincronização' : 'Itens pendentes para sincronizar'}
+          </Text>
+          <Text style={{ color: theme.colors.muted }}>
+            Pendentes: {syncInfo.pending} • Falhas: {syncInfo.failed}
+          </Text>
+          {!syncInfo.isSyncing && (
+            <Pressable onPress={() => forceSync()} style={{ alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8 }}>
+              <Text style={{ color: theme.colors.text, fontWeight: '600' }}>Tentar novamente</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
       <View style={[styles.map, theme.shadows.heavy, { backgroundColor: theme.colors.card, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }]}> 
         <GeneratedImage text="Pulse mapa com rotas urbanas brilhantes, estilo esportivo moderno" aspect="16:9" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
         <View style={[styles.gradientOverlay]} />
@@ -149,10 +174,17 @@ export default function HomeScreen() {
         </View>
 
         <SectionTitle title="Estatísticas" subtitle="Resumo rápido" />
-        <View style={[styles.statsRow]}> 
-          <GoalCard title="Total (km)" value={stats?.totalDistanceKm?.toFixed(1) ?? '0'} />
-          <GoalCard title="Semana (km)" value={stats?.weekDistanceKm?.toFixed(1) ?? '0'} />
-        </View>
+        {!stats ? (
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+            <Shimmer height={16} style={{ marginBottom: 10 }} />
+            <Shimmer height={16} width={'60%'} />
+          </View>
+        ) : (
+          <View style={[styles.statsRow]}> 
+            <GoalCard title="Total (km)" value={stats?.totalDistanceKm?.toFixed(1) ?? '0'} />
+            <GoalCard title="Semana (km)" value={stats?.weekDistanceKm?.toFixed(1) ?? '0'} />
+          </View>
+        )}
 
         <SectionTitle title="Rotas Inteligentes" subtitle="Sugestões rápidas perto de você" />
         {!ai ? (

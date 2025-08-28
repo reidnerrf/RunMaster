@@ -27,6 +27,30 @@ const httpRequestDurationMs = new client.Histogram({
 registry.registerMetric(httpRequestsTotal);
 registry.registerMetric(httpRequestDurationMs);
 
+// AI-specific metrics
+export const aiLogCreated = new client.Counter({
+    name: 'ai_log_created_total',
+    help: 'Total AI log records created',
+    labelNames: ['type', 'model'] as const,
+});
+
+export const aiLogDurationMs = new client.Histogram({
+    name: 'ai_log_duration_ms',
+    help: 'Duration of AI log writes in ms',
+    buckets: [5, 10, 25, 50, 100, 250, 500, 1000],
+    labelNames: ['type'] as const,
+});
+
+export const dbErrors = new client.Counter({
+    name: 'db_errors_total',
+    help: 'Total number of database errors',
+    labelNames: ['operation', 'collection'] as const,
+});
+
+registry.registerMetric(aiLogCreated);
+registry.registerMetric(aiLogDurationMs);
+registry.registerMetric(dbErrors);
+
 const startTimeKey = Symbol('startTime');
 
 export function setupMetrics(app: FastifyInstance) {

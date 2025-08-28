@@ -18,6 +18,9 @@ import {
   Users
 } from 'lucide-react-native';
 import { hapticSuccess, hapticWarning } from '../../utils/haptics';
+import { openRouterAI } from '../../Lib/openrouter-ai';
+import { getPersonalization, updateFeedback } from '../../utils/personalization';
+import { Platform } from 'react-native';
 
 export type SmartSuggestion = {
   id: string;
@@ -39,6 +42,7 @@ export type SmartSuggestion = {
 
 type AISmartSuggestionsProps = {
   userContext: {
+    userId?: string;
     currentLocation?: { lat: number; lon: number };
     lastWorkout?: any;
     currentGoals?: any[];
@@ -65,11 +69,105 @@ export default function AISmartSuggestions({
     generateSmartSuggestions();
   }, [userContext]);
 
+  // Enriquecimento com IA: rotas e otimização climática
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const aiSugs: SmartSuggestion[] = [];
+
+        // Sugestões de rota via IA
+        if (userContext.currentLocation) {
+          const distancePref = userContext.lastWorkout?.distance_km || 5;
+          const intensity = userContext.lastWorkout?.intensity || 'moderate';
+          const difficulty = intensity === 'high' ? 'hard' : intensity === 'low' ? 'easy' : 'moderate';
+          const routes = await openRouterAI.suggestRoutes({
+            location: userContext.currentLocation,
+            distance_preference_km: Math.max(3, Math.min(15, Math.round(distancePref))),
+            difficulty,
+            weather_conditions: userContext.weatherConditions,
+            time_of_day: userContext.timeOfDay,
+            user_preferences: {
+              scenic_routes: true,
+              safety_priority: 'high',
+            }
+          });
+
+          if (routes?.routes?.length) {
+            const top = routes.routes[0];
+            aiSugs.push({
+              id: `ai-route-${top.id || 'top'}`,
+              type: 'route',
+              priority: 'high',
+              title: `Rota Sugerida: ${top.name || 'Rota próxima'}`,
+              description: `~${top.distance_km || distancePref} km, dificuldade ${top.difficulty || difficulty}.`,
+              icon: '🧭',
+              action: {
+                label: 'Ver Rotas',
+                onPress: () => hapticSuccess()
+              },
+              dismissible: true,
+              aiReasoning: routes.aiReasoning || 'Sugestão de rota personalizada pela IA',
+              confidence: Math.round((routes.confidence || 0.85) * 100),
+              personalizationFactors: ['Localização', 'Preferência de distância', 'Condições locais']
+            });
+          }
+        }
+
+        // Otimização climática via IA
+        if (userContext.currentLocation && userContext.weatherConditions) {
+          const plannedTime = new Date().toISOString();
+          const optimization = await openRouterAI.optimizeForWeather({
+            location: userContext.currentLocation,
+            planned_time: plannedTime,
+            weather_forecast: userContext.weatherConditions,
+            user_preferences: { }
+          });
+          if (optimization?.optimization) {
+            aiSugs.push({
+              id: 'ai-weather-optimization',
+              type: 'weather',
+              priority: 'medium',
+              title: 'Ajustes para o Clima (IA)',
+              description: 'Sugestões de horário e vestuário otimizados para as condições atuais.',
+              icon: '🌤️',
+              action: {
+                label: 'Ver Ajustes',
+                onPress: () => hapticSuccess()
+              },
+              dismissible: true,
+              aiReasoning: optimization.aiReasoning || 'Otimização climática personalizada pela IA',
+              confidence: Math.round((optimization.confidence || 0.85) * 100),
+              personalizationFactors: ['Clima atual', 'Horário', 'Preferências pessoais']
+            });
+          }
+        }
+
+        if (!cancelled && aiSugs.length) {
+          setSuggestions(prev => {
+            const merged = [...prev, ...aiSugs];
+            // Ordenar por prioridade e confiança
+            const priorityOrder = { high: 3, medium: 2, low: 1 } as const;
+            merged.sort((a, b) => {
+              const pdiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+              if (pdiff !== 0) return pdiff;
+              return (b.confidence || 0) - (a.confidence || 0);
+            });
+            return merged;
+          });
+        }
+      } catch (e) {
+        // silencioso; mantemos heurísticas locais
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userContext]);
+
   useEffect(() => {
     setVisibleSuggestions(suggestions.slice(0, 3)); // Mostra apenas as 3 principais
   }, [suggestions]);
 
-  const generateSmartSuggestions = () => {
+  const generateSmartSuggestions = async () => {
     const newSuggestions: SmartSuggestion[] = [];
 
     // Sugestão baseada no horário
@@ -216,12 +314,41 @@ export default function AISmartSuggestions({
       return b.confidence - a.confidence;
     });
 
+    // Personalização: reordenar por pesos aprendidos
+    try {
+      const userId = userContext.userId;
+      const prefs = await getPersonalization(userId);
+      // Enriquecer com pesos do servidor (se disponível)
+      try {
+        const baseUrl = Platform.select({ default: 'http://localhost:4000' });
+        const resp = await fetch(`${baseUrl}/ai/personalization/scores?userId=${encodeURIComponent(userId || '')}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          const serverWeights = (data && data.weights) || {};
+          // Combinar pesos locais e do servidor
+          for (const k of Object.keys(serverWeights)) {
+            prefs.weights['type:' + k] = (prefs.weights['type:' + k] ?? 0) + serverWeights[k] * 10;
+          }
+        }
+      } catch {}
+      const priorityBase = { high: 100, medium: 50, low: 0 } as const;
+      newSuggestions.sort((a, b) => {
+        const aScore = priorityBase[a.priority] + (prefs.weights['type:' + a.type] ?? 0) + (prefs.weights['id:' + a.id] ?? 0) + (a.confidence || 0) / 10;
+        const bScore = priorityBase[b.priority] + (prefs.weights['type:' + b.type] ?? 0) + (prefs.weights['id:' + b.id] ?? 0) + (b.confidence || 0) / 10;
+        return bScore - aScore;
+      });
+    } catch {}
+
     setSuggestions(newSuggestions);
   };
 
   const handleDismiss = (suggestion: SmartSuggestion) => {
     hapticWarning();
     setVisibleSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
+    // Aprendizado: feedback negativo
+    const userId = userContext.userId;
+    updateFeedback(userId, 'id:' + suggestion.id, -1).catch(() => {});
+    updateFeedback(userId, 'type:' + suggestion.type, -1).catch(() => {});
     onSuggestionDismissed?.(suggestion);
   };
 

@@ -24,6 +24,11 @@ export default function Input({ value, onChangeText, placeholder, secureTextEntr
         placeholder={placeholder}
         placeholderTextColor={theme.colors.textSecondary}
         secureTextEntry={secureTextEntry}
+        accessibilityLabel={placeholder}
+        accessibilityHint={helpText}
+        accessible
+        allowFontScaling
+        maxFontSizeMultiplier={1.3}
         style={[styles.input, { borderColor: isError ? '#EF4444' : theme.colors.border, backgroundColor: theme.colors.background, color: theme.colors.text }, inputStyle]}
       />
       {helpText && !isError ? <Text style={[styles.help, { color: theme.colors.textSecondary }]}>{helpText}</Text> : null}
