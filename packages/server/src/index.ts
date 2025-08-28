@@ -2,6 +2,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import jwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
+import compress from '@fastify/compress';
 import Fastify from 'fastify';
 import { env } from './env';
 import { metricsHandler, setupMetrics } from './metrics';
@@ -23,6 +24,7 @@ await app.register(rateLimit, {
 	max: env.RATE_LIMIT_MAX,
 	timeWindow: env.RATE_LIMIT_TIME_WINDOW_MS
 });
+await app.register(compress, { global: true });
 await app.register(jwt, { secret: env.JWT_SECRET });
 
 // Basic request id propagation

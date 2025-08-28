@@ -91,7 +91,7 @@ class OpenRouterAIService {
         return existing;
       }
 
-      const fetchPromise = (async () => {
+      const fetchOnce = async (): Promise<string> => {
         const response = await fetch(`${this.baseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -110,11 +110,25 @@ class OpenRouterAIService {
 
         const data: OpenRouterResponse = await response.json();
         const content = data.choices[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
-
-        // Armazena no cache (com compressão)
         this.saveToCache(cacheKey, content, this.defaultTTLMs);
         return content;
-      })();
+      };
+
+      const fetchWithRetry = async (retries = 2, baseDelayMs = 200): Promise<string> => {
+        let attempt = 0;
+        while (true) {
+          try {
+            return await fetchOnce();
+          } catch (err) {
+            attempt++;
+            if (attempt > retries) throw err;
+            const delay = baseDelayMs * Math.pow(2, attempt - 1);
+            await new Promise(res => setTimeout(res, delay));
+          }
+        }
+      };
+
+      const fetchPromise = fetchWithRetry();
 
       this.inflightRequests.set(cacheKey, fetchPromise);
       try {

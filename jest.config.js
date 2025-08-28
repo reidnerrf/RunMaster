@@ -21,6 +21,8 @@ module.exports = {
       '^expo-modules-core/(.*)$': '<rootDir>/__mocks__/empty.js',
       '^expo-crypto$': '<rootDir>/__mocks__/expo-crypto.js',
       '^expo-constants$': '<rootDir>/__mocks__/expo-constants.js',
-      '^@react-native-async-storage/async-storage$': '<rootDir>/__mocks__/async-storage.js'
+      '^@react-native-async-storage/async-storage$': '<rootDir>/__mocks__/async-storage.js',
+      '^expo-status-bar$': '<rootDir>/__mocks__/expo-status-bar.js',
+      '^expo-haptics$': '<rootDir>/__mocks__/expo-haptics.js'
     }
 };

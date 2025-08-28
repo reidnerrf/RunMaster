@@ -20,6 +20,7 @@ import {
 import { hapticSuccess, hapticWarning } from '../../utils/haptics';
 import { openRouterAI } from '../../Lib/openrouter-ai';
 import { getPersonalization, updateFeedback } from '../../utils/personalization';
+import { Platform } from 'react-native';
 
 export type SmartSuggestion = {
   id: string;
@@ -317,6 +318,19 @@ export default function AISmartSuggestions({
     try {
       const userId = userContext.userId;
       const prefs = await getPersonalization(userId);
+      // Enriquecer com pesos do servidor (se disponível)
+      try {
+        const baseUrl = Platform.select({ default: 'http://localhost:4000' });
+        const resp = await fetch(`${baseUrl}/ai/personalization/scores?userId=${encodeURIComponent(userId || '')}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          const serverWeights = (data && data.weights) || {};
+          // Combinar pesos locais e do servidor
+          for (const k of Object.keys(serverWeights)) {
+            prefs.weights['type:' + k] = (prefs.weights['type:' + k] ?? 0) + serverWeights[k] * 10;
+          }
+        }
+      } catch {}
       const priorityBase = { high: 100, medium: 50, low: 0 } as const;
       newSuggestions.sort((a, b) => {
         const aScore = priorityBase[a.priority] + (prefs.weights['type:' + a.type] ?? 0) + (prefs.weights['id:' + a.id] ?? 0) + (a.confidence || 0) / 10;

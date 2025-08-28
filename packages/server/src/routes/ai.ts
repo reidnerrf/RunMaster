@@ -76,5 +76,29 @@ export async function aiRoutes(app: FastifyInstance) {
             return reply.code(500).send({ error: 'internal_error' });
         }
     });
+
+    // Simple personalization scores per user based on counts by type
+    app.get('/ai/personalization/scores', async (request, reply) => {
+        try {
+            const { userId } = (request.query as any) || {};
+            const col = getCollection<AILog>(app, 'ai_logs');
+            if (!col) return reply.code(503).send({ error: 'db_unavailable' });
+            const match: any = {};
+            if (userId) match.userId = userId;
+            const agg = await col.aggregate([
+                { $match: match },
+                { $group: { _id: '$type', count: { $sum: 1 } } }
+            ]).toArray();
+            // Normalize into weights 0..1
+            const total = agg.reduce((s, a) => s + a.count, 0) || 1;
+            const weights: Record<string, number> = {};
+            for (const a of agg) weights[a._id] = a.count / total;
+            return { userId: userId || null, weights };
+        } catch (err) {
+            dbErrors.inc({ operation: 'aggregate', collection: 'ai_logs' });
+            app.log.error({ err }, 'Failed to compute personalization scores');
+            return reply.code(500).send({ error: 'internal_error' });
+        }
+    });
 }
 
