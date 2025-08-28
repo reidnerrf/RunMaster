@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, RefreshControl } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { getRoutes, SavedRoute, deleteRouteLocal, updateRouteLocal } from '../../Lib/routeStore';
 import { syncRoutes } from '../../Lib/sync';
@@ -8,6 +8,9 @@ import SectionTitle from '../../components/SectionTitle';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../Lib/api';
 import { importGpxFromUrl } from '../../Lib/gpx';
+import Skeleton from '../../components/ui/Skeleton';
+import PressableScale from '../../components/ui/PressableScale';
+import { useRefresh } from '../../hooks/useRefresh';
 
 export default function SavedRoutesScreen() {
   const { theme } = useTheme();
@@ -16,9 +19,14 @@ export default function SavedRoutesScreen() {
   const [routes, setRoutes] = useState<SavedRoute[]>([]);
   const [syncing, setSyncing] = useState(false);
 
-  useEffect(() => {
-    getRoutes().then(setRoutes).catch(() => setRoutes([]));
+  const load = useCallback(async () => {
+    const data = await getRoutes();
+    setRoutes(data);
   }, []);
+
+  useEffect(() => { load().catch(() => setRoutes([])); }, [load]);
+
+  const { refreshing, onRefresh } = useRefresh(load);
 
   const onDelete = async (r: SavedRoute) => {
     // delete remote first if exists (best-effort)
@@ -56,12 +64,12 @@ export default function SavedRoutesScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: theme.colors.background }}>
+    <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: theme.colors.background }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <SectionTitle title="Rotas Salvas" subtitle={`${routes.length} favoritas`} />
-      <Pressable onPress={async () => { if (!user) return; setSyncing(true); await syncRoutes(user.id); setRoutes(await getRoutes()); setSyncing(false); }} style={[styles.sync, { borderColor: theme.colors.border }]}>
+      <PressableScale onPress={async () => { if (!user) return; setSyncing(true); await syncRoutes(user.id); setRoutes(await getRoutes()); setSyncing(false); }} style={[styles.sync, { borderColor: theme.colors.border }]}>
         <Text style={{ color: theme.colors.muted }}>{syncing ? 'Sincronizando...' : 'Sincronizar com a nuvem'}</Text>
-      </Pressable>
-      <Pressable onPress={async () => {
+      </PressableScale>
+      <PressableScale onPress={async () => {
         const anyAlert: any = Alert as any;
         const doImport = async (url: string) => {
           try {
@@ -83,19 +91,26 @@ export default function SavedRoutesScreen() {
       }} style={[styles.sync, { borderColor: theme.colors.border }]}>
         <Text style={{ color: theme.colors.muted }}>Importar GPX (URL)</Text>
 
-      </Pressable>
-      {routes.length === 0 && (
-        <View style={[styles.empty, { borderColor: theme.colors.border }]}> 
-          <Text style={{ color: theme.colors.muted }}>Você ainda não salvou rotas.</Text>
+      </PressableScale>
+      {routes.length === 0 ? (
+        <View>
+          <View style={[styles.empty, { borderColor: theme.colors.border }]}> 
+            <Text style={{ color: theme.colors.muted }}>Você ainda não salvou rotas.</Text>
+          </View>
+          <View style={{ marginTop: 10, gap: 8 }}>
+            <Skeleton height={50} />
+            <Skeleton height={50} />
+            <Skeleton height={50} />
+          </View>
         </View>
-      )}
+      ) : null}
       <View style={{ gap: 10 }}>
         {routes.map((r) => (
           <View key={r.id} style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
-            <Pressable onPress={() => nav.navigate('RouteDetail' as never, { id: r.id } as never)} style={{ flex: 1 }}>
+            <PressableScale onPress={() => nav.navigate('RouteDetail' as never, { id: r.id } as never)} style={{ flex: 1 }}>
               <Text style={[styles.title, { color: theme.colors.text }]}>{r.name}</Text>
               <Text style={{ color: theme.colors.muted }}>{r.distance_km.toFixed(1)} km • {new Date(r.savedAt).toLocaleDateString()} {r.synced ? '' : '• Não sincronizado'}</Text>
-            </Pressable>
+            </PressableScale>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable onPress={() => onRename(r)} style={[styles.smallBtn, { backgroundColor: theme.colors.secondary }]}><Text style={{ color: 'white' }}>Renomear</Text></Pressable>
               <Pressable onPress={() => onDelete(r)} style={[styles.smallBtn, { backgroundColor: theme.colors.danger }]}><Text style={{ color: 'white' }}>Excluir</Text></Pressable>

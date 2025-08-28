@@ -320,9 +320,9 @@ const darkTheme: ThemeConfig = {
     backgroundCard: '#141519',
     backgroundModal: '#141519',
     
-    text: '#F9FAFB',
-    textSecondary: '#CBD5E1',
-    textTertiary: '#94A3B8',
+    text: '#F3F4F6',
+    textSecondary: '#D1D5DB',
+    textTertiary: '#9CA3AF',
     textInverse: '#0B0B0C',
     
     success: '#34D399',
@@ -330,9 +330,9 @@ const darkTheme: ThemeConfig = {
     error: '#F87171',
     info: '#60A5FA',
     
-    border: '#1F2937',
-    borderLight: '#111827',
-    divider: '#1F2937',
+    border: '#2A2E37',
+    borderLight: '#1A1D22',
+    divider: '#2A2E37',
     shadow: 'rgba(0, 0, 0, 0.3)',
     overlay: 'rgba(0, 0, 0, 0.7)',
     

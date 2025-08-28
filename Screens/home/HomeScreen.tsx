@@ -13,6 +13,7 @@ import FlowHint from '../../components/FlowHint';
 import GeneratedImage from '../../components/GeneratedImage';
 import IconButton from '../../components/IconButton';
 import PulsingButton from '../../components/PulsingButton';
+import StickyCTA from '../../components/ui/StickyCTA';
 import SectionTitle from '../../components/SectionTitle';
 import GeneratedImage from '../../components/GeneratedImage';
 import FadeInUp from '../../components/FadeInUp';
@@ -121,7 +122,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <View>
             <Text style={{ color: theme.colors.muted, fontSize: 12 }}>Bem-vindo de volta,</Text>
@@ -289,6 +290,9 @@ export default function HomeScreen() {
           ))
         )}
       </ScrollView>
+      <StickyCTA>
+        <Button title={tt('home_start')} onPress={handleStartRun} leftIcon={<Play size={18} color={'#fff'} />} />
+      </StickyCTA>
       <RitualPicker
         visible={showRitualPicker}
         onClose={() => setShowRitualPicker(false)}

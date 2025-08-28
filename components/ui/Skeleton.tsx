@@ -1,4 +1,20 @@
 import React from 'react';
+import { View } from 'react-native';
+
+interface SkeletonProps {
+  height?: number | string;
+  width?: number | string;
+  radius?: number;
+  style?: any;
+}
+
+export default function Skeleton({ height = 14, width = '100%', radius = 8, style }: SkeletonProps) {
+  return (
+    <View style={[{ height, width, borderRadius: radius, backgroundColor: 'rgba(0,0,0,0.06)', overflow: 'hidden' }, style]} />
+  );
+}
+
+import React from 'react';
 import { Animated, ViewStyle } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
